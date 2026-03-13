@@ -1,0 +1,12 @@
+# Credentials - KHÔNG được commit
+.env
+
+# Ảnh upload của người dùng
+public/uploads/*
+!public/uploads/.gitkeep
+
+# Hệ thống
+.DS_Store
+Thumbs.db
+*.log
+/vendor/

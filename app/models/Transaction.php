@@ -23,16 +23,45 @@ class Transaction extends Model
              JOIN users seller     ON seller.id = t.seller_id
              WHERE t.buyer_id = ? OR t.seller_id = ?
              ORDER BY t.created_at DESC',
-            [$userId, $userId]
+        [$userId, $userId]
         );
+    }
+
+    /**
+     * Lấy giao dịch theo ID
+     */
+    public function findById(int $id): ?array
+    {
+        return $this->queryOne('SELECT * FROM transactions WHERE id = ? LIMIT 1', [$id]);
+    }
+
+    /**
+     * Tạo giao dịch
+     */
+    public function createTransaction(int $buyerId, int $sellerId, int $productId, float $amount, string $paymentMethod, string $shippingAddress): int
+    {
+        return $this->insert(
+            'INSERT INTO transactions 
+             (buyer_id, seller_id, product_id, amount, payment_method, shipping_address, payment_status, created_at) 
+             VALUES (?, ?, ?, ?, ?, ?, "pending", NOW())',
+            [$buyerId, $sellerId, $productId, $amount, $paymentMethod, $shippingAddress]
+        );
+    }
+
+    /**
+     * Cập nhật trạng thái thanh toán
+     */
+    public function updatePaymentStatus(int $id, string $status): void
+    {
+        $this->execute('UPDATE transactions SET payment_status = ? WHERE id = ?', [$status, $id]);
     }
 
     /**
      * Lấy tất cả giao dịch (Admin)
      */
-    public function getAll(string $fromDate = '', string $toDate = ''): array
+    public function getAll(string $fromDate = '', string $toDate = '', int $limit = 1000): array
     {
-        $sql    = 'SELECT t.*, p.title AS product_title, buyer.name AS buyer_name,
+        $sql = 'SELECT t.*, p.title AS product_title, buyer.name AS buyer_name,
                           seller.name AS seller_name
                    FROM transactions t
                    JOIN products p   ON p.id = t.product_id
@@ -41,10 +70,17 @@ class Transaction extends Model
                    WHERE 1';
         $params = [];
 
-        if ($fromDate) { $sql .= ' AND DATE(t.created_at) >= ?'; $params[] = $fromDate; }
-        if ($toDate)   { $sql .= ' AND DATE(t.created_at) <= ?'; $params[] = $toDate; }
+        if ($fromDate) {
+            $sql .= ' AND DATE(t.created_at) >= ?';
+            $params[] = $fromDate;
+        }
+        if ($toDate) {
+            $sql .= ' AND DATE(t.created_at) <= ?';
+            $params[] = $toDate;
+        }
 
-        $sql .= ' ORDER BY t.created_at DESC';
+        $sql .= ' ORDER BY t.created_at DESC LIMIT ?';
+        $params[] = $limit;
         return $this->query($sql, $params);
     }
 

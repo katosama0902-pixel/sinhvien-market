@@ -28,6 +28,13 @@ CREATE TABLE `users` (
     `avatar`     VARCHAR(255) DEFAULT NULL COMMENT 'Đường dẫn ảnh đại diện',
     `role`       ENUM('student', 'admin') NOT NULL DEFAULT 'student',
     `is_locked`  TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = bị khóa bởi Admin',
+    -- Phase 11.2 - OTP & Security
+    `security_question` VARCHAR(255) DEFAULT NULL,
+    `security_answer`   VARCHAR(255) DEFAULT NULL,
+    `otp_code`          VARCHAR(255) DEFAULT NULL,
+    `otp_expires_at`    TIMESTAMP NULL DEFAULT NULL,
+    `is_verified`       TINYINT(1) DEFAULT 0,
+    `last_verified_at`  TIMESTAMP NULL DEFAULT NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
@@ -177,14 +184,23 @@ SET FOREIGN_KEY_CHECKS = 1;
 --  SEED DATA - Dữ liệu mẫu ban đầu
 -- ============================================================
 
--- Tài khoản Admin mặc định — Password: Admin@123
-INSERT INTO `users` (`name`, `email`, `password`, `role`) VALUES
+-- Tài khoản Admin mặt định — Password: Admin@123
+INSERT INTO `users` (`name`, `email`, `password`, `role`, `is_verified`, `last_verified_at`) VALUES
 ('Quản Trị Viên', 'admin@market.com',
  '$2y$12$SgUUG97QUauWA2EuHa/iXufwMcJ6JDRX0irQZ5252MTsc0u9yZEfe',
- 'admin');
+ 'admin', 1, NOW());
+
+-- Tài khoản Admin thứ hai — Password: Admin@123
+INSERT INTO `users` (`name`, `email`, `password`, `role`, `is_verified`, `last_verified_at`) VALUES
+('Kato', 'darkrover1080@gmail.com',
+ '$2y$12$SgUUG97QUauWA2EuHa/iXufwMcJ6JDRX0irQZ5252MTsc0u9yZEfe',
+ 'admin', 1, NOW());
 
 -- Tài khoản sinh viên mẫu — Password: Admin@123 (dùng chung cho demo)
-INSERT INTO `users` (`name`, `email`, `password`, `role`) VALUES
+INSERT INTO `users` (`name`, `email`, `password`, `role`, `is_verified`, `last_verified_at`) VALUES
+('Kagato', 'katosama0902@gmail.com',
+ '$2y$12$SgUUG97QUauWA2EuHa/iXufwMcJ6JDRX0irQZ5252MTsc0u9yZEfe',
+ 'student', 1, NOW()),
 ('Nguyễn Văn An', 'an@student.edu.vn',
  '$2y$12$SgUUG97QUauWA2EuHa/iXufwMcJ6JDRX0irQZ5252MTsc0u9yZEfe',
  'student'),

@@ -11,14 +11,25 @@ use Core\Model;
 class Product extends Model
 {
     /**
+     * Lấy 1 bản ghi bằng ID cơ bản
+     */
+    public function findById(int $id): ?array
+    {
+        return $this->queryOne('SELECT * FROM products WHERE id = ? LIMIT 1', [$id]);
+    }
+
+    /**
      * Lấy danh sách sản phẩm đang active (có phân trang)
      */
     public function getActive(int $limit = 12, int $offset = 0, int $categoryId = 0): array
     {
-        $sql = 'SELECT p.*, c.name AS category_name, u.name AS seller_name
+        $sql = 'SELECT p.*, c.name AS category_name, u.name AS seller_name,
+                       a.id AS auction_id, a.start_price, a.floor_price,
+                       a.decrease_amount, a.step_minutes, a.started_at, a.status AS auction_status
                 FROM products p
-                JOIN categories c ON c.id = p.category_id
-                JOIN users u      ON u.id = p.user_id
+                JOIN categories c  ON c.id = p.category_id
+                JOIN users u       ON u.id = p.user_id
+                LEFT JOIN auctions a ON a.product_id = p.id
                 WHERE p.status = "active"';
         $params = [];
 
@@ -40,10 +51,13 @@ class Product extends Model
     public function search(string $keyword, int $categoryId = 0, int $limit = 12, int $offset = 0): array
     {
         $sql = "SELECT p.*, c.name AS category_name, u.name AS seller_name,
+                       a.id AS auction_id, a.start_price, a.floor_price,
+                       a.decrease_amount, a.step_minutes, a.started_at, a.status AS auction_status,
                        MATCH(p.title, p.description) AGAINST(? IN NATURAL LANGUAGE MODE) AS score
                 FROM products p
-                JOIN categories c ON c.id = p.category_id
-                JOIN users u      ON u.id = p.user_id
+                JOIN categories c  ON c.id = p.category_id
+                JOIN users u       ON u.id = p.user_id
+                LEFT JOIN auctions a ON a.product_id = p.id
                 WHERE MATCH(p.title, p.description) AGAINST(? IN NATURAL LANGUAGE MODE)
                   AND p.status = 'active'";
 
@@ -75,7 +89,7 @@ class Product extends Model
              JOIN users u      ON u.id = p.user_id
              LEFT JOIN auctions a ON a.product_id = p.id
              WHERE p.id = ? LIMIT 1',
-            [$id]
+        [$id]
         );
     }
 
@@ -85,10 +99,13 @@ class Product extends Model
     public function getByUser(int $userId): array
     {
         return $this->query(
-            'SELECT p.*, c.name AS category_name FROM products p
-             JOIN categories c ON c.id = p.category_id
+            'SELECT p.*, c.name AS category_name,
+                    a.start_price, a.floor_price, a.status AS auction_status
+             FROM products p
+             JOIN categories c  ON c.id = p.category_id
+             LEFT JOIN auctions a ON a.product_id = p.id
              WHERE p.user_id = ? ORDER BY p.created_at DESC',
-            [$userId]
+        [$userId]
         );
     }
 
@@ -100,15 +117,15 @@ class Product extends Model
         return $this->insert(
             'INSERT INTO products (user_id, category_id, title, description, image, type, price)
              VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [
-                $data['user_id'],
-                $data['category_id'],
-                $data['title'],
-                $data['description'],
-                $data['image'] ?? null,
-                $data['type'],
-                $data['price'] ?? null,
-            ]
+        [
+            $data['user_id'],
+            $data['category_id'],
+            $data['title'],
+            $data['description'],
+            $data['image'] ?? null,
+            $data['type'],
+            $data['price'] ?? null,
+        ]
         );
     }
 
@@ -139,6 +156,41 @@ class Product extends Model
              JOIN categories c ON c.id = p.category_id
              JOIN users u ON u.id = p.user_id
              WHERE p.status = "pending" ORDER BY p.created_at ASC'
+        );
+    }
+
+    /**
+     * Lấy tất cả sản phẩm (Admin — kể cả pending, cancelled)
+     */
+    public function getAllForAdmin(): array
+    {
+        return $this->query(
+            'SELECT p.*, c.name AS category_name, u.name AS seller_name, u.email AS seller_email
+             FROM products p
+             JOIN categories c ON c.id = p.category_id
+             JOIN users u ON u.id = p.user_id
+             ORDER BY p.created_at DESC
+             LIMIT 300'
+        );
+    }
+
+    /**
+     * Lấy các phiên đấu giá ngược đang active (cho trang chủ)
+     */
+    public function getActiveAuctions(int $limit = 6): array
+    {
+        return $this->query(
+            'SELECT p.*, c.name AS category_name, u.name AS seller_name,
+                    a.id AS auction_id, a.start_price, a.floor_price,
+                    a.decrease_amount, a.step_minutes, a.started_at, a.status AS auction_status
+             FROM products p
+             JOIN categories c  ON c.id = p.category_id
+             JOIN users u       ON u.id = p.user_id
+             JOIN auctions a    ON a.product_id = p.id
+             WHERE p.status = "active" AND a.status = "active"
+             ORDER BY p.created_at DESC
+             LIMIT ?',
+        [$limit]
         );
     }
 }

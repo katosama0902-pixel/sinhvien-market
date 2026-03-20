@@ -25,89 +25,135 @@ function isActive(string $keyword, string $current): string {
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link href="<?= $appUrl ?>/public/css/style.css" rel="stylesheet">
   <style>
-    body { background: #f1f3f9; }
+    body { background: #f1f5f9; font-family: 'Plus Jakarta Sans', sans-serif; }
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
 
     .admin-wrapper { display: flex; min-height: 100vh; }
 
-    /* Sidebar */
+    /* ── Sidebar ───────────────────────────────────── */
     .admin-sidebar {
-      width: 250px; min-width: 250px;
-      background: #1a1d2e;
+      width: 260px; min-width: 260px;
+      background: linear-gradient(180deg, #1e1b4b 0%, #0f172a 100%);
       display: flex; flex-direction: column;
       position: fixed; top: 0; left: 0; bottom: 0;
-      z-index: 100; overflow-y: auto;
+      z-index: 100; overflow-y: auto; overflow-x: hidden;
+      border-right: 1px solid rgba(255,255,255,.05);
+      box-shadow: 4px 0 24px rgba(0,0,0,.25);
     }
+
     .sidebar-brand {
-      padding: 1.25rem 1.5rem;
-      color: #fff; font-weight: 800; font-size: 1.15rem;
-      border-bottom: 1px solid rgba(255,255,255,.1);
+      padding: 1.4rem 1.5rem;
+      display: flex; align-items: center; gap: .75rem;
+      border-bottom: 1px solid rgba(255,255,255,.07);
       text-decoration: none;
     }
-    .sidebar-brand span { color: #818cf8; }
+    .sidebar-brand-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; color: #fff;
+      box-shadow: 0 4px 12px rgba(99,102,241,.5);
+      flex-shrink: 0;
+    }
+    .sidebar-brand-text {
+      font-size: 1.05rem; font-weight: 900; color: #fff;
+    }
+    .sidebar-brand-text span { color: #a5b4fc; }
+    .sidebar-admin-badge {
+      font-size: .62rem; font-weight: 700; letter-spacing: .5px;
+      color: rgba(255,255,255,.35);
+      text-transform: uppercase;
+    }
 
     .sidebar-section {
-      padding: .5rem 1rem .25rem;
-      color: rgba(255,255,255,.35);
-      font-size: .7rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-top: .5rem;
+      padding: .6rem 1.2rem .2rem;
+      color: rgba(255,255,255,.3);
+      font-size: .68rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.2px;
+      margin-top: .6rem;
     }
 
-    .sidebar-nav { padding: .5rem; flex: 1; }
+    .sidebar-nav { padding: .75rem .6rem; flex: 1; }
     .sidebar-nav a {
-      display: flex; align-items: center; gap: .75rem;
-      padding: .6rem 1rem; border-radius: 8px;
-      color: rgba(255,255,255,.65);
-      font-size: .9rem; font-weight: 500;
+      display: flex; align-items: center; gap: .8rem;
+      padding: .65rem 1rem; border-radius: 10px;
+      color: rgba(255,255,255,.6);
+      font-size: .88rem; font-weight: 600;
       text-decoration: none;
-      transition: all .18s;
-      margin-bottom: 2px;
+      transition: all .2s cubic-bezier(.4,0,.2,1);
+      margin-bottom: 3px; position: relative;
     }
-    .sidebar-nav a i { font-size: 1.1rem; width: 20px; }
-    .sidebar-nav a:hover  { background: rgba(255,255,255,.08); color: #fff; }
-    .sidebar-nav a.active { background: #3b5bdb;  color: #fff; box-shadow: 0 2px 8px rgba(59,91,219,.4); }
+    .sidebar-nav a i { font-size: 1.05rem; width: 20px; flex-shrink: 0; }
+    .sidebar-nav a:hover {
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      transform: translateX(3px);
+    }
+    .sidebar-nav a.active {
+      background: linear-gradient(135deg, rgba(99,102,241,.35), rgba(139,92,246,.25));
+      color: #a5b4fc;
+      border: 1px solid rgba(99,102,241,.3);
+      box-shadow: 0 2px 12px rgba(99,102,241,.2), inset 0 0 0 1px rgba(99,102,241,.15);
+    }
+    .sidebar-nav a.active i { color: #818cf8; }
 
     .sidebar-footer {
-      padding: 1rem;
-      border-top: 1px solid rgba(255,255,255,.1);
+      padding: 1rem .75rem;
+      border-top: 1px solid rgba(255,255,255,.06);
     }
     .sidebar-footer a {
-      display: flex; align-items: center; gap: .5rem;
-      color: rgba(255,255,255,.5); font-size: .85rem;
-      text-decoration: none; transition: color .18s;
+      display: flex; align-items: center; gap: .6rem;
+      color: rgba(255,255,255,.4); font-size: .82rem; font-weight: 600;
+      text-decoration: none; padding: .55rem .85rem; border-radius: 8px;
+      transition: all .2s;
     }
-    .sidebar-footer a:hover { color: #fff; }
+    .sidebar-footer a:hover { background: rgba(255,255,255,.07); color: rgba(255,255,255,.8); }
 
-    /* Main panel */
-    .admin-main {
-      flex: 1;
-      margin-left: 250px;
-      display: flex;
-      flex-direction: column;
-    }
+    /* ── Main panel ────────────────────────────────── */
+    .admin-main { flex: 1; margin-left: 260px; display: flex; flex-direction: column; }
 
-    /* Topbar */
+    /* ── Topbar ────────────────────────────────────── */
     .admin-topbar {
       background: #fff;
-      border-bottom: 1px solid #dee2e6;
-      padding: .75rem 1.5rem;
+      border-bottom: 1px solid #e2e8f0;
+      padding: .85rem 1.75rem;
       display: flex; align-items: center; justify-content: space-between;
       position: sticky; top: 0; z-index: 90;
-      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      box-shadow: 0 1px 8px rgba(0,0,0,.05);
     }
-    .admin-topbar h5 { font-weight: 700; margin: 0; color: #212529; }
+    .admin-topbar-title {
+      font-weight: 800; font-size: 1.15rem; color: #0f172a; margin: 0;
+      display: flex; align-items: center; gap: .6rem;
+    }
+    .admin-topbar-title::before {
+      content: '';
+      width: 4px; height: 20px;
+      background: linear-gradient(180deg, #6366f1, #8b5cf6);
+      border-radius: 99px;
+    }
 
-    /* Content area */
-    .admin-content { padding: 1.5rem; flex: 1; }
+    .topbar-user-info { display: flex; align-items: center; gap: .6rem; }
+    .topbar-avatar {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, #6366f1, #ec4899);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 800; font-size: .85rem;
+      box-shadow: 0 2px 8px rgba(99,102,241,.35);
+    }
+    .topbar-name { font-weight: 700; font-size: .88rem; color: #334155; }
+    .topbar-role { font-size: .75rem; color: #94a3b8; font-weight: 500; }
 
-    /* Responsive */
+    /* ── Content area ──────────────────────────────── */
+    .admin-content { padding: 1.75rem; flex: 1; }
+
+    /* ── Responsive ────────────────────────────────── */
     @media (max-width: 768px) {
       .admin-sidebar { display: none; }
       .admin-main { margin-left: 0; }
     }
   </style>
+
 </head>
 <body>
 <div class="admin-wrapper">
@@ -115,7 +161,11 @@ function isActive(string $keyword, string $current): string {
   <!-- ─── Sidebar ───────────────────────────────── -->
   <aside class="admin-sidebar">
     <a class="sidebar-brand" href="<?= $appUrl ?>/admin">
-      <i class="bi bi-shield-lock me-2"></i>Admin<span>Panel</span>
+      <div class="sidebar-brand-icon"><i class="bi bi-shield-lock"></i></div>
+      <div>
+        <div class="sidebar-brand-text">Admin<span>Panel</span></div>
+        <div class="sidebar-admin-badge">SinhVienMarket</div>
+      </div>
     </a>
 
     <nav class="sidebar-nav">
@@ -133,6 +183,9 @@ function isActive(string $keyword, string $current): string {
       </a>
       <a href="<?= $appUrl ?>/admin/categories" class="<?= isActive('admin/categories', $currentUrl) ?>">
         <i class="bi bi-tags"></i> Danh mục
+      </a>
+      <a href="<?= $appUrl ?>/admin/giveaways" class="<?= isActive('admin/giveaway', $currentUrl) ?>">
+        <i class="bi bi-gift"></i> Sự kiện Giveaway
       </a>
 
       <div class="sidebar-section">Báo cáo</div>
@@ -154,12 +207,15 @@ function isActive(string $keyword, string $current): string {
   <!-- ─── Main ──────────────────────────────────── -->
   <div class="admin-main">
     <div class="admin-topbar">
-      <h5><?= $title ?></h5>
-      <div class="d-flex align-items-center gap-3">
-        <span class="text-muted small"><i class="bi bi-person-circle me-1"></i>
-          <?= htmlspecialchars($user['name'] ?? '', ENT_QUOTES) ?></span>
-        <a href="<?= $appUrl ?>/logout" class="btn btn-sm btn-outline-danger">
-          <i class="bi bi-box-arrow-right me-1"></i>Đăng xuất
+      <h5 class="admin-topbar-title"><?= $title ?></h5>
+      <div class="topbar-user-info">
+        <div class="topbar-avatar"><?= mb_strtoupper(mb_substr($user['name'] ?? 'A', 0, 1)) ?></div>
+        <div>
+          <div class="topbar-name"><?= htmlspecialchars($user['name'] ?? 'Admin', ENT_QUOTES) ?></div>
+          <div class="topbar-role">Administrator</div>
+        </div>
+        <a href="<?= $appUrl ?>/logout" class="btn btn-sm ms-2" style="background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2);border-radius:8px;font-weight:700;font-size:.8rem">
+          <i class="bi bi-box-arrow-right me-1"></i>Thoát
         </a>
       </div>
     </div>

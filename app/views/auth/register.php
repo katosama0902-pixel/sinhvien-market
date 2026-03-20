@@ -89,6 +89,42 @@ use Core\Flash;
         </div>
       </div>
 
+      <!-- Câu hỏi bảo mật -->
+      <div class="mb-3">
+        <label for="security_question" class="form-label">Câu hỏi bảo mật (dùng để khôi phục mật khẩu) <span class="text-danger">*</span></label>
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0">
+            <i class="bi bi-patch-question text-muted"></i>
+          </span>
+          <select id="security_question" name="security_question" class="form-select border-start-0 ps-0 <?= isset($errors['security_question']) ? 'is-invalid' : '' ?>" required>
+            <option value="">Chọn câu hỏi bảo mật</option>
+            <option value="q1" <?= ($old['security_question'] ?? '') == 'q1' ? 'selected' : '' ?>>Tên trường cấp 1 của bạn là gì?</option>
+            <option value="q2" <?= ($old['security_question'] ?? '') == 'q2' ? 'selected' : '' ?>>Tên thú cưng đầu tiên của bạn?</option>
+            <option value="q3" <?= ($old['security_question'] ?? '') == 'q3' ? 'selected' : '' ?>>Bạn thân thời thơ ấu của bạn tên gì?</option>
+          </select>
+          <?php if (isset($errors['security_question'])): ?>
+            <div class="invalid-feedback"><?= htmlspecialchars($errors['security_question'], ENT_QUOTES) ?></div>
+          <?php endif; ?>
+        </div>
+      </div>
+
+      <!-- Câu trả lời bảo mật -->
+      <div class="mb-3">
+        <label for="security_answer" class="form-label">Câu trả lời <span class="text-danger">*</span></label>
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0">
+            <i class="bi bi-pen text-muted"></i>
+          </span>
+          <input type="text" id="security_answer" name="security_answer"
+                 class="form-control border-start-0 ps-0 <?= isset($errors['security_answer']) ? 'is-invalid' : '' ?>"
+                 placeholder="Nhập câu trả lời"
+                 value="<?= htmlspecialchars($old['security_answer'] ?? '', ENT_QUOTES) ?>" required>
+          <?php if (isset($errors['security_answer'])): ?>
+            <div class="invalid-feedback"><?= htmlspecialchars($errors['security_answer'], ENT_QUOTES) ?></div>
+          <?php endif; ?>
+        </div>
+      </div>
+
       <!-- Mật khẩu -->
       <div class="mb-3">
         <label for="password" class="form-label">Mật khẩu <span class="text-danger">*</span></label>

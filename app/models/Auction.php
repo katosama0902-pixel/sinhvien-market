@@ -46,6 +46,53 @@ class Auction extends Model
     }
 
     /**
+     * Lấy thông tin auction theo ID
+     */
+    public function findById(int $id): ?array
+    {
+        return $this->queryOne('SELECT * FROM auctions WHERE id = ? LIMIT 1', [$id]);
+    }
+
+    /**
+     * Tạo bản ghi auction cho sản phẩm mới đăng
+     */
+    public function createAuction(
+        int $productId,
+        int $startPrice,
+        int $floorPrice,
+        int $decreaseAmount,
+        int $stepMinutes
+    ): int {
+        return $this->insert(
+            'INSERT INTO auctions (product_id, start_price, floor_price, decrease_amount, step_minutes, started_at)
+             VALUES (?, ?, ?, ?, ?, NOW())',
+            [$productId, $startPrice, $floorPrice, $decreaseAmount, $stepMinutes]
+        );
+    }
+
+    /**
+     * Lấy các phiên đấu giá đã kết thúc nhưng chưa chuyển trạng thái
+     */
+    public function getEndedAuctions(): array
+    {
+        return $this->query(
+            'SELECT * FROM auctions WHERE status = "active" AND
+             (floor_price >= current_price OR TIME_TO_SEC(TIMEDIFF(NOW(), started_at)) / 60 > 1440)'
+        );
+    }
+
+    /**
+     * Kết thúc phiên đấu giá
+     */
+    public function markAsEnded(int $auctionId, int $winnerId, float $finalPrice): void
+    {
+        $this->execute(
+            'UPDATE auctions SET status = "ended", winner_id = ?, final_price = ?, ended_at = NOW() WHERE id = ?',
+            [$winnerId, $finalPrice, $auctionId]
+        );
+    }
+
+    /**
      * Lấy thông tin auction theo product_id
      */
     public function findByProduct(int $productId): ?array

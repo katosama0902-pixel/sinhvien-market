@@ -209,8 +209,16 @@ $p = $product;
           <form action="<?= $appUrl ?>/chat/start" method="POST" class="mt-3">
             <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf, ENT_QUOTES) ?>">
             <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
-            <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" style="padding: .6rem 1rem">
+            <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 mb-2" style="padding: .6rem 1rem">
               <i class="bi bi-chat-dots-fill"></i> Liên hệ người bán
+            </button>
+          </form>
+          
+          <form action="<?= $appUrl ?>/wishlist/toggle" method="POST">
+            <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf, ENT_QUOTES) ?>">
+            <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
+            <button type="submit" class="btn btn-outline-danger w-100 rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2" style="padding: .6rem 1rem">
+              <i class="bi bi-heart"></i> Thêm vào Yêu thích
             </button>
           </form>
         <?php elseif (!$user): ?>

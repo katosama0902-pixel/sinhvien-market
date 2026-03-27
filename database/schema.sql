@@ -185,10 +185,6 @@ CREATE TABLE `audit_logs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Nhật ký hành động của Admin — dùng để kiểm toán';
 
--- ============================================================
---  RESET FOREIGN KEY CHECKS
--- ============================================================
-SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
 --  8. CONVERSATIONS — Cuộc hội thoại giữa người mua & người bán
@@ -367,3 +363,42 @@ CREATE TABLE `reports` (
     CONSTRAINT `fk_reports_reporter` FOREIGN KEY (`reporter_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Báo cáo vi phạm (Sản phẩm / Người dùng) gửi cho Admin';
+
+-- ============================================================
+-- 16. GIVEAWAYS - Sự kiện quay số may mắn
+-- ============================================================
+DROP TABLE IF EXISTS `giveaway_participants`;
+DROP TABLE IF EXISTS `giveaways`;
+CREATE TABLE `giveaways` (
+    `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `title`       VARCHAR(255) NOT NULL COLLATE utf8mb4_unicode_ci,
+    `description` TEXT         COLLATE utf8mb4_unicode_ci,
+    `image`       VARCHAR(255) DEFAULT NULL COLLATE utf8mb4_unicode_ci,
+    `end_time`    DATETIME     NOT NULL COMMENT 'Thời điểm kết thúc sự kiện',
+    `status`      ENUM('active','ended') COLLATE utf8mb4_unicode_ci DEFAULT 'active',
+    `winner_id`   INT UNSIGNED DEFAULT NULL COMMENT 'ID người trúng thưởng',
+    `created_at`  TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_winner_id` (`winner_id`),
+    CONSTRAINT `fk_giveaways_winner` FOREIGN KEY (`winner_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Sự kiện Giveaway / Vòng quay may mắn';
+
+-- ============================================================
+-- 17. GIVEAWAY_PARTICIPANTS - Danh sách tham gia sự kiện
+-- ============================================================
+CREATE TABLE `giveaway_participants` (
+    `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `giveaway_id` INT UNSIGNED NOT NULL COMMENT 'Sự kiện tham gia',
+    `user_id`     INT UNSIGNED NOT NULL COMMENT 'Người tham gia',
+    `joined_at`   TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_participation` (`giveaway_id`, `user_id`),
+    KEY `idx_user_id` (`user_id`),
+    CONSTRAINT `fk_gp_giveaway` FOREIGN KEY (`giveaway_id`) REFERENCES `giveaways`(`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_gp_user`     FOREIGN KEY (`user_id`)     REFERENCES `users`(`id`)    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Danh sách người dùng đã tham gia Giveaway';
+
+SET FOREIGN_KEY_CHECKS = 1;
+

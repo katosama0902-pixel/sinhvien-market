@@ -119,7 +119,7 @@ function hp(int $price): string {
 
 <!-- ─── GIVEAWAY EVENT ───────────────────────────────────────────── -->
 <?php if (!empty($giveaway)): ?>
-<section class="hp-giveaway">
+<section class="hp-giveaway" id="giveaway">
   <div class="hp-gw-blob-1"></div>
   <div class="hp-gw-blob-2"></div>
   <div class="container" style="position:relative;z-index:2">
@@ -179,9 +179,9 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('_csrf', '<?= htmlspecialchars($this->csrfToken() ?? "") ?>');
         const response = await fetch('<?= $appUrl ?>/api/giveaways/join', { method: 'POST', body: formData });
         const result = await response.json();
-        if (result.status === 'success') { alert(result.msg); window.location.reload(); }
+        if (result.success) { alert(result.message || 'Đăng ký thành công!'); window.location.reload(); }
         else {
-          alert(result.msg || 'Có lỗi xảy ra.');
+          alert((result.error && result.error.message) || 'Có lỗi xảy ra.');
           btn.disabled = false;
           btn.innerHTML = '<i class="bi bi-controller me-2"></i>Tham gia vòng quay ngay!';
         }

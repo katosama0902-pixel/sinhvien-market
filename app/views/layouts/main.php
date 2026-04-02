@@ -105,9 +105,15 @@ $user    = $_SESSION['user'] ?? null;
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
               <div class="nav-avatar">
-                <?= mb_strtoupper(mb_substr($user['name'], 0, 1)) ?>
+                <?php if (!empty($user['avatar'])): ?>
+                  <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($user['avatar'], ENT_QUOTES) ?>" alt="Avatar">
+                <?php elseif (!empty($user['avatar_url'])): ?>
+                  <img src="<?= htmlspecialchars($user['avatar_url'], ENT_QUOTES) ?>" alt="Avatar">
+                <?php else: ?>
+                  <?= mb_strtoupper(mb_substr($user['name'] ?? 'U', 0, 1)) ?>
+                <?php endif; ?>
               </div>
-              <span><?= htmlspecialchars($user['name'], ENT_QUOTES) ?></span>
+              <span><?= htmlspecialchars($user['name'] ?? 'Tài khoản', ENT_QUOTES) ?></span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end border-0 rounded-4 mt-1 p-2" style="min-width:220px">
               <li>

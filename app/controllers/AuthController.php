@@ -154,6 +154,8 @@ class AuthController extends Controller
                 'id'           => $user['id'],
                 'name'         => $user['name'],
                 'email'        => $user['email'],
+                'avatar'       => $user['avatar']       ?? null,
+                'avatar_url'   => $user['avatar_url']   ?? null,
                 'role'         => $user['role'],
                 'is_locked'    => 1,
                 'lock_reason'  => $user['lock_reason']  ?? null,
@@ -196,11 +198,13 @@ class AuthController extends Controller
         session_regenerate_id(true);
 
         $_SESSION['user'] = [
-            'id'        => $user['id'],
-            'name'      => $user['name'],
-            'email'     => $user['email'],
-            'role'      => $user['role'],
-            'is_locked' => $user['is_locked'],
+            'id'         => $user['id'],
+            'name'       => $user['name'],
+            'email'      => $user['email'],
+            'avatar'     => $user['avatar']     ?? null,
+            'avatar_url' => $user['avatar_url'] ?? null,
+            'role'       => $user['role'],
+            'is_locked'  => $user['is_locked'],
         ];
 
         Flash::set('success', 'Chào mừng trở lại, ' . $user['name'] . '!');
@@ -314,11 +318,13 @@ class AuthController extends Controller
         // Cho đăng nhập luôn
         session_regenerate_id(true);
         $_SESSION['user'] = [
-            'id'        => $user['id'],
-            'name'      => $user['name'],
-            'email'     => $user['email'],
-            'role'      => $user['role'],
-            'is_locked' => $user['is_locked'],
+            'id'         => $user['id'],
+            'name'       => $user['name'],
+            'email'      => $user['email'],
+            'avatar'     => $user['avatar']     ?? null,
+            'avatar_url' => $user['avatar_url'] ?? null,
+            'role'       => $user['role'],
+            'is_locked'  => $user['is_locked'],
         ];
 
         Flash::set('success', 'Xác minh thành công! Chào mừng bạn.');

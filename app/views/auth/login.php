@@ -179,6 +179,8 @@ use Core\Flash;
       <?php endif; ?>
 
       <!-- Form -->
+      <div id="recentAccounts"></div>
+
       <form action="<?= $appUrl ?>/login" method="POST" novalidate id="loginForm">
         <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf ?? '', ENT_QUOTES) ?>">
 
@@ -189,8 +191,8 @@ use Core\Flash;
         <div class="form-floating-custom">
           <span class="field-icon"><i class="bi bi-envelope"></i></span>
           <input type="email" id="email" name="email"
-                 class="form-control <?= isset($errors['email']) ? 'is-invalid' : '' ?>"
-                 placeholder="you@student.edu.vn"
+                 class="form-control form-control-pill <?= isset($errors['email']) ? 'is-invalid' : '' ?>"
+                 placeholder="you@student.edu.vn hoặc Số điện thoại"
                  value="<?= htmlspecialchars($old['email'] ?? '', ENT_QUOTES) ?>"
                  autocomplete="email" required>
           <?php if (isset($errors['email'])): ?>
@@ -207,7 +209,7 @@ use Core\Flash;
         </div>
         <div class="form-floating-custom">
           <span class="field-icon"><i class="bi bi-lock"></i></span>
-          <div class="input-group">
+          <div class="input-group input-group-pill">
             <input type="password" id="password" name="password"
                    class="form-control <?= isset($errors['password']) ? 'is-invalid' : '' ?>"
                    placeholder="••••••••"
@@ -233,6 +235,13 @@ use Core\Flash;
 
       <div class="divider">hoặc</div>
 
+      <div class="mb-4">
+        <a href="<?= $appUrl ?>/auth/google" class="btn-social-google">
+          <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="18" alt="Google">
+          <span>Tiếp tục với Google</span>
+        </a>
+      </div>
+
       <div class="text-center">
         <p class="mb-2" style="font-size:.9rem;color:#64748b">
           Chưa có tài khoản?
@@ -248,6 +257,82 @@ use Core\Flash;
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+// Quản lý Recent Accounts (localStorage)
+const RECENT_ACCOUNTS_KEY = 'svmarket_recent_accounts';
+
+function getRecentAccounts() {
+    try {
+        return JSON.parse(localStorage.getItem(RECENT_ACCOUNTS_KEY) || '[]');
+    } catch(e) { return []; }
+}
+
+function saveRecentAccount(name, email) {
+    let accounts = getRecentAccounts();
+    // Xóa email cũ nếu đã có (để đưa lên đầu)
+    accounts = accounts.filter(a => a.email !== email);
+    accounts.unshift({ name, email });
+    // Giữa tối đa 3 tài khoản gần nhất
+    localStorage.setItem(RECENT_ACCOUNTS_KEY, JSON.stringify(accounts.slice(0, 3)));
+}
+
+function removeRecentAccount(email, event) {
+    if (event) event.stopPropagation();
+    let accounts = getRecentAccounts().filter(a => a.email !== email);
+    localStorage.setItem(RECENT_ACCOUNTS_KEY, JSON.stringify(accounts));
+    renderRecentAccounts();
+}
+
+function fillAccount(email) {
+    document.getElementById('email').value = email;
+    document.getElementById('password').focus();
+}
+
+function renderRecentAccounts() {
+    const list = getRecentAccounts();
+    const container = document.getElementById('recentAccounts');
+    if (list.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = `
+        <p class="text-center mb-3 small fw-600 text-muted">Tiếp tục với tài khoản cũ</p>
+        <div class="recent-accounts-list">
+    `;
+
+    list.forEach(acc => {
+        const initial = acc.name.charAt(0).toUpperCase();
+        // Tạo gradient ngẫu nhiên dựa trên email
+        const hash = acc.email.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
+        const hue = Math.abs(hash % 360);
+        const bg = `linear-gradient(135deg, hsl(${hue}, 70%, 60%), hsl(${(hue + 40) % 360}, 70%, 50%))`;
+
+        html += `
+            <div class="recent-account-item" onclick="fillAccount('${acc.email}')">
+                <button class="btn-remove-account" onclick="removeRecentAccount('${acc.email}', event)" title="Xóa">×</button>
+                <div class="recent-account-avatar" style="background: ${bg}">${initial}</div>
+                <span class="recent-account-name">${acc.name}</span>
+            </div>
+        `;
+    });
+
+    html += `</div><div class="divider">hoặc dùng email khác</div>`;
+    container.innerHTML = html;
+}
+
+// Kiểm tra có cookie user mới từ server không
+function checkNewLogin() {
+    const match = document.cookie.match(new RegExp('(^| )_recent_user=([^;]+)'));
+    if (match) {
+        try {
+            const user = JSON.parse(decodeURIComponent(match[2]));
+            saveRecentAccount(user.name, user.email);
+            // Xóa cookie sau khi đã lưu
+            document.cookie = "_recent_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        } catch(e) {}
+    }
+}
+
 function togglePass(id, btn) {
   var input = document.getElementById(id);
   var icon  = btn.querySelector('i');
@@ -257,6 +342,11 @@ function togglePass(id, btn) {
     input.type = 'password'; icon.className = 'bi bi-eye';
   }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    checkNewLogin();
+    renderRecentAccounts();
+});
 
 document.getElementById('loginForm').addEventListener('submit', function() {
   var btn = document.getElementById('btnLogin');

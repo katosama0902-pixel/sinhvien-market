@@ -1,0 +1,181 @@
+<?php
+
+namespace App\Controllers;
+
+use Core\Controller;
+use App\Models\User;
+use Core\Flash;
+
+/**
+ * GoogleAuthController — Xử lý luồng OAuth 2.0 với Google
+ * Không sử dụng thư viện bên ngoài, implement thuần bằng PHP + cURL
+ */
+class GoogleAuthController extends Controller
+{
+    private string $clientId;
+    private string $clientSecret;
+    private string $redirectUri;
+
+    private const AUTH_URL  = 'https://accounts.google.com/o/oauth2/v2/auth';
+    private const TOKEN_URL = 'https://oauth2.googleapis.com/token';
+    private const USER_URL  = 'https://www.googleapis.com/oauth2/v3/userinfo';
+
+    public function __construct()
+    {
+        $this->clientId     = $_ENV['GOOGLE_CLIENT_ID']     ?? '';
+        $this->clientSecret = $_ENV['GOOGLE_CLIENT_SECRET'] ?? '';
+        $this->redirectUri  = $_ENV['GOOGLE_REDIRECT_URI']  ?? '';
+    }
+
+    // ─── Bước 1: Redirect người dùng đến Google ─────────────────────────────
+    public function redirectToGoogle(): void
+    {
+        // Tạo state token chống CSRF
+        $state = bin2hex(random_bytes(16));
+        $_SESSION['oauth_state'] = $state;
+
+        $params = http_build_query([
+            'client_id'     => $this->clientId,
+            'redirect_uri'  => $this->redirectUri,
+            'response_type' => 'code',
+            'scope'         => 'openid email profile',
+            'access_type'   => 'online',
+            'state'         => $state,
+            'prompt'        => 'select_account',
+        ]);
+
+        $url = self::AUTH_URL . '?' . $params;
+        header('Location: ' . $url);
+        exit;
+    }
+
+    // ─── Bước 2: Nhận callback từ Google ────────────────────────────────────
+    public function callback(): void
+    {
+        // 1. Kiểm tra lỗi từ Google
+        if (isset($_GET['error'])) {
+            Flash::set('error', 'Đăng nhập Google bị hủy: ' . htmlspecialchars($_GET['error']));
+            $this->redirect('/login');
+            return;
+        }
+
+        // 2. Kiểm tra state chống CSRF
+        if (empty($_GET['state']) || $_GET['state'] !== ($_SESSION['oauth_state'] ?? '')) {
+            Flash::set('error', 'Yêu cầu không hợp lệ. Vui lòng thử lại.');
+            $this->redirect('/login');
+            return;
+        }
+        unset($_SESSION['oauth_state']);
+
+        // 3. Đổi authorization code lấy access token
+        $code        = $_GET['code'] ?? '';
+        $tokenData   = $this->fetchAccessToken($code);
+
+        if (empty($tokenData['access_token'])) {
+            Flash::set('error', 'Không thể xác thực với Google. Vui lòng thử lại.');
+            $this->redirect('/login');
+            return;
+        }
+
+        // 4. Lấy thông tin user từ Google
+        $googleUser = $this->fetchGoogleUser($tokenData['access_token']);
+
+        if (empty($googleUser['email'])) {
+            Flash::set('error', 'Không lấy được thông tin từ Google. Vui lòng thử lại.');
+            $this->redirect('/login');
+            return;
+        }
+
+        $googleId  = $googleUser['sub']     ?? '';
+        $email     = $googleUser['email']   ?? '';
+        $name      = $googleUser['name']    ?? $email;
+        $avatarUrl = $googleUser['picture'] ?? '';
+
+        // 5. Xử lý logic tạo / tìm tài khoản
+        $userModel = new User();
+
+        // Case 1: Đã có google_id trong DB → đăng nhập luôn
+        $user = $userModel->findByGoogleId($googleId);
+        if ($user) {
+            $userModel->linkGoogle($user['id'], $googleId, $avatarUrl);
+            $this->loginUser($user);
+            return;
+        }
+
+        // Case 2: Email đã tồn tại (account email/password cũ) → link Google vào
+        $user = $userModel->findByEmail($email);
+        if ($user) {
+            $userModel->linkGoogle($user['id'], $googleId, $avatarUrl);
+            Flash::set('success', '✅ Tài khoản Google đã được liên kết thành công!');
+            $this->loginUser($user);
+            return;
+        }
+
+        // Case 3: User mới hoàn toàn → tạo tài khoản
+        $userId = $userModel->createFromGoogle($name, $email, $googleId, $avatarUrl);
+        $user   = $userModel->findById($userId);
+
+        Flash::set('success', '🎉 Tài khoản đã được tạo thành công qua Google!');
+        $this->loginUser($user);
+    }
+
+    // ─── Private helpers ────────────────────────────────────────────────────
+
+    private function fetchAccessToken(string $code): array
+    {
+        $ch = curl_init(self::TOKEN_URL);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => http_build_query([
+                'code'          => $code,
+                'client_id'     => $this->clientId,
+                'client_secret' => $this->clientSecret,
+                'redirect_uri'  => $this->redirectUri,
+                'grant_type'    => 'authorization_code',
+            ]),
+            CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_TIMEOUT        => 10,
+        ]);
+        $response = curl_exec($ch);
+        curl_close($ch);
+        return json_decode($response, true) ?? [];
+    }
+
+    private function fetchGoogleUser(string $accessToken): array
+    {
+        $ch = curl_init(self::USER_URL);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER     => ['Authorization: Bearer ' . $accessToken],
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_TIMEOUT        => 10,
+        ]);
+        $response = curl_exec($ch);
+        curl_close($ch);
+        return json_decode($response, true) ?? [];
+    }
+
+    private function loginUser(array $user): void
+    {
+        // Ghi session đăng nhập (giống AuthController::login)
+        $_SESSION['user'] = [
+            'id'         => $user['id'],
+            'name'       => $user['name'],
+            'email'      => $user['email'],
+            'avatar'     => $user['avatar']     ?? null,
+            'avatar_url' => $user['avatar_url'] ?? null,
+            'role'       => $user['role']       ?? 'student',
+        ];
+
+        // Lưu info cho tính năng "recent accounts" (đọc bằng JS localStorage)
+        // Được set bằng cookie tạm, JS sẽ đọc và lưu vào localStorage
+        setcookie('_recent_user', json_encode([
+            'name'  => $user['name'],
+            'email' => $user['email'],
+        ]), time() + 300, '/', '', false, false);
+
+        $this->redirect('/');
+    }
+}

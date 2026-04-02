@@ -96,6 +96,10 @@ $router->post('forgot-password', 'Auth', 'forgotPassword');
 $router->get('reset-password', 'Auth', 'resetPasswordForm');
 $router->post('reset-password', 'Auth', 'resetPassword');
 
+// Google OAuth
+$router->get('auth/google',          'GoogleAuth', 'redirectToGoogle');
+$router->get('auth/google/callback', 'GoogleAuth', 'callback');
+
 $router->get('dashboard', 'Home', 'dashboard'); // Student dashboard
 
 // ─── Profile ──────────────────────────────────────────────────────────────────

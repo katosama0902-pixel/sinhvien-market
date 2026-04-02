@@ -168,4 +168,40 @@ class User extends Model
     {
         return $this->count('SELECT COUNT(*) FROM users WHERE role = "student"');
     }
+
+    // ─── Google OAuth Methods ─────────────────────────────────────────────────
+
+    /**
+     * Tìm user theo Google ID
+     */
+    public function findByGoogleId(string $googleId): ?array
+    {
+        return $this->queryOne(
+            'SELECT * FROM users WHERE google_id = ? LIMIT 1',
+            [$googleId]
+        );
+    }
+
+    /**
+     * Tạo tài khoản mới từ Google (không có password, is_verified = 1)
+     */
+    public function createFromGoogle(string $name, string $email, string $googleId, string $avatarUrl): int
+    {
+        return $this->insert(
+            'INSERT INTO users (name, email, password, google_id, avatar_url, role, is_verified, created_at)
+             VALUES (?, ?, ?, ?, ?, "student", 1, NOW())',
+            [$name, $email, '', $googleId, $avatarUrl]
+        );
+    }
+
+    /**
+     * Gắn Google ID vào tài khoản đã có
+     */
+    public function linkGoogle(int $userId, string $googleId, string $avatarUrl): void
+    {
+        $this->execute(
+            'UPDATE users SET google_id = ?, avatar_url = ? WHERE id = ?',
+            [$googleId, $avatarUrl, $userId]
+        );
+    }
 }

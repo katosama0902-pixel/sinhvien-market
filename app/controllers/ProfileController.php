@@ -27,6 +27,12 @@ class ProfileController extends Controller
         $sessionUser = $this->currentUser();
         $user = $this->userModel->findById((int)$sessionUser['id']);
 
+        // Sync avatar to session if it changed or was missing
+        if ($user) {
+            $_SESSION['user']['avatar']     = $user['avatar'];
+            $_SESSION['user']['avatar_url'] = $user['avatar_url'];
+        }
+
         $this->render('profile/edit', [
             'title' => 'Hồ sơ của tôi',
             'user'  => $user,
@@ -135,8 +141,8 @@ class ProfileController extends Controller
             $this->redirect('profile');
         }
 
-        if ($file['size'] > 2 * 1024 * 1024) { // 2MB
-            Flash::set('danger', 'Ảnh không được vượt quá 2MB.');
+        if ($file['size'] > 10 * 1024 * 1024) { // 10MB
+            Flash::set('danger', 'Ảnh không được vượt quá 10MB.');
             $this->redirect('profile');
         }
 
@@ -163,6 +169,10 @@ class ProfileController extends Controller
         }
 
         $this->userModel->changeAvatar($userId, 'avatars/' . $filename);
+        
+        // Sync to session immediately
+        $_SESSION['user']['avatar'] = 'avatars/' . $filename;
+
         Flash::set('success', '🖼️ Cập nhật ảnh đại diện thành công!');
         $this->redirect('profile');
     }

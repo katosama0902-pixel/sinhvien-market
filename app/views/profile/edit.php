@@ -61,7 +61,7 @@ $tab = $_GET['tab'] ?? 'info'; // 'info' hoặc 'security'
                                         <i class="bi bi-upload me-2"></i>Tải ảnh lên
                                     </button>
                                 </form>
-                                <div class="text-muted small mt-2">Được phép JPG, PNG, WEBP hoặc GIF. Tối đa 2MB.</div>
+                                <div class="text-muted small mt-2">Được phép JPG, PNG, WEBP hoặc GIF. Tối đa 10MB.</div>
                             </div>
                         </div>
                     </div>

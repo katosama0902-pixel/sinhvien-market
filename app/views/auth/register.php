@@ -38,7 +38,7 @@ use Core\Flash;
       <!-- Họ tên -->
       <div class="mb-3">
         <label for="name" class="form-label">Họ và tên <span class="text-danger">*</span></label>
-        <div class="input-group">
+        <div class="input-group input-group-pill">
           <span class="input-group-text bg-white border-end-0">
             <i class="bi bi-person text-muted"></i>
           </span>
@@ -56,13 +56,13 @@ use Core\Flash;
       <!-- Email -->
       <div class="mb-3">
         <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
-        <div class="input-group">
+        <div class="input-group input-group-pill">
           <span class="input-group-text bg-white border-end-0">
             <i class="bi bi-envelope text-muted"></i>
           </span>
           <input type="email" id="email" name="email"
                  class="form-control border-start-0 ps-0 <?= isset($errors['email']) ? 'is-invalid' : '' ?>"
-                 placeholder="you@student.edu.vn"
+                 placeholder="you@student.edu.vn hoặc Số điện thoại"
                  value="<?= htmlspecialchars($old['email'] ?? '', ENT_QUOTES) ?>"
                  autocomplete="email" required>
           <?php if (isset($errors['email'])): ?>
@@ -74,7 +74,7 @@ use Core\Flash;
       <!-- Số điện thoại -->
       <div class="mb-3">
         <label for="phone" class="form-label">Số điện thoại <span class="text-muted">(tuỳ chọn)</span></label>
-        <div class="input-group">
+        <div class="input-group input-group-pill">
           <span class="input-group-text bg-white border-end-0">
             <i class="bi bi-telephone text-muted"></i>
           </span>
@@ -92,7 +92,7 @@ use Core\Flash;
       <!-- Câu hỏi bảo mật -->
       <div class="mb-3">
         <label for="security_question" class="form-label">Câu hỏi bảo mật (dùng để khôi phục mật khẩu) <span class="text-danger">*</span></label>
-        <div class="input-group">
+        <div class="input-group input-group-pill">
           <span class="input-group-text bg-white border-end-0">
             <i class="bi bi-patch-question text-muted"></i>
           </span>
@@ -111,7 +111,7 @@ use Core\Flash;
       <!-- Câu trả lời bảo mật -->
       <div class="mb-3">
         <label for="security_answer" class="form-label">Câu trả lời <span class="text-danger">*</span></label>
-        <div class="input-group">
+        <div class="input-group input-group-pill">
           <span class="input-group-text bg-white border-end-0">
             <i class="bi bi-pen text-muted"></i>
           </span>
@@ -128,7 +128,7 @@ use Core\Flash;
       <!-- Mật khẩu -->
       <div class="mb-3">
         <label for="password" class="form-label">Mật khẩu <span class="text-danger">*</span></label>
-        <div class="input-group">
+        <div class="input-group input-group-pill">
           <span class="input-group-text bg-white border-end-0">
             <i class="bi bi-lock text-muted"></i>
           </span>
@@ -156,7 +156,7 @@ use Core\Flash;
       <!-- Xác nhận mật khẩu -->
       <div class="mb-4">
         <label for="password_confirm" class="form-label">Xác nhận mật khẩu <span class="text-danger">*</span></label>
-        <div class="input-group">
+        <div class="input-group input-group-pill">
           <span class="input-group-text bg-white border-end-0">
             <i class="bi bi-lock-fill text-muted"></i>
           </span>
@@ -174,12 +174,19 @@ use Core\Flash;
         </div>
       </div>
 
-      <button type="submit" class="btn btn-primary w-100 btn-lg" id="btnRegister">
+      <button type="submit" class="btn btn-primary w-100 btn-lg" id="btnRegister" style="border-radius:50px">
         <i class="bi bi-person-plus me-2"></i>Tạo tài khoản
       </button>
     </form>
 
     <div class="auth-divider">hoặc</div>
+
+    <div class="mb-4">
+      <a href="<?= $appUrl ?>/auth/google" class="btn-social-google">
+        <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="18" alt="Google">
+        <span>Đăng ký với Google</span>
+      </a>
+    </div>
 
     <div class="text-center">
       <p class="mb-0 text-muted">Đã có tài khoản?

@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!-- ─── ĐẤU GIÁ HOT ─────────────────────────────────────────────── -->
 <?php if (!empty($auctionProducts)): ?>
-<section style="padding:72px 0;background:#fff">
+<section style="padding:72px 0;background:var(--bg)">
   <div class="container">
     <div class="d-flex justify-content-between align-items-end mb-5">
       <div>
@@ -250,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <?php endif; ?>
 
 <!-- ─── DANH MỤC ────────────────────────────────────────────────── -->
-<section style="padding:72px 0;background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%)">
+<section class="hp-category-section" style="padding:72px 0;">
   <div class="container">
     <div class="text-center mb-5">
       <span class="hp-section-badge">
@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </section>
 
 <!-- ─── SẢN PHẨM MỚI NHẤT ──────────────────────────────────────── -->
-<section style="padding:72px 0;background:#fff">
+<section style="padding:72px 0;background:var(--card-bg)">
   <div class="container">
     <div class="d-flex justify-content-between align-items-end mb-5">
       <div>

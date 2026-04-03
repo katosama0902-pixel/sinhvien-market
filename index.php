@@ -24,6 +24,11 @@ ini_set('session.cookie_samesite', 'Lax'); // Chống CSRF qua cross-site reques
 // Khởi động session
 session_start();
 
+// ─── Tích hợp thư viện Composer (Google API, v.v) ───────────────────────────
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require_once __DIR__ . '/vendor/autoload.php';
+}
+
 // ─── Load .env sớm để APP_URL có sẵn cho mọi view ────────────────────────────
 $_envFile = __DIR__ . '/.env';
 if (file_exists($_envFile)) {
@@ -99,6 +104,11 @@ $router->post('reset-password', 'Auth', 'resetPassword');
 // Google OAuth
 $router->get('auth/google',          'GoogleAuth', 'redirectToGoogle');
 $router->get('auth/google/callback', 'GoogleAuth', 'callback');
+
+// ─── Coins & Bump (Feature 2) ─────────────────────────────────────────────
+$router->post('coins/checkin', 'Coin', 'checkIn');
+$router->post('coins/bump',    'Coin', 'bump');
+
 
 $router->get('dashboard', 'Home', 'dashboard'); // Student dashboard
 

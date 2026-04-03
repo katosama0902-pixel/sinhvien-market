@@ -392,6 +392,11 @@ class AdminController extends Controller
         $fromDate = $_GET['from'] ?? date('Y-m-01');
         $toDate = $_GET['to'] ?? date('Y-m-d');
 
+        if (strtotime($fromDate) > strtotime($toDate)) {
+            Flash::set('danger', 'Lỗi: "Từ ngày" không được lớn hơn "Đến ngày"!');
+            $fromDate = $toDate;
+        }
+
         $transactions = $this->txModel->getAll($fromDate, $toDate);
         $totalAmount = array_sum(array_column($transactions, 'amount'));
 
@@ -497,7 +502,7 @@ class AdminController extends Controller
             if ($winner && $giveaway) {
                 // Sử dụng hàm notify tùy chỉnh cho Giveaway (nếu chưa có thì tạm dùng notify qua Mailer trực tiếp ở đây)
                 $link = rtrim($_ENV['APP_URL'] ?? '', '/') . '/giveaways';
-                \App\Models\Notification::create(
+                (new \App\Models\Notification())->create(
                     $winnerId,
                     'giveaway_win',
                     '🎉 Xin chúc mừng, bạn đã trúng Giveaway!',
@@ -507,7 +512,6 @@ class AdminController extends Controller
                 
                 \Core\Mailer::send(
                     $winner['email'],
-                    $winner['name'],
                     '🎉 Bạn đã trúng giải sự kiện SinhVienMarket',
                     "Xin chào {$winner['name']},<br><br>
                     Xin chúc mừng! Bạn là người may mắn trúng giải thưởng trong sự kiện <strong>\"{$giveaway['title']}\"</strong>.<br><br>

@@ -125,15 +125,25 @@ $typeMap = [
 
               <!-- Hành động -->
               <td>
-                <div class="d-flex gap-1">
-                  <a href="<?= $appUrl ?>/products/show?id=<?= $p['id'] ?>"
-                     class="btn btn-sm btn-outline-primary" title="Xem">
-                    <i class="bi bi-eye"></i>
-                  </a>
-                  <?php if (!in_array($p['status'], ['sold', 'cancelled'])): ?>
-                    <button type="button" class="btn btn-sm btn-outline-danger" title="Thu hồi"
-                            onclick="confirmDelete(<?= $p['id'] ?>, '<?= htmlspecialchars($p['title'], ENT_QUOTES) ?>')">
-                      <i class="bi bi-trash"></i>
+                <div class="d-flex flex-column gap-2">
+                  <div class="d-flex gap-1 justify-content-center">
+                    <a href="<?= $appUrl ?>/products/show?id=<?= $p['id'] ?>"
+                       class="btn btn-sm btn-outline-primary px-2" title="Xem">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                    <?php if (!in_array($p['status'], ['sold', 'cancelled'])): ?>
+                      <button type="button" class="btn btn-sm btn-outline-danger px-2" title="Thu hồi"
+                              onclick="confirmDelete(<?= $p['id'] ?>, '<?= htmlspecialchars($p['title'], ENT_QUOTES) ?>')">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    <?php endif; ?>
+                  </div>
+                  <?php if ($p['status'] === 'active'): ?>
+                    <button type="button" class="btn btn-sm text-white px-2 py-1 flex-grow-1"
+                            style="background:linear-gradient(135deg, #f59e0b, #ea580c); font-size:0.75rem; font-weight:600; border:none; border-radius:6px; box-shadow:0 2px 4px rgba(234,88,12,0.2)"
+                            title="Tốn 50 xu để đẩy tin lên đầu"
+                            onclick="confirmBump(<?= $p['id'] ?>, '<?= htmlspecialchars($p['title'], ENT_QUOTES) ?>')">
+                      <i class="bi bi-rocket-takeoff me-1"></i>Đẩy tin (50 xu)
                     </button>
                   <?php endif; ?>
                 </div>
@@ -152,10 +162,22 @@ $typeMap = [
   <input type="hidden" name="product_id"  id="deleteProductId" value="">
 </form>
 
+<!-- Form đẩy tin ẩn -->
+<form id="bumpForm" action="<?= $appUrl ?>/coins/bump" method="POST" style="display:none">
+  <input type="hidden" name="_csrf"       value="<?= htmlspecialchars($csrf, ENT_QUOTES) ?>">
+  <input type="hidden" name="product_id"  id="bumpProductId" value="">
+</form>
+
 <script>
 function confirmDelete(id, title) {
   if (!confirm('Thu hồi bài đăng "' + title + '"?\n\nBài đăng sẽ bị ẩn khỏi danh sách sản phẩm.')) return;
   document.getElementById('deleteProductId').value = id;
   document.getElementById('deleteForm').submit();
+}
+
+function confirmBump(id, title) {
+  if (!confirm('Đẩy tin "' + title + '" lên đầu?\n\nHành động này sẽ tiêu tốn 50 xu.')) return;
+  document.getElementById('bumpProductId').value = id;
+  document.getElementById('bumpForm').submit();
 }
 </script>

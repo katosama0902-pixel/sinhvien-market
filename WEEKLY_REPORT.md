@@ -151,20 +151,24 @@ Hoàn thiện tài liệu, kiểm tra toàn bộ hệ thống và chuẩn bị n
 ### 📝 Công Việc Đã Thực Hiện
 
 | STT | Công việc | Người thực hiện | Trạng thái | Ghi chú |
-|-----|-----------|-----------------|------------|---------|
-| 1 | Soạn `README.md` chuẩn GitHub | *(Tên)* | 🔄 | Đang cập nhật |
-| 2 | Tổng hợp `BUG_FIX_NOTES.md` | *(Tên)* | 🔄 | 11 bugs đã fix |
-| 3 | Bộ lọc sản phẩm nâng cao | *(Tên)* | ⏸️ | Chưa bắt đầu |
-| 4 | Live Search (gợi ý khi gõ) | *(Tên)* | ⏸️ | Chưa bắt đầu |
-| 5 | Rate Limiting (chống spam OTP) | *(Tên)* | ⏸️ | Chưa bắt đầu |
-| 6 | Smoke Testing toàn bộ luồng | *(Tên)* | ⏸️ | Chưa bắt đầu |
-| 7 | Hoàn thiện báo cáo + tài liệu đồ án | *(Tên)* | ⏸️ | Chưa bắt đầu |
+| 1 | Soạn `README.md` chuẩn GitHub | *(Tên)* | ✅ | Đã cập nhật đầy đủ |
+| 2 | Tổng hợp `BUG_FIX_NOTES.md` | *(Tên)* | ✅ | Đã bổ sung lỗi mới nhất |
+| 3 | Cập nhật Bộ lọc sản phẩm nâng cao (theo tình trạng) | *(Tên)* | ✅ | Auto-submit bằng JS |
+| 4 | Bổ sung Tính năng Huy hiệu Xác thực Sinh Viên | *(Tên)* | ✅ | Xác thực qua mail .edu.vn + UI Badges |
+| 5 | Bổ sung Tính năng Điểm Xu & Check-in & Đẩy tin | *(Tên)* | ✅ | Check-in +10, Đẩy tin -50 xu |
+| 6 | Live Search (gợi ý khi gõ) | *(Tên)* | ⏸️ | Chưa bắt đầu |
+| 7 | Rate Limiting (chống spam OTP) | *(Tên)* | ⏸️ | Chưa bắt đầu |
+| 8 | Smoke Testing toàn bộ luồng | *(Tên)* | ✅ | Đã test thủ công UI |
+| 9 | Hoàn thiện báo cáo + tài liệu đồ án | *(Tên)* | 🔄 | Đang soạn thảo |
 
 ### 🐛 Lỗi Phát Sinh & Cách Xử Lý
-*(Cập nhật sau)*
+
+| Bug | Mô tả | Trạng thái |
+|-----|--------|------------|
+| 🐛 Lỗi báo "Tổng: 0 xu" khi mới checkin lần đầu | Biến `coins` bị gán NULL trong phép tính do dữ liệu DB cũ. | ✅ Đã fix (dùng `COALESCE`) |
 
 ### 📊 Tiến Độ Tổng Thể
-- **Hoàn thành:** 2/7 công việc (~28%)
+- **Hoàn thành:** 6/9 công việc (~67%)
 - **Dự kiến hoàn thành cuối tuần:** 100%
 
 ### 💬 Nhận Xét / Kế Hoạch Tuần Sau

@@ -28,6 +28,13 @@ CREATE TABLE `users` (
     `avatar`     VARCHAR(255) DEFAULT NULL COMMENT 'Đường dẫn ảnh đại diện',
     `role`       ENUM('student', 'admin') NOT NULL DEFAULT 'student',
     `is_locked`  TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = bị khóa bởi Admin',
+    -- Các trường phục vụ tính năng khóa/ban
+    `lock_reason` VARCHAR(255) DEFAULT NULL,
+    `locked_at`   TIMESTAMP NULL DEFAULT NULL,
+    `locked_until` TIMESTAMP NULL DEFAULT NULL,
+    -- Các trường Google OAuth
+    `google_id`   VARCHAR(100) NULL UNIQUE COMMENT 'ID từ Google',
+    `avatar_url`  VARCHAR(255) NULL COMMENT 'Ảnh đại diện từ Google',
     -- Phase 11.2 - OTP & Security
     `security_question` VARCHAR(255) DEFAULT NULL,
     `security_answer`   VARCHAR(255) DEFAULT NULL,
@@ -41,12 +48,18 @@ CREATE TABLE `users` (
     `social_contact`    VARCHAR(255) DEFAULT NULL COMMENT 'Zalo / Facebook liên hệ',
     `bio`               TEXT         DEFAULT NULL COMMENT 'Tiểu sử ngắn',
     `available_time`    VARCHAR(100) DEFAULT NULL COMMENT 'Thời gian online',
+    -- Feature: Huy hiệu Sinh Viên Đã Xác Thực
+    `is_student_verified` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = đã xác thực là sinh viên (email edu/ac.vn)',
+    -- Feature: Hệ thống Xu & Đẩy Tin
+    `coins`         INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Số xu hiện có',
+    `last_checkin`  DATE          DEFAULT NULL COMMENT 'Ngày check-in gần nhất để tránh check-in 2 lần/ngày',
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uq_email` (`email`),
     KEY `idx_role` (`role`),
-    KEY `idx_is_locked` (`is_locked`)
+    KEY `idx_is_locked` (`is_locked`),
+    KEY `idx_student_verified` (`is_student_verified`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Tài khoản người dùng hệ thống';
 
@@ -81,6 +94,11 @@ CREATE TABLE `products` (
     `status`      ENUM('pending', 'active', 'sold', 'cancelled') NOT NULL DEFAULT 'pending'
                   COMMENT 'pending=chờ duyệt, active=đang bán, sold=đã bán, cancelled=bị từ chối',
     `price`       DECIMAL(12, 0) DEFAULT NULL COMMENT 'Giá cố định (chỉ dùng với type=sale)',
+    -- Feature: Bộ Lọc Nâng Cao — Tình trạng sản phẩm
+    `condition`   ENUM('new','like_new','used','worn') NOT NULL DEFAULT 'used'
+                  COMMENT 'Tình trạng: new=Mới 100%, like_new=Như mới, used=Đã dùng, worn=Cũ & có dấu vết',
+    -- Feature: Đẩy Tin — thời điểm được đẩy gần nhất
+    `bumped_at`   TIMESTAMP NULL DEFAULT NULL COMMENT 'Thời điểm đẩy tin gần nhất (NULL = chưa từng đẩy)',
     `created_at`  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at`  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
@@ -88,6 +106,8 @@ CREATE TABLE `products` (
     KEY `idx_category_id` (`category_id`),
     KEY `idx_type`        (`type`),
     KEY `idx_status`      (`status`),
+    KEY `idx_condition`   (`condition`),
+    KEY `idx_bumped_at`   (`bumped_at`),
     KEY `idx_created_at`  (`created_at`),
     -- FULLTEXT index cho tìm kiếm nhanh theo title và description
     FULLTEXT KEY `ft_search` (`title`, `description`),
@@ -308,10 +328,10 @@ INSERT INTO `users` (`name`, `email`, `password`, `role`, `is_verified`, `last_v
  'student', 1, NOW()),
 ('Nguyễn Văn An', 'an@student.edu.vn',
  '$2y$12$SgUUG97QUauWA2EuHa/iXufwMcJ6JDRX0irQZ5252MTsc0u9yZEfe',
- 'student'),
+ 'student', 1, NOW()),
 ('Trần Thị Bình', 'binh@student.edu.vn',
  '$2y$12$SgUUG97QUauWA2EuHa/iXufwMcJ6JDRX0irQZ5252MTsc0u9yZEfe',
- 'student');
+ 'student', 1, NOW());
 
 -- Danh mục sản phẩm
 INSERT INTO `categories` (`name`, `slug`, `icon`) VALUES
@@ -342,6 +362,7 @@ INSERT INTO `products` (`user_id`, `category_id`, `title`, `description`, `type`
 -- Giá khởi điểm: 80.000đ, giá sàn: 30.000đ, giảm 5.000đ mỗi 10 phút
 INSERT INTO `auctions`
     (`product_id`, `start_price`, `floor_price`, `decrease_amount`, `step_minutes`, `started_at`)
+VALUES
     (3, 80000, 30000, 5000, 10, NOW());
 
 -- ============================================================

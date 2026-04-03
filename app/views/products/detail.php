@@ -45,21 +45,43 @@ $p = $product;
         <span><?= htmlspecialchars($p['category_name'], ENT_QUOTES) ?></span>
       </div>
 
-      <!-- Loại -->
-      <?php if ($p['type'] === 'auction'): ?>
-        <span class="badge-auction mb-2 d-inline-block px-3 py-1">
-          <i class="bi bi-lightning-fill me-1"></i>Đấu giá ngược
-        </span>
-      <?php elseif ($p['type'] === 'exchange'): ?>
-        <span class="badge bg-info text-white mb-2">🔄 Trao đổi</span>
-      <?php endif; ?>
+      <?php 
+      $conditionMap = [
+          'new'      => ['🟢 Mới 100%',            'success'],
+          'like_new' => ['🔵 Như mới (90%+)',       'primary'],
+          'used'     => ['🟡 Đã qua sử dụng',       'warning'],
+          'worn'     => ['🔴 Cũ & có dấu vết',      'danger'],
+      ];
+      ?>
+
+      <!-- Loại & Tình trạng -->
+      <div class="mb-2">
+        <?php if ($p['type'] === 'auction'): ?>
+          <span class="badge-auction d-inline-block px-3 py-1 me-1">
+            <i class="bi bi-lightning-fill me-1"></i>Đấu giá ngược
+          </span>
+        <?php elseif ($p['type'] === 'exchange'): ?>
+          <span class="badge bg-info text-white me-1">🔄 Trao đổi</span>
+        <?php endif; ?>
+        
+        <?php if (!empty($p['condition']) && isset($conditionMap[$p['condition']])): ?>
+          <span class="badge bg-<?= $conditionMap[$p['condition']][1] ?>">
+             <?= $conditionMap[$p['condition']][0] ?>
+          </span>
+        <?php endif; ?>
+      </div>
 
       <!-- Tiêu đề -->
       <h4 class="fw-700 mb-3"><?= htmlspecialchars($p['title'], ENT_QUOTES) ?></h4>
 
       <!-- Người bán + Ngày -->
       <div class="d-flex gap-3 mb-4 small text-muted">
-        <span><i class="bi bi-person-circle me-1"></i><?= htmlspecialchars($p['seller_name'], ENT_QUOTES) ?></span>
+        <span>
+          <i class="bi bi-person-circle me-1"></i><?= htmlspecialchars($p['seller_name'], ENT_QUOTES) ?>
+          <?php if (!empty($p['seller_verified'])): ?>
+            <span title="Sinh viên đã xác thực" style="color:#22c55e;font-size:.8rem;margin-left:2px">🛡️</span>
+          <?php endif; ?>
+        </span>
         <span><i class="bi bi-calendar3 me-1"></i><?= date('d/m/Y', strtotime($p['created_at'])) ?></span>
         <span><i class="bi bi-folder me-1"></i><?= htmlspecialchars($p['category_name'], ENT_QUOTES) ?></span>
       </div>

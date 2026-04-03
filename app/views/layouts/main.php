@@ -87,6 +87,19 @@ $user    = $_SESSION['user'] ?? null;
             </a>
           </li>
 
+          <!-- 🪙 COINS & CHECK-IN -->
+          <li class="nav-item">
+            <form action="<?= $appUrl ?>/coins/checkin" method="POST" style="display:inline">
+              <input type="hidden" name="_csrf" value="<?= (new class extends \Core\Controller {})->csrfToken() ?>">
+              <button type="submit" class="btn btn-sm d-flex align-items-center gap-1 ms-1"
+                      style="background:rgba(255,220,80,.18);color:#ffe066;border:1px solid rgba(255,220,80,.35);border-radius:20px;padding:3px 12px;font-size:.82rem;font-weight:700"
+                      title="Check-in nhận xu mỗi ngày">
+                🪙 <?= (int)($user['coins'] ?? 0) ?> xu
+              </button>
+            </form>
+          </li>
+
+
           <!-- NOTIFICATION BELL -->
           <li class="nav-item dropdown" style="position:relative">
             <a class="nav-link px-2" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown" title="Thông báo">
@@ -201,7 +214,7 @@ $user    = $_SESSION['user'] ?? null;
       <div class="col-md-4">
         <div class="footer-brand"><i class="bi bi-shop-window me-1"></i>SinhVienMarket</div>
         <p class="mb-0" style="font-size:.875rem;line-height:1.7">
-          Nền tảng mua bán, trao đổi &amp; đấu giá ngược dành riêng cho sinh viên <strong style="color:rgba(255,255,255,.7)">KTX Khu B</strong>.
+          Nền tảng mua bán, trao đổi &amp; đấu giá ngược dành riêng cho sinh viên <strong style="color:rgba(255,255,255,.7)">KTX Đại học Quốc gia</strong>.
           Tiết kiệm chi phí, kết nối cộng đồng.
         </p>
         <div class="mt-3 d-flex gap-2">
@@ -243,7 +256,7 @@ $user    = $_SESSION['user'] ?? null;
       <div class="col-md-4">
         <div class="footer-heading">Thông tin</div>
         <ul class="footer-links">
-          <li><i class="bi bi-geo-alt me-2"></i>KTX Khu B, Đại học Quốc gia TP.HCM</li>
+          <li><i class="bi bi-geo-alt me-2"></i>KTX Đại học Quốc gia TP.HCM</li>
           <li><i class="bi bi-envelope me-2"></i>support@sinhvienmarket.edu.vn</li>
           <li><i class="bi bi-clock me-2"></i>Hỗ trợ: 8:00 - 22:00 hàng ngày</li>
         </ul>

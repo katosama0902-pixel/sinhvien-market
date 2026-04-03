@@ -36,13 +36,22 @@ class ProductController extends Controller
     {
         $keyword    = trim($_GET['q']          ?? '');
         $categoryId = (int)($_GET['category']  ?? 0);
+        $condition  = $_GET['condition']       ?? '';
+        $priceMin   = (int)($_GET['price_min'] ?? 0);
+        $priceMax   = (int)($_GET['price_max'] ?? 0);
         $page       = max(1, (int)($_GET['page'] ?? 1));
         $offset     = ($page - 1) * self::PER_PAGE;
 
+        // Sanitize condition
+        $validConditions = ['new', 'like_new', 'used', 'worn'];
+        if (!in_array($condition, $validConditions, true)) {
+            $condition = '';
+        }
+
         if ($keyword !== '') {
-            $products = $this->productModel->search($keyword, $categoryId, self::PER_PAGE, $offset);
+            $products = $this->productModel->search($keyword, $categoryId, self::PER_PAGE, $offset, $condition, $priceMin, $priceMax);
         } else {
-            $products = $this->productModel->getActive(self::PER_PAGE, $offset, $categoryId);
+            $products = $this->productModel->getActive(self::PER_PAGE, $offset, $categoryId, $condition, $priceMin, $priceMax);
         }
 
         // Tính giá hiện tại cho sản phẩm đấu giá
@@ -64,6 +73,9 @@ class ProductController extends Controller
             'categories' => $categories,
             'keyword'    => $keyword,
             'categoryId' => $categoryId,
+            'condition'  => $condition,
+            'priceMin'   => $priceMin,
+            'priceMax'   => $priceMax,
             'page'       => $page,
         ]);
     }
@@ -150,6 +162,13 @@ class ProductController extends Controller
         }
 
         // ── Validate giá theo type ─────────────────────────────────────
+        // Đọc condition
+        $condition = $_POST['condition'] ?? 'used';
+        if (!in_array($condition, ['new', 'like_new', 'used', 'worn'], true)) {
+            $condition = 'used';
+        }
+        $old['condition'] = $condition;
+
         if ($old['type'] === 'sale') {
             $price = (int)str_replace(['.', ','], '', $old['price']);
             if ($price <= 0) $errors['price'] = 'Giá bán phải lớn hơn 0.';
@@ -205,6 +224,7 @@ class ProductController extends Controller
             'image'       => $imageName,
             'type'        => $old['type'],
             'price'       => ($old['type'] === 'sale') ? $price : null,
+            'condition'   => $old['condition'] ?? 'used',
         ]);
 
         // ── Tạo auction nếu là đấu giá ngược ─────────────────────────

@@ -21,9 +21,10 @@ class Product extends Model
     /**
      * Lấy danh sách sản phẩm đang active (có phân trang)
      */
-    public function getActive(int $limit = 12, int $offset = 0, int $categoryId = 0): array
+    public function getActive(int $limit = 12, int $offset = 0, int $categoryId = 0, string $condition = '', int $priceMin = 0, int $priceMax = 0): array
     {
         $sql = 'SELECT p.*, c.name AS category_name, u.name AS seller_name,
+                       u.is_student_verified AS seller_verified,
                        a.id AS auction_id, a.start_price, a.floor_price,
                        a.decrease_amount, a.step_minutes, a.started_at, a.status AS auction_status
                 FROM products p
@@ -37,8 +38,21 @@ class Product extends Model
             $sql .= ' AND p.category_id = ?';
             $params[] = $categoryId;
         }
+        if ($condition !== '' && in_array($condition, ['new', 'like_new', 'used', 'worn'])) {
+            $sql .= ' AND p.condition = ?';
+            $params[] = $condition;
+        }
+        if ($priceMin > 0) {
+            $sql .= ' AND p.price >= ?';
+            $params[] = $priceMin;
+        }
+        if ($priceMax > 0) {
+            $sql .= ' AND p.price <= ?';
+            $params[] = $priceMax;
+        }
 
-        $sql .= ' ORDER BY p.created_at DESC LIMIT ? OFFSET ?';
+        // Sắp xếp theo thời điểm mới nhất giữa created_at và bumped_at
+        $sql .= ' ORDER BY GREATEST(p.created_at, COALESCE(p.bumped_at, \'2000-01-01\')) DESC LIMIT ? OFFSET ?';
         $params[] = $limit;
         $params[] = $offset;
 
@@ -48,9 +62,10 @@ class Product extends Model
     /**
      * Tìm kiếm FULLTEXT theo từ khóa
      */
-    public function search(string $keyword, int $categoryId = 0, int $limit = 12, int $offset = 0): array
+    public function search(string $keyword, int $categoryId = 0, int $limit = 12, int $offset = 0, string $condition = '', int $priceMin = 0, int $priceMax = 0): array
     {
         $sql = "SELECT p.*, c.name AS category_name, u.name AS seller_name,
+                       u.is_student_verified AS seller_verified,
                        a.id AS auction_id, a.start_price, a.floor_price,
                        a.decrease_amount, a.step_minutes, a.started_at, a.status AS auction_status,
                        MATCH(p.title, p.description) AGAINST(? IN NATURAL LANGUAGE MODE) AS score
@@ -66,6 +81,18 @@ class Product extends Model
         if ($categoryId > 0) {
             $sql .= ' AND p.category_id = ?';
             $params[] = $categoryId;
+        }
+        if ($condition !== '' && in_array($condition, ['new', 'like_new', 'used', 'worn'])) {
+            $sql .= ' AND p.condition = ?';
+            $params[] = $condition;
+        }
+        if ($priceMin > 0) {
+            $sql .= ' AND p.price >= ?';
+            $params[] = $priceMin;
+        }
+        if ($priceMax > 0) {
+            $sql .= ' AND p.price <= ?';
+            $params[] = $priceMax;
         }
 
         $sql .= ' ORDER BY score DESC LIMIT ? OFFSET ?';
@@ -115,8 +142,8 @@ class Product extends Model
     public function create(array $data): int
     {
         return $this->insert(
-            'INSERT INTO products (user_id, category_id, title, description, image, type, price)
-             VALUES (?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO products (user_id, category_id, title, description, image, type, price, `condition`)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         [
             $data['user_id'],
             $data['category_id'],
@@ -125,8 +152,29 @@ class Product extends Model
             $data['image'] ?? null,
             $data['type'],
             $data['price'] ?? null,
+            $data['condition'] ?? 'used',
         ]
         );
+    }
+
+    /**
+     * Đẩy tin lên đầu: cập nhật bumped_at = NOW()
+     */
+    public function bump(int $productId): void
+    {
+        $this->execute(
+            'UPDATE products SET bumped_at = NOW() WHERE id = ?',
+            [$productId]
+        );
+    }
+
+    /**
+     * Lấy thời điểm được đẩy cuối cùng của một sản phẩm
+     */
+    public function getLastBumped(int $productId): ?string
+    {
+        $row = $this->queryOne('SELECT bumped_at FROM products WHERE id = ?', [$productId]);
+        return $row['bumped_at'] ?? null;
     }
 
     /**

@@ -204,4 +204,81 @@ class User extends Model
             [$googleId, $avatarUrl, $userId]
         );
     }
+
+    // ─── Feature 1: Huy hiệu Sinh Viên Đã Xác Thực ───────────────────────────
+
+    /**
+     * Kiểm tra email có phải email sinh viên không (@edu.vn, @ac.vn, @student.)
+     */
+    public static function isStudentEmail(string $email): bool
+    {
+        $studentDomains = ['@edu.vn', '@ac.vn', '@student.', '@students.'];
+        foreach ($studentDomains as $domain) {
+            if (str_contains(strtolower($email), $domain)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Đánh dấu người dùng là sinh viên đã xác thực
+     */
+    public function verifyStudent(int $userId): void
+    {
+        $this->execute('UPDATE users SET is_student_verified = 1 WHERE id = ?', [$userId]);
+    }
+
+    // ─── Feature 2: Hệ thống Xu & Đẩy Tin ───────────────────────────────────
+
+    /**
+     * Lấy số xu hiện tại của user
+     */
+    public function getCoins(int $userId): int
+    {
+        $row = $this->queryOne('SELECT coins FROM users WHERE id = ?', [$userId]);
+        return (int)($row['coins'] ?? 0);
+    }
+
+    /**
+     * Cộng xu cho user
+     */
+    public function addCoins(int $userId, int $amount): void
+    {
+        $this->execute('UPDATE users SET coins = COALESCE(coins, 0) + ? WHERE id = ?', [$amount, $userId]);
+    }
+
+    /**
+     * Trừ xu (trả về false nếu không đủ xu)
+     */
+    public function spendCoins(int $userId, int $amount): bool
+    {
+        $current = $this->getCoins($userId);
+        if ($current < $amount) {
+            return false;
+        }
+        $this->execute('UPDATE users SET coins = coins - ? WHERE id = ?', [$amount, $userId]);
+        return true;
+    }
+
+    /**
+     * Kiểm tra user có thể check-in hôm nay không
+     */
+    public function canCheckin(int $userId): bool
+    {
+        $row = $this->queryOne('SELECT last_checkin FROM users WHERE id = ?', [$userId]);
+        $last = $row['last_checkin'] ?? null;
+        return $last !== date('Y-m-d'); // check-in nếu chưa check-in hôm nay
+    }
+
+    /**
+     * Thực hiện check-in: +10 xu, cập nhật last_checkin
+     */
+    public function doCheckin(int $userId): void
+    {
+        $this->execute(
+            'UPDATE users SET coins = COALESCE(coins, 0) + 10, last_checkin = CURDATE() WHERE id = ?',
+            [$userId]
+        );
+    }
 }

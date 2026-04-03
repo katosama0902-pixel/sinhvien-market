@@ -64,6 +64,18 @@ $csrf = $ctrl->csrfToken();
         </div>
 
         <div class="col-sm-6">
+          <label class="form-label">Tình trạng <span class="text-danger">*</span></label>
+          <select name="condition" class="form-select <?= isset($errors['condition']) ? 'is-invalid' : '' ?>" required>
+            <option value="new"      <?= ($old['condition'] ?? '') === 'new'      ? 'selected' : '' ?>>Mới 100%</option>
+            <option value="like_new" <?= ($old['condition'] ?? '') === 'like_new' ? 'selected' : '' ?>>Như mới (90%+)</option>
+            <option value="used"     <?= ($old['condition'] ?? '') === 'used'     ? 'selected' : '' ?>>Đã qua sử dụng</option>
+            <option value="worn"     <?= ($old['condition'] ?? '') === 'worn'     ? 'selected' : '' ?>>Cũ & có dấu vết</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-sm-6">
           <label class="form-label">Loại đăng <span class="text-danger">*</span></label>
           <select name="type" id="productType" class="form-select" required onchange="toggleTypeFields()">
             <option value="sale"     <?= ($old['type'] ?? '') === 'sale'     ? 'selected' : '' ?>>💰 Bán thường</option>
@@ -225,5 +237,17 @@ document.getElementById('createForm').addEventListener('submit', function() {
   var btn = document.getElementById('btnSubmit');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang đăng...';
+});
+
+// Remove is-invalid class when user types
+document.querySelectorAll('.is-invalid').forEach(function(el) {
+  el.addEventListener('input', function() {
+    this.classList.remove('is-invalid');
+    var feedback = this.parentNode.querySelector('.invalid-feedback') || this.parentNode.querySelector('.text-danger');
+    if (feedback) feedback.style.display = 'none';
+  });
+  el.addEventListener('change', function() {
+    this.classList.remove('is-invalid');
+  });
 });
 </script>

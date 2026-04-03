@@ -32,7 +32,7 @@ function hp(int $price): string {
         </div>
         <h1 class="hp-hero-title">
           Chợ Sinh Viên<br>
-          <span class="hp-hero-gradient">KTX Khu B</span>
+          <span class="hp-hero-gradient">KTX Đại học Quốc gia</span>
         </h1>
         <p class="hp-hero-sub">
           Mua bán sách giáo trình, đồ dùng với giá hợp lý nhất.<br>

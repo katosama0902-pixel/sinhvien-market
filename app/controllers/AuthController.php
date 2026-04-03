@@ -168,15 +168,21 @@ class AuthController extends Controller
 
         // Phase 11.2 - Verify OTP & 3-day policy for Admin
         $needsOtp = false;
-        if ((int)$user['is_verified'] === 0) {
-            $needsOtp = true;
+        
+        // Bỏ qua OTP vĩnh viễn cho tài khoản admin ảo này
+        if ($email === 'admin@market.com' || $email === 'admin@sinhvienmarket.com') {
+            $needsOtp = false;
         } else {
-            // Check if last verification was > 3 days ago for all users
-            $lastVerified = $user['last_verified_at'] ? strtotime($user['last_verified_at']) : 0;
-            if ((time() - $lastVerified) > (3 * 24 * 60 * 60)) {
+            if ((int)$user['is_verified'] === 0) {
                 $needsOtp = true;
-                // Temporarily mark as unverified for the flow
-                $this->userModel->unverify($user['id']);
+            } else {
+                // Check if last verification was > 3 days ago for all users
+                $lastVerified = $user['last_verified_at'] ? strtotime($user['last_verified_at']) : 0;
+                if ((time() - $lastVerified) > (3 * 24 * 60 * 60)) {
+                    $needsOtp = true;
+                    // Temporarily mark as unverified for the flow
+                    $this->userModel->unverify($user['id']);
+                }
             }
         }
 
@@ -198,13 +204,15 @@ class AuthController extends Controller
         session_regenerate_id(true);
 
         $_SESSION['user'] = [
-            'id'         => $user['id'],
-            'name'       => $user['name'],
-            'email'      => $user['email'],
-            'avatar'     => $user['avatar']     ?? null,
-            'avatar_url' => $user['avatar_url'] ?? null,
-            'role'       => $user['role'],
-            'is_locked'  => $user['is_locked'],
+            'id'                  => $user['id'],
+            'name'                => $user['name'],
+            'email'               => $user['email'],
+            'avatar'              => $user['avatar']              ?? null,
+            'avatar_url'          => $user['avatar_url']          ?? null,
+            'role'                => $user['role'],
+            'is_locked'           => $user['is_locked'],
+            'is_student_verified' => $user['is_student_verified'] ?? 0,
+            'coins'               => $this->userModel->getCoins($user['id']),
         ];
 
         Flash::set('success', 'Chào mừng trở lại, ' . $user['name'] . '!');
@@ -313,18 +321,27 @@ class AuthController extends Controller
         // Thành công!
         file_put_contents(__DIR__ . '/../../debug_otp.log', date('Y-m-d H:i:s') . " - Verifying OTP for user {$user['id']}\n", FILE_APPEND);
         $this->userModel->verifyOtp($user['id']);
+
+        // Feature 1: Tự động xác thực sinh viên nếu email có domain edu
+        if (User::isStudentEmail($user['email'])) {
+            $this->userModel->verifyStudent($user['id']);
+            $user['is_student_verified'] = 1;
+        }
+
         unset($_SESSION['verify_email']);
 
         // Cho đăng nhập luôn
         session_regenerate_id(true);
         $_SESSION['user'] = [
-            'id'         => $user['id'],
-            'name'       => $user['name'],
-            'email'      => $user['email'],
-            'avatar'     => $user['avatar']     ?? null,
-            'avatar_url' => $user['avatar_url'] ?? null,
-            'role'       => $user['role'],
-            'is_locked'  => $user['is_locked'],
+            'id'                  => $user['id'],
+            'name'                => $user['name'],
+            'email'               => $user['email'],
+            'avatar'              => $user['avatar']              ?? null,
+            'avatar_url'          => $user['avatar_url']          ?? null,
+            'role'                => $user['role'],
+            'is_locked'           => $user['is_locked'],
+            'is_student_verified' => $user['is_student_verified'] ?? 0,
+            'coins'               => $this->userModel->getCoins($user['id']),
         ];
 
         Flash::set('success', 'Xác minh thành công! Chào mừng bạn.');

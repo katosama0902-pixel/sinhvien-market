@@ -248,14 +248,25 @@ line-clamp: 2;  /* + Thêm dòng này */
 
 ---
 
+### [BF-012] Lỗi hiển thị "Tổng: 0 xu" khi Check-in ở User cũ
+- **Ngày phát hiện:** 03/04/2026
+- **Mức độ:** Medium (Lỗi Logic CSDL)
+- **Mô tả:** Khi user check-in, thông báo hiển thị nhận +10 xu nhưng tổng lại là 0 xu, thay vì 10.
+- **Nguyên nhân:** Cột `coins` mới được thêm vào DB với dạng có default là 0 qua quá trình migration. Khi có dữ liệu trống hoặc truy vấn UPDATE qua PDO thao tác `coins = coins + 10` với giá trị rỗng/không tương thích, phép tính trả về rỗng `NULL` hoặc được Model parse thành `0` gây hiển thị sai lệch.
+- **Cách fix:** Đổi truy vấn cập nhật trong model `User.php` từ `coins = coins + X` thành phương thức bắt an toàn `coins = COALESCE(coins, 0) + X`.
+- **Files liên quan:**
+  - `app/models/User.php`
+
+---
+
 ## 📊 Tổng Kết
 
 | # | Mức độ | Số lượng | Trạng thái |
 |---|--------|----------|------------|
 | 🔴 | High (Crash/Blocker) | 4 | ✅ Đã fix tất cả |
-| 🟡 | Medium | 4 | ✅ Đã fix tất cả |
+| 🟡 | Medium | 5 | ✅ Đã fix tất cả |
 | 🟢 | Low (Visual/Warning) | 3 | ✅ Đã fix tất cả |
-| | **Tổng** | **11 bugs** | **100% resolved** |
+| | **Tổng** | **12 bugs** | **100% resolved** |
 
 ---
 

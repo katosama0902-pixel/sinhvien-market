@@ -1,7 +1,7 @@
 <?php
 /**
- * View: Danh sách sản phẩm
- * Biến nhận: $products, $categories, $keyword, $categoryId, $page
+ * View: Danh sách sản phẩm — Feature 3: Bộ lọc nâng cao + huy hiệu
+ * Biến nhận: $products, $categories, $keyword, $categoryId, $condition, $priceMin, $priceMax, $page
  */
 $appUrl  = rtrim($_ENV['APP_URL'] ?? '', '/');
 $user    = $_SESSION['user'] ?? null;
@@ -11,12 +11,20 @@ function formatPrice(int $price): string {
     return number_format($price, 0, ',', '.') . 'đ';
 }
 
+$conditionMap = [
+    'new'      => ['🟢 Mới 100%',            'success'],
+    'like_new' => ['🔵 Như mới (90%+)',       'primary'],
+    'used'     => ['🟡 Đã qua sử dụng',       'warning'],
+    'worn'     => ['🔴 Cũ & có dấu vết',      'danger'],
+];
 $statusLabel = [
     'pending'   => ['Chờ duyệt',  'warning'],
     'active'    => ['Đang bán',   'success'],
     'sold'      => ['Đã bán',     'secondary'],
     'cancelled' => ['Đã thu hồi','danger'],
 ];
+// Detect active filters
+$hasFilter = $keyword || $categoryId || $condition || $priceMin || $priceMax;
 ?>
 
 <div class="container py-4">
@@ -26,7 +34,7 @@ $statusLabel = [
     <div class="col-lg-3 fade-in-up delay-100">
       <div class="card-sv glass-card p-4 sticky-top" style="top:76px; border:2px solid var(--border)">
         <h6 class="fw-800 mb-3"><i class="bi bi-funnel me-2 text-primary"></i>Lọc sản phẩm</h6>
-        <form method="GET" action="<?= $appUrl ?>/products">
+        <form method="GET" action="<?= $appUrl ?>/products" id="filterForm">
           <!-- Tìm kiếm -->
           <div class="mb-3">
             <label class="form-label small fw-600">Từ khóa</label>
@@ -49,11 +57,53 @@ $statusLabel = [
             </select>
           </div>
 
+          <!-- Feature 3: Tình trạng sản phẩm -->
+          <div class="mb-3">
+            <label class="form-label small fw-600">Tình trạng</label>
+            <div class="d-flex flex-column gap-1">
+              <?php foreach ($conditionMap as $val => [$label, $color]): ?>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="condition"
+                         id="cond_<?= $val ?>" value="<?= $val ?>"
+                         <?= ($condition ?? '') === $val ? 'checked' : '' ?>
+                         onchange="this.form.submit()">
+                  <label class="form-check-label small" for="cond_<?= $val ?>">
+                    <?= $label ?>
+                  </label>
+                </div>
+              <?php endforeach; ?>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="condition"
+                       id="cond_all" value=""
+                       <?= ($condition ?? '') === '' ? 'checked' : '' ?>
+                       onchange="this.form.submit()">
+                <label class="form-check-label small" for="cond_all">⚪ Tất cả</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Feature 3: Khoảng giá -->
+          <div class="mb-3">
+            <label class="form-label small fw-600">Khoảng giá (VNĐ)</label>
+            <div class="row g-1">
+              <div class="col-6">
+                <input type="number" name="price_min" class="form-control form-control-sm"
+                       placeholder="Từ" min="0" step="1000"
+                       value="<?= $priceMin > 0 ? $priceMin : '' ?>">
+              </div>
+              <div class="col-6">
+                <input type="number" name="price_max" class="form-control form-control-sm"
+                       placeholder="Đến" min="0" step="1000"
+                       value="<?= $priceMax > 0 ? $priceMax : '' ?>">
+              </div>
+            </div>
+          </div>
+
           <button class="btn btn-primary btn-sm w-100" type="submit">
             <i class="bi bi-search me-1"></i>Tìm kiếm
           </button>
 
-          <?php if ($keyword || $categoryId): ?>
+          <?php if ($hasFilter): ?>
             <a href="<?= $appUrl ?>/products" class="btn btn-outline-secondary btn-sm w-100 mt-2">
               <i class="bi bi-x me-1"></i>Xóa bộ lọc
             </a>
@@ -76,6 +126,9 @@ $statusLabel = [
             <?php endforeach; ?>
           <?php else: ?>
             Tất cả sản phẩm
+          <?php endif; ?>
+          <?php if (!empty($condition) && is_string($condition) && isset($conditionMap[$condition])): ?>
+            <span class="badge bg-<?= $conditionMap[$condition][1] ?> ms-2 fs-xs"><?= $conditionMap[$condition][0] ?></span>
           <?php endif; ?>
         </h5>
         <?php if ($user): ?>
@@ -130,6 +183,15 @@ $statusLabel = [
                         <span class="badge bg-info text-white">Trao đổi</span>
                       <?php endif; ?>
                     </span>
+
+                    <!-- Feature 3: Badge tình trạng -->
+                    <?php if (!empty($p['condition']) && isset($conditionMap[$p['condition']])): ?>
+                      <span class="position-absolute top-0 end-0 m-2">
+                        <span class="badge bg-<?= $conditionMap[$p['condition']][1] ?>" style="font-size:.65rem">
+                          <?= $conditionMap[$p['condition']][0] ?>
+                        </span>
+                      </span>
+                    <?php endif; ?>
                   </div>
 
                   <!-- Nội dung -->
@@ -155,8 +217,13 @@ $statusLabel = [
                       <?php endif; ?>
                     </div>
 
-                    <div class="mt-2 small text-muted">
-                      <i class="bi bi-person me-1"></i><?= htmlspecialchars($p['seller_name'], ENT_QUOTES) ?>
+                    <!-- Feature 1: Tên người bán + badge xác thực -->
+                    <div class="mt-2 small text-muted d-flex align-items-center gap-1">
+                      <i class="bi bi-person me-1"></i>
+                      <?= htmlspecialchars($p['seller_name'], ENT_QUOTES) ?>
+                      <?php if (!empty($p['seller_verified'])): ?>
+                        <span title="Sinh viên đã xác thực" style="color:#22c55e;font-size:.8rem">🛡️</span>
+                      <?php endif; ?>
                       <span class="ms-2"><i class="bi bi-clock me-1"></i><?= date('d/m', strtotime($p['created_at'])) ?></span>
                     </div>
                   </div>
@@ -182,3 +249,6 @@ $statusLabel = [
 
   </div>
 </div>
+
+
+

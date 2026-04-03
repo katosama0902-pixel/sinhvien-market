@@ -44,6 +44,11 @@
 - **Recent Accounts** — Ghi nhớ tài khoản đã đăng nhập để truy cập nhanh
 - **Quên mật khẩu** qua câu hỏi bảo mật cá nhân
 - CSRF Protection, Password Bcrypt, XSS Escaping toàn bộ output
+- **Huy Hiệu Sinh Viên 🛡️ (Trust Badge)** — Chỉ cấp cho người dùng đăng ký, xác thực thành công bằng email `.edu.vn` (tự động verify)
+
+### 💎 Cơ Chế Hệ Thống Mới
+- **Hệ Thống Xu & Đẩy Tin 🚀** — Điểm danh (check-in) nhận 10 xu mỗi ngày, tiêu 50 xu để đẩy sản phẩm của mình lên đầu trang.
+- **Lọc Sản Phẩm Tự Động (Bộ Lọc Nâng Cao)** — Lọc qua Tình trạng (Mới, Đã Dùng...). Badge phân biệt rõ Tình trạng xuất hiện trên Card sản phẩm. Auto-submit filter tức thời.
 
 ### 💬 Tương Tác Cộng Đồng
 - **Chat realtime** giữa người mua và người bán (Polling 3s)
@@ -234,69 +239,6 @@ Dự án đồ án cơ sở — mọi góp ý, phát hiện lỗi đều đượ
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
----
-
-## 🐛 Changelog & Bugfixes
-
-> Tổng hợp toàn bộ lỗi đã được phát hiện và sửa trong quá trình phát triển. Dùng để tra cứu và tránh lặp lại lỗi.
-
-### v1.1.0 — 2026-03-27 · Dark Mode Fixes
-
-#### 🌙 CSS Global (`public/css/style.css`) — Hardcoded Colors
-
-| Thành phần | Vấn đề | Fix |
-|---|---|---|
-| Form inputs / select | `background: #fff` hardcoded | → `var(--card-bg)` |
-| Input group, password toggle | `background: #fff` hardcoded | → `var(--card-bg)` |
-| Navbar dropdown menu | `background: rgba(255,255,255,.98)` hardcoded | → `var(--bs-dropdown-bg)` |
-| Bootstrap dropdown | Thiếu CSS variable override | Thêm `--bs-dropdown-bg`, `--bs-dropdown-color` vào `[data-theme="dark"]` |
-| Auth card (login/register) | Nền trắng trong dark mode | Thêm dark mode override cho `.auth-card` |
-
-#### 🏠 Home Page (`app/views/home/index.php`) — Inline Styles
-
-| Thành phần | Vấn đề | Fix |
-|---|---|---|
-| Section "Đấu giá HOT" | `background: #fff` inline | → `var(--bg)` |
-| Section "Danh mục" | `background: linear-gradient(#f8fafc...)` inline | → class `.hp-category-section` với dark override |
-| Section "Sản phẩm mới nhất" | `background: #fff` inline | → `var(--card-bg)` |
-| `.hp-auction-card` / `.hp-cat-card` / `.hp-product-card` | `background: #fff` hardcoded | → `var(--card-bg)`, `border: var(--border)` |
-| Text màu card title | `color: #0f172a` hardcoded | → `var(--text)` |
-
-#### 🗄️ Database Schema — Lỗi 500 crash
-
-| Lỗi | Nguyên nhân | Fix |
-|---|---|---|
-| `500` toàn app | Thiếu bảng `giveaways` và `giveaway_participants` | Thêm vào `schema.sql` + migrate DB |
-| `500` trang Admin Users | Thiếu cột `lock_reason`, `locked_at`, `locked_until` | `ALTER TABLE` + cập nhật schema |
-| `500` trang Tố cáo | Thiếu bảng `reports` | Thêm vào `schema.sql` + migrate DB |
-
----
-
-### v1.2.0 — 2026-03-29 · Auth, Upload & Admin Fixes
-
-| ID | Mức độ | Mô tả | Fix |
-|---|---|---|---|
-| BF-001 | 🟡 Medium | Avatar không hiển thị trên Navbar sau upload | Bổ sung `avatar`, `avatar_url` vào `$_SESSION['user']` ở tất cả điểm login; sync session trong `ProfileController::show()` |
-| BF-002 | 🔴 High | `redirect()` trong GoogleAuthController xung đột với base Controller | Đổi tên thành `redirectToGoogle()` |
-| BF-003 | 🔴 High | Admin duyệt bài crash: `Column not found: 'details'` | Sửa tên cột trong `AuditLog::log()` từ `details` → `note` |
-| BF-004 | 🔴 High | Bảng `users` thiếu cột `google_id` và `avatar_url` | Chạy `ALTER TABLE` thêm 2 cột; thêm 3 methods vào `User.php` |
-| BF-005 | 🟢 Low | CSS lint warning: `-webkit-line-clamp` thiếu property chuẩn | Thêm `line-clamp: N` sau mỗi `-webkit-line-clamp: N` |
-| BF-006 | 🟢 Low | Avatar tràn ra ngoài khung tròn trong navbar | Thêm `overflow: hidden` + `object-fit: cover` cho `.nav-avatar img` |
-| BF-007 | 🟡 Medium | Giới hạn upload avatar chỉ 2MB — quá thấp | Nâng lên `10 * 1024 * 1024` trong `ProfileController` + cập nhật UI text |
-| BF-009 | 🟡 Medium | OAuth `state` token không bị xóa sau callback | Thêm `unset($_SESSION['oauth_state'])` sau xác minh thành công |
-
----
-
-### 📊 Tổng Kết
-
-| Mức độ | Số lượng | Trạng thái |
-|--------|----------|------------|
-| 🔴 High (Crash/Blocker) | 4 | ✅ Đã fix |
-| 🟡 Medium | 4 | ✅ Đã fix |
-| 🟢 Low (Visual/Warning) | 3 | ✅ Đã fix |
-| **Tổng** | **11 bugs** | **100% resolved** |
-
----
 
 <div align="center">
 Made with ❤️ by SinhVienMarket Team · Đồ án cơ sở 2026

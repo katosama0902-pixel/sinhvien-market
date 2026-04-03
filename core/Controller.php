@@ -137,7 +137,7 @@ abstract class Controller
     /**
      * Tạo CSRF token và lưu vào session
      */
-    protected function csrfToken(): string
+    public function csrfToken(): string
     {
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));

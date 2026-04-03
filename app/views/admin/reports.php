@@ -22,20 +22,38 @@ $avgAmount  = $totalCount ? (int)($totalAmount / $totalCount) : 0;
 
   <!-- Bộ lọc ngày -->
   <div class="card-sv p-3 mb-4">
-    <form class="row g-3 align-items-end" method="GET" action="<?= $appUrl ?>/admin/reports">
+    <form class="row g-3 align-items-end" method="GET" action="<?= $appUrl ?>/admin/reports" id="filterForm">
       <div class="col-sm-4">
         <label class="form-label small fw-600">Từ ngày</label>
-        <input type="date" name="from" class="form-control" value="<?= htmlspecialchars($fromDate) ?>">
+        <input type="date" name="from" id="fromDate" class="form-control" value="<?= htmlspecialchars($fromDate) ?>">
       </div>
       <div class="col-sm-4">
         <label class="form-label small fw-600">Đến ngày</label>
-        <input type="date" name="to" class="form-control" value="<?= htmlspecialchars($toDate) ?>">
+        <input type="date" name="to" id="toDate" class="form-control" value="<?= htmlspecialchars($toDate) ?>">
       </div>
       <div class="col-sm-4 d-flex gap-2">
         <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-1"></i>Lọc</button>
         <a href="<?= $appUrl ?>/admin/reports" class="btn btn-outline-secondary">Reset</a>
       </div>
     </form>
+    <script>
+      document.getElementById('filterForm').addEventListener('submit', function(e) {
+          var from = document.getElementById('fromDate').value;
+          var to = document.getElementById('toDate').value;
+          if (from && to && from > to) {
+              e.preventDefault();
+              alert('Lỗi: "Từ ngày" không được lớn hơn "Đến ngày"!');
+          }
+      });
+      document.getElementById('fromDate').addEventListener('change', function() {
+          var toEle = document.getElementById('toDate');
+          toEle.min = this.value;
+      });
+      document.getElementById('toDate').addEventListener('change', function() {
+          var fromEle = document.getElementById('fromDate');
+          fromEle.max = this.value;
+      });
+    </script>
   </div>
 
   <!-- Stats -->

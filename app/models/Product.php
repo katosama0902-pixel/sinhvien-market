@@ -108,7 +108,7 @@ class Product extends Model
     public function findWithAuction(int $id): ?array
     {
         return $this->queryOne(
-            'SELECT p.*, c.name AS category_name, u.name AS seller_name, u.phone AS seller_phone,
+            'SELECT p.*, c.name AS category_name, u.name AS seller_name, u.phone AS seller_phone, u.dormitory_address AS seller_address, u.is_student_verified AS seller_verified,
                     a.start_price, a.floor_price, a.decrease_amount, a.step_minutes,
                     a.started_at, a.status AS auction_status, a.id AS auction_id
              FROM products p

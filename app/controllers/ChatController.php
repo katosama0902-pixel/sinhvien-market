@@ -156,6 +156,50 @@ class ChatController extends Controller
             $conv['product_title']
         );
 
+        // ─── Tích hợp AI Auto-Responder (Lazada/Shopee Style) ──────────────────────
+        // Nếu người mua nhắn tin, Bot AI sẽ tự động phản hồi 1 lần duy nhất 
+        // dựa trên các mốc thời gian (Cooldown)
+        if ((int)$conv['buyer_id'] === (int)$user['id']) {
+            $lastSellerTime = $this->msgModel->getLastMessageTimeBySender($convId, $conv['seller_id']);
+            $lastBuyerTime  = $this->msgModel->getLastMessageTimeBySender($convId, $conv['buyer_id'], $msgId);
+            
+            // Điều kiện 1: Người bán (hoặc Bot) KHÔNG nhắn tin gì trong vòng 12 tiếng qua.
+            // Nếu người bán vừa phản hồi, Bot sẽ im lặng nhường sân cho người bán.
+            $sellerCooledDown = true;
+            if ($lastSellerTime && (time() - strtotime($lastSellerTime)) < 12 * 3600) {
+                $sellerCooledDown = false;
+            }
+
+            // Điều kiện 2: Chống spam gọi Bot nhiều lần.
+            // Nếu người mua nhắn liên tục (các tin nhắn cách nhau dưới 5 phút), 
+            // thì chỉ tin nhắn ĐẦU TIÊN mới kích hoạt Bot.
+            $isNewSession = true;
+            if ($lastBuyerTime && (time() - strtotime($lastBuyerTime)) < 5 * 60) {
+                $isNewSession = false;
+            }
+
+            if ($sellerCooledDown && $isNewSession) {
+                $productModel = new Product();
+                $p = $productModel->findById($conv['product_id']);
+                if ($p) {
+                    $prompt = "Bạn là AI trợ lý bán hàng tự động của SinhVienMarket. Người dùng đang hỏi hoặc chào hỏi về món đồ cũ:\n";
+                    $prompt .= "- Tên sản phẩm: {$p['title']}\n";
+                    $prompt .= "- Giá: {$p['price']} VNĐ\n";
+                    $prompt .= "- Tình trạng bề ngoài: {$p['condition']}\n";
+                    $prompt .= "- Nơi giao dịch: " . ($p['seller_address'] ?? 'Khu vực ĐHQG TP.HCM') . "\n";
+                    $prompt .= "\nKhách hàng vừa nhắn tin nhắn đầu tiên: \"$body\"\n";
+                    $prompt .= "\nNhiệm vụ của bạn: Đóng vai người bán hàng, hãy trả lời thật ngắn gọn (dưới 40 chữ), thân thiện năng động chuẩn sinh viên, xưng hô 'mình' và 'cậu' hoặc 'bạn'. Có thể dựa vào nội dung khách nhắn để nương theo, nếu khách chỉ chào thì bạn cũng chào lại và giới thiệu tắt về sản phẩm.";
+                    
+                    $aiResponse = \App\Services\GoogleAiService::askGemini($prompt);
+                    
+                    if ($aiResponse) {
+                        $aiText = "🤖 *[Hệ thống tự động]* " . $aiResponse . "\n_(Chủ shop đang vắng mặt, bạn cứ để lại lời nhắn nha)_";
+                        $this->msgModel->send($convId, $conv['seller_id'], $aiText);
+                    }
+                }
+            }
+        }
+
         $this->json([
             'success' => true,
             'data'    => [

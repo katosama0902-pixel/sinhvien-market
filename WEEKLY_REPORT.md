@@ -176,6 +176,38 @@ Hoàn thiện tài liệu, kiểm tra toàn bộ hệ thống và chuẩn bị n
 
 ---
 
+## TUẦN 6 — 05/04/2026 đến 11/04/2026
+
+### 🎯 Mục Tiêu Tuần Này
+Tích hợp các tiện ích tương tác chuyên sâu nâng cao: Trợ lý bán hàng tự động bằng AI, khắc phục các lỗi chập chờn của Polling Chat và nghiên cứu thư viện Bản đồ.
+
+### 📝 Công Việc Đã Thực Hiện
+
+| STT | Công việc | Người thực hiện | Trạng thái | Ghi chú |
+|-----|-----------|-----------------|------------|---------|
+| 1 | Tích hợp Trợ lý bán hàng AI (Gemini Flash) | *(Tên)* | ✅ | Dùng Google AI Studio API Key |
+| 2 | Áp dụng Shopee/Lazada Auto-Reply Cooldown | *(Tên)* | ✅ | 12h Cooldown & 5m Session protect |
+| 3 | Sửa lỗi Duplicate Chat (Race Condition) | *(Tên)* | ✅ | Cắm cờ ID `msg-{{id}}` vào DOM |
+| 4 | Thử nghiệm Google Maps & Places Autocomplete | *(Tên)* | 🔄 | Script đã viết sẵn nhưng tạm ẩn chờ Config Cloud billing |
+| 5 | Tối ưu hóa UI Chatbox (isSending Lock) | *(Tên)* | ✅ | Ngăn double-submit |
+
+### 🐛 Lỗi Phát Sinh & Cách Xử Lý
+
+| Bug | Mô tả | Trạng thái |
+|-----|--------|------------|
+| 🐛 Tin nhắn chat bị đúp 2 lần | Fetch AJAX bắt nhầm tin cũ | ✅ Đã fix (ID mapping) |
+| 🐛 Bot AI Spam liên tục | AI Reply bị trigger sai chuẩn | ✅ Đã fix (Áp dụng bộ đếm thời gian thực) |
+| 🐛 API Key Google Maps không chạy | Key AI Studio không hỗ trợ quyền Maps | 🔄 Tạm Restore Leaflet, chờ Setup GCP gốc |
+
+### 📊 Tiến Độ Tổng Thể
+- **Hoàn thành:** 4/5 công việc (80%)
+- **Bugs phát sinh:** 3 — Đã fix: 2, Chờ config: 1
+
+### 💬 Nhận Xét / Kế Hoạch Tuần Sau
+Tính năng AI đã hoạt động đúng thiết kế thông minh (nhường lời cho người bán nếu người bán đang online). Tuần sau sẽ tập trung vào live test toàn diện toàn bộ quy trình mua bán lần cuối và chỉnh sửa nốt config Google Cloud cho map.
+
+---
+
 ## 📈 Tổng Hợp Tiến Độ Toàn Dự Án
 
 | Tuần | Giai đoạn | Số task | Hoàn thành | Tỷ lệ |
@@ -184,8 +216,9 @@ Hoàn thiện tài liệu, kiểm tra toàn bộ hệ thống và chuẩn bị n
 | Tuần 2 (15–21/03) | Tính năng cốt lõi | 7 | 7 | 100% ✅ |
 | Tuần 3 (22–25/03) | Nâng cao & An toàn | 5 | 5 | 100% ✅ |
 | Tuần 4 (26–29/03) | UI & DevOps | 10 | 10 | 100% ✅ |
-| Tuần 5 (30/03–...) | Tài liệu & Kiểm thử | 7 | 2 | ~28% 🔄 |
-| **Tổng** | | **35** | **30** | **~85%** |
+| Tuần 5 (30/03–04/04) | Tài liệu & Kiểm thử | 9 | 8 | ~88% ✅ |
+| Tuần 6 (05/04–11/04) | AI Chat & Map Dev | 5 | 4 | 80% 🔄 |
+| **Tổng** | | **42** | **40** | **~95%** |
 
 ---
 

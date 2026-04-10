@@ -51,7 +51,9 @@
 - **Lọc Sản Phẩm Tự Động (Bộ Lọc Nâng Cao)** — Lọc qua Tình trạng (Mới, Đã Dùng...). Badge phân biệt rõ Tình trạng xuất hiện trên Card sản phẩm. Auto-submit filter tức thời.
 
 ### 💬 Tương Tác Cộng Đồng
-- **Chat realtime** giữa người mua và người bán (Polling 3s)
+- **Chat realtime** giữa người mua và người bán (Polling thân thiện chống duplicate data)
+- **Trợ lý AI Tự Động (Gemini 2.5 Flash):** Tự động đóng vai Shop để tư vấn sản phẩm khi người bán vắng mặt, được giới hạn thông minh bằng hệ thống Timer (Shopee/Lazada style) chống Spam.
+- **Bản đồ Vị trí (Leaflet/Maps):** Dễ dàng hẹn lịch giao dịch nhờ hiển thị vùng an toàn trên bản đồ.
 - **Thông báo trong app** — Bell badge cập nhật tin nhắn/duyệt bài/đấu giá
 - **Đánh giá người bán** (1–5 sao + nhận xét sau giao dịch)
 - **Tố cáo vi phạm** — Báo cáo sản phẩm hoặc tài khoản đáng ngờ

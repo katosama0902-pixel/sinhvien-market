@@ -105,7 +105,7 @@ $me     = $_SESSION['user'] ?? [];
           <?php else: ?>
             <?php foreach ($messages as $msg): ?>
               <?php $isMe = (int)$msg['sender_id'] === (int)$me['id']; ?>
-              <div class="msg-row <?= $isMe ? 'me' : '' ?>">
+              <div class="msg-row <?= $isMe ? 'me' : '' ?>" id="msg-<?= $msg['id'] ?>">
                 <?php if (!$isMe): ?>
                   <div style="font-size:.72rem;color:#9ca3af;margin-bottom:3px"><?= htmlspecialchars($msg['sender_name'], ENT_QUOTES) ?></div>
                 <?php endif; ?>
@@ -154,30 +154,45 @@ function scrollBottom() {
 scrollBottom();
 
 // Gửi tin nhắn
+let isSending = false;
 async function sendMsg() {
+  if (isSending) return;
+  
   const input = document.getElementById('msgInput');
   const body  = input.value.trim();
   if (!body) return;
+  
+  isSending = true;
   input.value = '';
   input.style.height = 'auto';
 
-  const res = await fetch(BASE + '/chat/send', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: `conversation_id=${convId}&body=${encodeURIComponent(body)}&_csrf=${document.getElementById('csrfToken').value}`
-  });
-  const data = await res.json();
-  if (data.success) {
-    appendMsg({ id: data.data.message_id, body: escHtml(data.data.body), is_me: true, sender_name: '', time: data.data.time });
-    document.getElementById('lastMsgId').value = data.data.message_id;
-    scrollBottom();
+  try {
+    const res = await fetch(BASE + '/chat/send', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: `conversation_id=${convId}&body=${encodeURIComponent(body)}&_csrf=${document.getElementById('csrfToken').value}`
+    });
+    const data = await res.json();
+    if (data.success) {
+      appendMsg({ id: data.data.message_id, body: escHtml(data.data.body), is_me: true, sender_name: '', time: data.data.time });
+      const currentLastId = parseInt(document.getElementById('lastMsgId').value) || 0;
+      if (data.data.message_id > currentLastId) {
+        document.getElementById('lastMsgId').value = data.data.message_id;
+      }
+      scrollBottom();
+    }
+  } finally {
+    isSending = false;
   }
 }
 
 // Append bubble
 function appendMsg(m) {
+  if (document.getElementById('msg-' + m.id)) return; // Tránh lặp tin nhắn do Polling
+
   const wrap = document.getElementById('chatMessages');
   const el   = document.createElement('div');
+  el.id = 'msg-' + m.id;
   el.className = 'msg-row ' + (m.is_me ? 'me' : '');
   el.innerHTML = `
     ${!m.is_me ? `<div style="font-size:.72rem;color:#9ca3af;margin-bottom:3px">${escHtml(m.sender_name)}</div>` : ''}

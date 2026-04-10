@@ -61,4 +61,20 @@ class Message extends Model
             [$convId, $currentUserId]
         );
     }
+
+    /**
+     * Lấy thời gian của tin nhắn gần nhất từ một người dùng cụ thể trong hội thoại.
+     * Tùy chọn: chỉ tính các tin nhắn TRƯỚC một ID nhất định (để chống dội lệnh gõ liên tiếp).
+     */
+    public function getLastMessageTimeBySender(int $convId, int $senderId, ?int $beforeId = null): ?string
+    {
+        if ($beforeId) {
+            $sql = 'SELECT created_at FROM messages WHERE conversation_id = ? AND sender_id = ? AND id < ? ORDER BY id DESC LIMIT 1';
+            $result = $this->queryOne($sql, [$convId, $senderId, $beforeId]);
+        } else {
+            $sql = 'SELECT created_at FROM messages WHERE conversation_id = ? AND sender_id = ? ORDER BY id DESC LIMIT 1';
+            $result = $this->queryOne($sql, [$convId, $senderId]);
+        }
+        return $result ? $result['created_at'] : null;
+    }
 }

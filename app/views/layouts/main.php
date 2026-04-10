@@ -88,6 +88,7 @@ $user    = $_SESSION['user'] ?? null;
           </li>
 
           <!-- 🪙 COINS & CHECK-IN -->
+          <?php if (($user['role'] ?? '') !== 'admin'): ?>
           <li class="nav-item">
             <form action="<?= $appUrl ?>/coins/checkin" method="POST" style="display:inline">
               <input type="hidden" name="_csrf" value="<?= (new class extends \Core\Controller {})->csrfToken() ?>">
@@ -98,6 +99,7 @@ $user    = $_SESSION['user'] ?? null;
               </button>
             </form>
           </li>
+          <?php endif; ?>
 
 
           <!-- NOTIFICATION BELL -->

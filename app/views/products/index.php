@@ -117,7 +117,7 @@ $hasFilter = $keyword || $categoryId || $condition || $priceMin || $priceMax;
 
       <!-- Header -->
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="section-title mb-0">
+        <h1 class="section-title mb-0 h5">
           <?php if ($keyword): ?>
             Kết quả tìm kiếm: <em>"<?= htmlspecialchars($keyword, ENT_QUOTES) ?>"</em>
           <?php elseif ($categoryId): ?>
@@ -130,7 +130,7 @@ $hasFilter = $keyword || $categoryId || $condition || $priceMin || $priceMax;
           <?php if (!empty($condition) && is_string($condition) && isset($conditionMap[$condition])): ?>
             <span class="badge bg-<?= $conditionMap[$condition][1] ?> ms-2 fs-xs"><?= $conditionMap[$condition][0] ?></span>
           <?php endif; ?>
-        </h5>
+        </h1>
         <?php if ($user): ?>
           <a href="<?= $appUrl ?>/products/create" class="btn btn-primary btn-sm">
             <i class="bi bi-plus-lg me-1"></i>Đăng bán

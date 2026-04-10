@@ -40,12 +40,12 @@ $appUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
     </div>
     <div style="flex:1">
       <div class="d-flex justify-content-between align-items-start">
-        <div class="profile-name d-flex align-items-center gap-2">
+        <h1 class="profile-name d-flex align-items-center gap-2 m-0 fs-3">
             <?= htmlspecialchars($profile['name'], ENT_QUOTES) ?>
             <?php if (!empty($profile['is_student_verified'])): ?>
                 <span title="Sinh viên đã xác thực" style="color:#22c55e;font-size:1.1rem">🛡️</span>
             <?php endif; ?>
-        </div>
+        </h1>
         <?php if (isset($user) && $user['id'] !== $profile['id']): ?>
           <button class="btn btn-sm btn-light text-danger rounded-pill px-3 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#reportUserModal">
             <i class="bi bi-flag-fill me-1"></i>Tố cáo

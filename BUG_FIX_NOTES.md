@@ -259,16 +259,46 @@ line-clamp: 2;  /* + Thêm dòng này */
 
 ---
 
+## 8. Real-time Chat & AI Assistant (v1.2.0 — 10/04/2026)
+
+### [BF-013] Lỗi tin nhắn hiển thị trùng lặp 2 lần khi gửi
+- **Ngày phát hiện:** 10/04/2026
+- **Mức độ:** High (Visual / UX)
+- **Mô tả:** Khi nhắn 1 tin, khung chat hiển thị tin nhắn đó 2 lần liên tiếp.
+- **Nguyên nhân:** Xung đột giữa PHP render ban đầu và AJAX Polling chập chờn. Hàm Polling JavaScript lấy nhầm tin nhắn cũ do thiếu cờ định danh ID DOM. Đồng thời có biểu hiện của Race Condition khi người dùng nhấn gửi liên tục.
+- **Cách fix:** 
+  - Thêm thuộc tính `id="msg-{{id}}"` cho từng thẻ tin nhắn render từ PHP.
+  - Sửa hàm script trong `chat/index.php` để JS lấy `id` này.
+  - Cập nhật logic cắm cờ `isSending` trong JS để khóa nút submit tạm thời tránh ấn đúp. Thêm logic so sánh `$lastMsgId`.
+- **Files liên quan:**
+  - `app/views/chat/index.php`
+
+---
+
+### [BF-014] Bot AI Trợ lý tự động trả lời Spam mỗi câu nói của khách
+- **Ngày phát hiện:** 10/04/2026
+- **Mức độ:** Medium (Logic Nghiệp vụ)
+- **Mô tả:** Bot tự trả lời mỗi khi khách có dấu "?" hoặc nhắn chữ "còn". Điều này khiến Bot cướp lời Shop và nói luyên thuyên phá hỏng hội thoại.
+- **Cách fix:** Xây dựng lại hệ thống "Lazada-style Auto-Responder".
+  - Thêm hàm `getLastMessageTimeBySender` trong Model.
+  - Áp dụng 2 mốc thời gian: `12 tiếng Cooldown` (ẩn nếu shop vừa rep) và `5 phút Session` (ngăn Bot bắt lời nhiều tin nhắn liên tiếp).
+- **Files liên quan:**
+  - `app/controllers/ChatController.php`
+  - `app/models/Message.php`
+
+---
+
 ## 📊 Tổng Kết
 
 | # | Mức độ | Số lượng | Trạng thái |
 |---|--------|----------|------------|
-| 🔴 | High (Crash/Blocker) | 4 | ✅ Đã fix tất cả |
-| 🟡 | Medium | 5 | ✅ Đã fix tất cả |
+| 🔴 | High (Crash/Blocker) | 5 | ✅ Đã fix tất cả |
+| 🟡 | Medium | 6 | ✅ Đã fix tất cả |
 | 🟢 | Low (Visual/Warning) | 3 | ✅ Đã fix tất cả |
-| | **Tổng** | **12 bugs** | **100% resolved** |
+| | **Tổng** | **14 bugs** | **100% resolved** |
 
 ---
 
 > **Lưu ý cho maintainer:** Nếu phát hiện lỗi mới, hãy thêm vào file này theo đúng format `[BF-XXX]` để đảm bảo truy xuất được lỗi khi cần.
+
 

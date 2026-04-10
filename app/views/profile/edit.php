@@ -208,6 +208,20 @@ $tab = $_GET['tab'] ?? 'info'; // 'info' hoặc 'security'
                     </div>
                 </div>
             <?php endif; ?>
-        </div>
     </div>
 </div>
+
+<?php /* if ($tab === 'general'): ?>
+<script>
+function initAutocomplete() {
+    const input = document.querySelector('input[name="dormitory_address"]');
+    if (input) {
+        new google.maps.places.Autocomplete(input, {
+            componentRestrictions: { country: "vn" },
+            fields: ["formatted_address", "name"]
+        });
+    }
+}
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=<?= $_ENV['GOOGLE_MAPS_API_KEY'] ?? '' ?>&libraries=places&callback=initAutocomplete"></script>
+<?php endif; ?>

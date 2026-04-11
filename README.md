@@ -150,7 +150,7 @@ Browser Request
 
 **1. Clone repository**
 ```bash
-git clone https://github.com/your-username/sinhvien-market.git
+git clone https://github.com/katosama0902-pixel/sinhvien-market.git
 cd sinhvien-market
 ```
 
@@ -166,23 +166,16 @@ cp .env.example .env
 ```
 Mở file `.env` và điền thông tin:
 ```env
-APP_URL=http://localhost:8080/sinhvien-market
-APP_DEBUG=true
-
 DB_HOST=127.0.0.1
+DB_PORT=3306
 DB_NAME=sinhvien_market
 DB_USER=root
 DB_PASS=
 
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USERNAME=your_email@gmail.com
-MAIL_PASSWORD=your_app_password
-MAIL_FROM=your_email@gmail.com
-
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_REDIRECT_URI=http://localhost:8080/sinhvien-market/auth/google/callback
+APP_NAME=SinhVienMarket
+APP_URL=http://localhost:8080/sinhvien-market
+APP_ENV=development
+APP_DEBUG=true
 ```
 
 **4. Khởi động Laragon và truy cập**

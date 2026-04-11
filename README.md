@@ -213,10 +213,11 @@ http://localhost:8080/sinhvien-market
 | Database Design | 7/10 | 🟡 Khá |
 | Security | 8/10 | 🟢 Đạt |
 | Code Style | 7/10 | 🟡 Khá |
+| Testing (Manual — 11/04/2026) | 7/10 | 🟡 Đã kiểm thử — xem [`BUG_FIX_NOTES.md`](./BUG_FIX_NOTES.md) |
 | Testing (Automated) | 2/10 | 🔴 Chưa có |
-| Git Workflow | 7/10 | 🟡 Khá |
+| Git Workflow | 8/10 | 🟢 Đạt |
 
-**Điểm trung bình: 7.1/10**
+**Điểm trung bình: 7.4/10** *(cập nhật sau kiểm thử 11/04/2026)*
 
 ---
 

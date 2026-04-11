@@ -9,6 +9,10 @@
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)](https://getbootstrap.com)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
+[🌐 Demo](#) · [📋 Báo cáo tiến độ](#-báo-cáo-tiến-độ) · [🐛 Báo lỗi](../../issues)
+
+</div>
+
 ---
 
 ## 📖 Giới Thiệu

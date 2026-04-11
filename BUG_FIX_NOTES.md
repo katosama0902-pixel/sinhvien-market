@@ -288,17 +288,123 @@ line-clamp: 2;  /* + Thêm dòng này */
 
 ---
 
+## 9. Kiểm Thử Toàn Diện (v1.3.0 — 11/04/2026)
+
+> Phiên test thực hiện web testing toàn bộ tính năng Admin + User, Light Mode + Dark Mode.
+> Tài khoản test: `admin@market.com` / `Admin@123` (admin), `katosama0902@gmail.com` / `Admin@123` (sinh viên)
+
+### [BF-015] Lỗi ParseError — Trang Profile không thể truy cập
+
+- **Ngày phát hiện:** 11/04/2026
+- **Mức độ:** Critical (Trang hỏng hoàn toàn)
+- **Mô tả:** Khi sinh viên truy cập `/profile`, hệ thống bắn lỗi PHP `ParseError: Unterminated comment starting line 214`. Toàn bộ trang hồ sơ cá nhân không thể load — đây là tính năng core của ứng dụng.
+- **Nguyên nhân:** Trong file `app/views/profile/edit.php`, dòng 214 có một PHP comment block không được đóng:
+```php
+// Dòng 214 — SAI:
+<?php /* if ($tab === 'general'): ?>
+
+// Phải là:
+<?php /* if ($tab === 'general'): */ ?>
+```
+Comment dạng `/* ... */` bị để hở — không có `*/` đóng. PHP parse fail toàn bộ file.
+- **Cách fix:** Thêm `*/` để đóng comment đúng:
+```php
+<?php /* if ($tab === 'general'): */ ?>
+```
+Hoặc xóa toàn bộ block dead code từ dòng 214 đến 227 (code Google Maps API đã bị comment ra, vĩnh viễn không dùng).
+- **Files liên quan:**
+  - `app/views/profile/edit.php` (dòng 214)
+
+---
+
+### [BF-016] Flash Message bị Escape HTML — Tên user không in đậm trong thông báo Admin
+
+- **Ngày phát hiện:** 11/04/2026
+- **Mức độ:** Low (Visual/UX)
+- **Mô tả:** Khi Admin khóa/mở khóa tài khoản, thông báo hiển thị text thô như `✅ Đã khóa tài khoản <strong>Kagato</strong> trong 3 ngày.` thay vì in đậm tên user.
+- **Nguyên nhân:** `Flash::render()` trong `core/Flash.php` (dòng 42) escape toàn bộ nội dung message bằng `htmlspecialchars()`, khiến HTML tags bị hiển thị thay vì render. Trong khi `AdminController::toggleUser()` (dòng 178) truyền HTML có `<strong>` vào Flash message.
+- **Nguyên nhân gốc:** Không nhất quán: Flash message được thiết kế cho plain text, nhưng AdminController truyền HTML.
+- **Cách fix:** Chọn một trong hai:
+  1. *(Đơn giản)* Sửa `AdminController` để không dùng HTML trong Flash message:
+  ```php
+  // Trước (dòng 178):
+  Flash::set('success', "✅ Đã khóa tài khoản <strong>{$user['name']}</strong> trong $durationLabel.");
+  // Sau:
+  Flash::set('success', "✅ Đã khóa tài khoản {$user['name']} trong $durationLabel.");
+  ```
+  2. *(Mở rộng)* Thêm tham số `$allowHtml` vào `Flash::set()` và chỉ escape khi cần thiết.
+- **Files liên quan:**
+  - `core/Flash.php` (dòng 42)
+  - `app/controllers/AdminController.php` (dòng 178, 185)
+
+---
+
+### [BF-017] Bộ đếm ngược Đấu giá ngược hiển thị `--:--` thay vì thời gian thực
+
+- **Ngày phát hiện:** 11/04/2026
+- **Mức độ:** Medium (UX — tính năng core không hoạt động đúng)
+- **Mô tả:** Trên trang chi tiết sản phẩm đấu giá (ví dụ `/products/show?id=3`), đồng hồ đếm ngược "Giảm tiếp theo sau" hiển thị `--:--` thay vì thời gian thực tế đến lần giảm giá kế tiếp.
+- **Nguyên nhân:** Countdown timer trong view `products/detail.php` dùng JavaScript để tính toán thời gian, nhưng khi sản phẩm đã đạt giá sàn (`is_at_floor = true`), biến `next_drop_in_seconds` có thể bị tính sai hoặc JavaScript không phân biệt được trường hợp giá đạt sàn. Cần kiểm tra điều kiện render trong view.
+- **Nguyên nhân bổ sung:** Có thể liên quan đến timezone server (UTC) vs browser (UTC+7) gây tính sai `started_at`.
+- **Cách fix:**
+  1. Kiểm tra `app/views/products/detail.php` — điều kiện hiển thị countdown.
+  2. Nếu `is_at_floor = true`, hiển thị "Đã đạt giá sàn" thay vì countdown.
+  3. Đảm bảo `started_at` được truyền đúng định dạng ISO 8601 sang JavaScript để tránh timezone mismatch.
+- **Files liên quan:**
+  - `app/views/products/detail.php`
+  - `app/models/Auction.php` (hàm `calculateCurrentPrice`)
+
+---
+
+### [BF-018] Giá sản phẩm đấu giá hiển thị sai trong Product Listing
+
+- **Ngày phát hiện:** 11/04/2026
+- **Mức độ:** High (Logic nghiệp vụ sai — gây hiểu nhầm)
+- **Mô tả:** Trong trang danh sách sản phẩm `/products`, sản phẩm đấu giá (product ID 3) hiển thị giá `255.000đ` thay vì giá khởi điểm `80.000đ` hoặc giá hiện tại tính theo thời gian thực.
+  - DB: `start_price = 80,000`, `floor_price = 30,000`, `price = NULL`
+  - Trên screen: hiển thị `255.000đ` (không khớp với bất kỳ field nào trong auction logic)
+- **Nguyên nhân:** Model `Product::getActive()` JOIN với bảng `auctions` nhưng query có thể lấy thêm cột `price` từ các sản phẩm khác, hoặc `current_price` được tính sai do `started_at` không được SELECT trong query `getActive()`. Cần kiểm tra `Product::getActive()` có SELECT `started_at` và `auction_status` không.
+- **Cách fix:**
+  1. Đảm bảo query `Product::getActive()` bao gồm `a.started_at`, `a.status as auction_status`, `a.start_price`, `a.floor_price`, `a.decrease_amount`, `a.step_minutes`.
+  2. Nếu `product.type = 'auction'` mà `started_at` là NULL → không gọi `calculateCurrentPrice`.
+  3. Xác minh không có dữ liệu rác trong DB gây ra giá 255,000đ.
+- **Files liên quan:**
+  - `app/models/Product.php` (method `getActive`)
+  - `app/controllers/ProductController.php` (dòng 59-65)
+
+---
+
+### [BF-019] HomeController — Hàm `index()` và `dashboard()` thiếu line break, dễ gây nhầm lẫn
+
+- **Ngày phát hiện:** 11/04/2026
+- **Mức độ:** Low (Code Quality)
+- **Mô tả:** Trong `app/controllers/HomeController.php` dòng 74, hàm `dashboard()` bắt đầu ngay sau dấu `}` đóng của hàm `index()` trên cùng một dòng — không có newline. Đây là vấn đề code style nhưng không ảnh hưởng runtime.
+```php
+// Dòng 74 — hiện tại:
+        ]);
+    }    public function dashboard(): void
+// Phải là:
+        ]);
+    }
+
+    public function dashboard(): void
+```
+- **Cách fix:** Thêm dòng trống giữa hai hàm để dễ đọc.
+- **Files liên quan:**
+  - `app/controllers/HomeController.php` (dòng 74)
+
+---
+
 ## 📊 Tổng Kết
 
 | # | Mức độ | Số lượng | Trạng thái |
 |---|--------|----------|------------|
-| 🔴 | High (Crash/Blocker) | 5 | ✅ Đã fix tất cả |
-| 🟡 | Medium | 6 | ✅ Đã fix tất cả |
-| 🟢 | Low (Visual/Warning) | 3 | ✅ Đã fix tất cả |
-| | **Tổng** | **14 bugs** | **100% resolved** |
+| 🔴 | Critical (Crash/Blocker) | 6 | 🛠️ BF-015, BF-018 cần fix |
+| 🟡 | Medium | 7 | 🛠️ BF-017 cần fix; còn lại ✅ |
+| 🟢 | Low (Visual/Warning/Quality) | 6 | 🛠️ BF-016, BF-019 cần fix |
+| | **Tổng** | **19 bugs** | **14 đã resolved / 5 mới phát hiện** |
 
 ---
 
 > **Lưu ý cho maintainer:** Nếu phát hiện lỗi mới, hãy thêm vào file này theo đúng format `[BF-XXX]` để đảm bảo truy xuất được lỗi khi cần.
-
 

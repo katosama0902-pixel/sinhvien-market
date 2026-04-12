@@ -71,7 +71,9 @@ class HomeController extends Controller
             'giveaway'          => $giveaway,
             'hasJoinedGiveaway' => $hasJoinedGiveaway
         ]);
-    }    public function dashboard(): void
+    }
+    
+    public function dashboard(): void
     {
         \Core\Middleware::requireAuth();
         $user = $this->currentUser();

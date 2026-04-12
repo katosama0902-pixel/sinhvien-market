@@ -175,14 +175,14 @@ class AdminController extends Controller
                 'forever' => 'Vĩnh viễn',
             ][$duration];
 
-            Flash::set('success', "✅ Đã khóa tài khoản <strong>{$user['name']}</strong> trong $durationLabel.");
+            Flash::set('success', "✅ Đã khóa tài khoản {$user['name']} trong $durationLabel.");
         }
         // ── Xử lý MỞ KHÓA ───────────────────────────────────
         else {
             $this->userModel->toggleLock($userId, 0);
             $note = "Mở khóa User: {$user['name']} ({$user['email']})";
             $this->auditModel->log($admin['id'], 'unlock_user', 'user', $userId, $note);
-            Flash::set('success', "✅ Đã mở khóa tài khoản <strong>{$user['name']}</strong>.");
+            Flash::set('success', "✅ Đã mở khóa tài khoản {$user['name']}.");
         }
 
         $this->redirect('admin/users');

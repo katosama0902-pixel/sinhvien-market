@@ -24,7 +24,7 @@ class Auction extends Model
         $startedAt      = strtotime($auction['started_at']);
         $now            = time();
 
-        $elapsedSeconds = $now - $startedAt;
+        $elapsedSeconds = max(0, $now - $startedAt);
         $elapsedMinutes = $elapsedSeconds / 60;
         $stepsElapsed   = (int)floor($elapsedMinutes / $stepMinutes);
 

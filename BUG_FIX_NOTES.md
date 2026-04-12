@@ -288,14 +288,67 @@ line-clamp: 2;  /* + Thêm dòng này */
 
 ---
 
+## 9. Kiểm Thử Toàn Diện (v1.3.0 — 11/04/2026)
+
+### [BF-015] Lỗi ParseError — Trang Profile không thể truy cập
+- **Ngày phát hiện:** 11/04/2026
+- **Mức độ:** High (Crash trang)
+- **Mô tả:** Lỗi PHP ParseError do block comment PHP thiếu dấu đóng `*/` ở dòng 214 khiến không load được trang Edit Profile.
+- **Cách fix:** Xóa hoàn toàn block dead code dư thừa (Google Maps/Places API script không hoạt động).
+- **Files liên quan:**
+  - `app/views/profile/edit.php`
+
+---
+
+### [BF-016] Flash Message bị Escape HTML — Tên user không in đậm trong thông báo Admin
+- **Ngày phát hiện:** 11/04/2026
+- **Mức độ:** Low (Visual/UX)
+- **Mô tả:** Thẻ `<strong>` trong câu Flash Message báo thành công trên Admin Panel bị chuyển thành text thô.
+- **Cách fix:** Gỡ bỏ thẻ `<strong>` trong text gán cho phương thức Flash, chỉ giữ plain text.
+- **Files liên quan:**
+  - `app/controllers/AdminController.php`
+
+---
+
+### [BF-017] Bộ đếm ngược Đấu giá ngược hiển thị `--:--`
+- **Ngày phát hiện:** 11/04/2026
+- **Mức độ:** Medium (Chức năng cốt lõi)
+- **Mô tả:** JS Polling Timer gặp tình trạng trễ trong nhịp đầu (bị chững ở `--:--`) và không cập nhật được trạng thái 🔒 khi sản phẩm rớt về mức "Giá Sàn".
+- **Cách fix:** Sửa logic Javascript. Tách code trong `setInterval` thành một hàm `renderTime()` để kích hoạt in thời gian ra màn hình ngay lập tức. Thêm câu lệnh bắt cờ `data.is_at_floor` từ request trả về để thay HTML thành thông báo đạt sàn.
+- **Files liên quan:**
+  - `app/views/products/detail.php`
+
+---
+
+### [BF-018] Giá sản phẩm đấu giá hiển thị sai trong Product Listing
+- **Ngày phát hiện:** 11/04/2026
+- **Mức độ:** High (Lỗi tính toán logic hệ thống)
+- **Mô tả:** Product List hiển thị giá đấu giá đội lên cực cao thay vì giảm.
+- **Nguyên nhân:** Biến `started_at` do lệch múi giờ so với lúc tính toán, hoặc lệch local MySQL/PHP khiến thời gian bắt đầu trễ hơn thời gian thực tế, tạo ra số giây âm (VD: -35s). `Math.floor(-0.5) * decrease` ra mức giảm âm, khiến giá bị nâng lên.
+- **Cách fix:** Thay `elapsedSeconds` thành `max(0, $now - $startedAt)` để đồng hồ và bước nhảy luôn lớn hơn hoặc bằng 0, cấm chiều âm xảy ra.
+- **Files liên quan:**
+  - `app/models/Auction.php`
+
+---
+
+### [BF-019] Thiếu line break giữa 2 tính năng ở HomeController
+- **Ngày phát hiện:** 11/04/2026
+- **Mức độ:** Low (Format code)
+- **Mô tả:** Hàm `dashboard()` viết trực tiếp nối với đuôi ngoặc nhọn của hàm index.
+- **Cách fix:** Viết lại đúng dòng chữ và căn lề theo PSR-12.
+- **Files liên quan:**
+  - `app/controllers/HomeController.php`
+
+---
+
 ## 📊 Tổng Kết
 
 | # | Mức độ | Số lượng | Trạng thái |
 |---|--------|----------|------------|
-| 🔴 | High (Crash/Blocker) | 5 | ✅ Đã fix tất cả |
-| 🟡 | Medium | 6 | ✅ Đã fix tất cả |
-| 🟢 | Low (Visual/Warning) | 3 | ✅ Đã fix tất cả |
-| | **Tổng** | **14 bugs** | **100% resolved** |
+| 🔴 | High (Crash/Blocker) | 7 | ✅ Đã fix tất cả |
+| 🟡 | Medium | 7 | ✅ Đã fix tất cả |
+| 🟢 | Low (Visual/Warning) | 5 | ✅ Đã fix tất cả |
+| | **Tổng** | **19 bugs** | **100% resolved** |
 
 ---
 

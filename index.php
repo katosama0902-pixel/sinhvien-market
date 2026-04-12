@@ -106,6 +106,7 @@ $router->get('auth/google',          'GoogleAuth', 'redirectToGoogle');
 $router->get('auth/google/callback', 'GoogleAuth', 'callback');
 
 // ─── Coins & Bump (Feature 2) ─────────────────────────────────────────────
+$router->get('rewards',        'Coin', 'index');
 $router->post('coins/checkin', 'Coin', 'checkIn');
 $router->post('coins/bump',    'Coin', 'bump');
 
@@ -138,6 +139,7 @@ $router->get('transactions/history', 'Transaction', 'history');
 $router->post('transactions/update-status', 'Transaction', 'updateStatus');
 
 // API (JSON responses cho polling realtime)
+$router->get('api/products/search', 'Product', 'apiSearch');
 $router->get('api/auction/price', 'Auction', 'apiPrice');
 
 // Admin
@@ -177,6 +179,8 @@ $router->get('api/chat/unread', 'Chat', 'apiUnreadCount');
 // API-prefixed aliases (chuẩn hóa Phase 14)
 $router->post('api/chat/send', 'Chat', 'send');
 $router->get('api/chat/poll', 'Chat', 'apiPoll');
+$router->post('api/chat/offer', 'Chat', 'sendOffer');
+$router->post('api/chat/offer/respond', 'Chat', 'respondOffer');
 
 // ─── Notifications ───────────────────────────────────────────────────────────
 $router->get('notifications', 'Notification', 'index');

@@ -52,6 +52,7 @@ CREATE TABLE `users` (
     `is_student_verified` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = đã xác thực là sinh viên (email edu/ac.vn)',
     -- Feature: Hệ thống Xu & Đẩy Tin
     `coins`         INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Số xu hiện có',
+    `checkin_streak` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Chuỗi điểm danh liên tiếp',
     `last_checkin`  DATE          DEFAULT NULL COMMENT 'Ngày check-in gần nhất để tránh check-in 2 lần/ngày',
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -232,6 +233,9 @@ CREATE TABLE IF NOT EXISTS `messages` (
     `id`              INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `conversation_id` INT UNSIGNED NOT NULL,
     `sender_id`       INT UNSIGNED NOT NULL COMMENT 'Người gửi',
+    `msg_type`        ENUM('text', 'offer') NOT NULL DEFAULT 'text',
+    `offer_status`    ENUM('pending', 'accepted', 'rejected') NULL DEFAULT NULL,
+    `offer_price`     INT UNSIGNED NULL DEFAULT NULL,
     `body`            TEXT NOT NULL COMMENT 'Nội dung tin nhắn',
     `is_read`         TINYINT(1) NOT NULL DEFAULT 0 COMMENT '0 = chưa đọc',
     `created_at`      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -31,6 +31,32 @@ class CoinController extends Controller
         $this->productModel = new Product();
     }
 
+    public function index(): void
+    {
+        Middleware::requireAuth();
+        $userSession = $this->currentUser();
+        
+        $uData = $this->userModel->findById((int)$userSession['id']);
+        $streak = (int)($uData['checkin_streak'] ?? 0);
+        $lastCheckin = $uData['last_checkin'] ?? null;
+        $today = date('Y-m-d');
+        $canCheckin = ($lastCheckin !== $today);
+        
+        if ($canCheckin && $lastCheckin) {
+            $yesterday = date('Y-m-d', strtotime('-1 day'));
+            if ($lastCheckin !== $yesterday) {
+                $streak = 0;
+            }
+        }
+        
+        $this->render('rewards/index', [
+            'title'      => 'Trung tâm Nhận xu',
+            'streak'     => $streak,
+            'canCheckin' => $canCheckin,
+            'coins'      => $uData['coins'] ?? 0
+        ]);
+    }
+
     // ─── Check-in hàng ngày (+10 xu) ─────────────────────────────────────
 
     public function checkIn(): void
@@ -41,19 +67,23 @@ class CoinController extends Controller
         $userId = (int)$user['id'];
 
         if (!$this->userModel->canCheckin($userId)) {
-            Flash::set('warning', '⏰ Bạn đã check-in hôm nay rồi! Hẹn gặp lại ngày mai.');
-            $this->redirect('dashboard');
+            Flash::set('warning', '⏰ Bạn đã điểm danh hôm nay rồi! Hẹn gặp lại ngày mai.');
+            $this->redirect('rewards');
             return;
         }
 
-        $this->userModel->doCheckin($userId);
+        $result = $this->userModel->doCheckin($userId);
 
         // Cập nhật session tiếp theo với coins mới
         $coins = $this->userModel->getCoins($userId);
         $_SESSION['user']['coins'] = $coins;
 
-        Flash::set('success', '🪙 Check-in thành công! Bạn nhận được +' . self::CHECKIN_REWARD . ' xu. Tổng: ' . $coins . ' xu.');
-        $this->redirect('dashboard');
+        $msg = '🪙 Điểm danh thành công! Ngày ' . $result['streak'] . '/7. Bạn nhận được +' . $result['bonus'] . ' xu. Tổng: ' . $coins . ' xu.';
+        if ($result['bonus'] >= 50) {
+            $msg = '🎉 CHÚC MỪNG! Đạt mốc 7 ngày liên tiếp. Bạn nhận được thưởng lớn +' . $result['bonus'] . ' xu! Tổng: ' . $coins . ' xu.';
+        }
+        Flash::set('success', $msg);
+        $this->redirect('rewards');
     }
 
     // ─── Đẩy Tin (-50 xu) ─────────────────────────────────────────────────

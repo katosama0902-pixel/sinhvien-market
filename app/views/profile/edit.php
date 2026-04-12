@@ -39,8 +39,11 @@ $tab = $_GET['tab'] ?? 'info'; // 'info' hoặc 'security'
             <?php if ($tab === 'info'): ?>
                 <!-- Tab: Thông tin cá nhân -->
                 <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header bg-white border-bottom-0 pt-4 pb-2 px-4">
+                    <div class="card-header bg-white border-bottom-0 pt-4 pb-2 px-4 d-flex align-items-center gap-2">
                         <h5 class="fw-bold mb-0">Ảnh đại diện</h5>
+                        <span class="badge bg-<?= $rank['color'] ?? 'secondary' ?> rounded-pill" style="font-size: 0.8rem; letter-spacing: 0.05em">
+                            <i class="bi bi-<?= $rank['icon'] ?? 'person' ?> me-1"></i><?= $rank['name'] ?? 'Tân binh' ?>
+                        </span>
                     </div>
                     <div class="card-body px-4 pb-4">
                         <div class="d-flex align-items-center gap-4">

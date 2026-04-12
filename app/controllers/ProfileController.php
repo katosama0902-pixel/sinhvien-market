@@ -33,9 +33,16 @@ class ProfileController extends Controller
             $_SESSION['user']['avatar_url'] = $user['avatar_url'];
         }
 
+        // Phân rã cấp bậc người bán
+        $rank = ['name' => 'Tân binh', 'color' => 'secondary', 'icon' => 'person'];
+        if ($user) {
+            $rank = $this->userModel->getRankLevel($user['id']);
+        }
+
         $this->render('profile/edit', [
             'title' => 'Hồ sơ của tôi',
             'user'  => $user,
+            'rank'  => $rank,
         ]);
     }
 

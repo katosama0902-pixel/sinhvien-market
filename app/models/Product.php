@@ -103,6 +103,22 @@ class Product extends Model
     }
 
     /**
+     * Tìm kiếm nhanh cho Live Autocomplete
+     */
+    public function searchAjax(string $keyword, int $limit = 6): array
+    {
+        $keywordWildcard = "%{$keyword}%";
+        $sql = "SELECT id, title, image, price, type, `condition`
+                FROM products 
+                WHERE (title LIKE ? OR description LIKE ?)
+                  AND status = 'active'
+                ORDER BY created_at DESC 
+                LIMIT ?";
+        
+        return $this->query($sql, [$keywordWildcard, $keywordWildcard, $limit]);
+    }
+
+    /**
      * Lấy chi tiết sản phẩm kèm thông tin auction (nếu có)
      */
     public function findWithAuction(int $id): ?array

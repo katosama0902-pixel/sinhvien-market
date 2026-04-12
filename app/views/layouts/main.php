@@ -16,6 +16,12 @@ $user    = $_SESSION['user'] ?? null;
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Marketplace mua bán, trao đổi và đấu giá ngược đồ dùng sinh viên KTX">
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:title" content="<?= htmlspecialchars($og['title'] ?? $title, ENT_QUOTES) ?>">
+  <meta property="og:description" content="<?= htmlspecialchars($og['description'] ?? 'Trang thương mại điện tử sinh viên, trao đổi và thanh lý đồ dùng nội trú nhanh chóng.', ENT_QUOTES) ?>">
+  <meta property="og:image" content="<?= htmlspecialchars($og['image'] ?? ($appUrl . '/public/assets/img/og-fallback.png'), ENT_QUOTES) ?>">
+  <meta property="og:url" content="<?= htmlspecialchars($og['url'] ?? $appUrl, ENT_QUOTES) ?>">
+  <meta property="og:type" content="<?= htmlspecialchars($og['type'] ?? 'website', ENT_QUOTES) ?>">
   <title><?= $title ?> — SinhVienMarket</title>
 
   <!-- Google Fonts: Plus Jakarta Sans -->
@@ -52,15 +58,19 @@ $user    = $_SESSION['user'] ?? null;
 
     <div class="collapse navbar-collapse" id="navMain">
       <!-- Search form -->
-      <form class="d-flex mx-auto my-2 my-lg-0" action="<?= $appUrl ?>/products" method="GET" style="max-width:400px;width:100%">
+      <form class="d-flex mx-auto my-2 my-lg-0" action="<?= $appUrl ?>/products" method="GET" style="max-width:400px;width:100%;position:relative" id="mainSearchForm">
         <div class="input-group" style="border-radius:50px;overflow:hidden">
-          <input type="text" name="q" class="form-control border-0"
+          <input type="text" name="q" id="mainSearchInput" class="form-control border-0"
                  style="background:rgba(255,255,255,.15);color:#fff;border-radius:50px 0 0 50px!important;backdrop-filter:blur(8px)"
-                 placeholder="Tìm sách, đồ dùng..." value="<?= htmlspecialchars($_GET['q'] ?? '', ENT_QUOTES) ?>">
+                 placeholder="Tìm sách, đồ dùng..." value="<?= htmlspecialchars($_GET['q'] ?? '', ENT_QUOTES) ?>" autocomplete="off">
           <button class="btn px-3" type="submit" title="Tìm kiếm"
                   style="background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:0 50px 50px 0!important">
             <i class="bi bi-search"></i>
           </button>
+        </div>
+        <!-- Dropdown Gợi Ý -->
+        <div id="searchDropdown" class="dropdown-menu w-100 shadow-lg border-0" style="display:none;position:absolute;top:100%;left:0;margin-top:10px;z-index:9999;border-radius:12px;overflow:hidden;background:var(--card-bg)">
+          <div id="searchDropdownContent" class="list-group list-group-flush rounded-3"></div>
         </div>
       </form>
 
@@ -90,14 +100,11 @@ $user    = $_SESSION['user'] ?? null;
           <!-- 🪙 COINS & CHECK-IN -->
           <?php if (($user['role'] ?? '') !== 'admin'): ?>
           <li class="nav-item">
-            <form action="<?= $appUrl ?>/coins/checkin" method="POST" style="display:inline">
-              <input type="hidden" name="_csrf" value="<?= (new class extends \Core\Controller {})->csrfToken() ?>">
-              <button type="submit" class="btn btn-sm d-flex align-items-center gap-1 ms-1"
-                      style="background:rgba(255,220,80,.18);color:#ffe066;border:1px solid rgba(255,220,80,.35);border-radius:20px;padding:3px 12px;font-size:.82rem;font-weight:700"
-                      title="Check-in nhận xu mỗi ngày">
-                🪙 <?= (int)($user['coins'] ?? 0) ?> xu
-              </button>
-            </form>
+            <a href="<?= $appUrl ?>/rewards" class="btn btn-sm d-flex align-items-center gap-1 ms-1 text-decoration-none"
+                    style="background:rgba(255,220,80,.18);color:#ffe066;border:1px solid rgba(255,220,80,.35);border-radius:20px;padding:3px 12px;font-size:.82rem;font-weight:700"
+                    title="Đến Điểm Danh Bỏ Túi Xu">
+              🪙 <?= (int)($user['coins'] ?? 0) ?> xu
+            </a>
           </li>
           <?php endif; ?>
 
@@ -607,6 +614,66 @@ if (!empty($_activeGiveaways)):
       localStorage.setItem('theme', nextTheme);
       updateBtn();
     });
+
+    // Smart Search Autocomplete
+    const searchInput = document.getElementById('mainSearchInput');
+    const searchDropdown = document.getElementById('searchDropdown');
+    const searchContent = document.getElementById('searchDropdownContent');
+    let searchTimeout = null;
+
+    if (searchInput && searchDropdown) {
+      searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        if (query.length < 2) {
+          searchDropdown.style.display = 'none';
+          return;
+        }
+
+        searchTimeout = setTimeout(() => {
+          fetch('<?= $appUrl ?>/api/products/search?q=' + encodeURIComponent(query))
+            .then(r => r.json())
+            .then(data => {
+              if (data.length > 0) {
+                let html = '';
+                data.forEach(item => {
+                  const priceFmt = new Intl.NumberFormat('vi-VN').format(item.price) + 'đ';
+                  const badge = item.type === 'auction' ? '<span class="badge bg-warning ms-1" style="font-size:0.6rem">Đấu giá</span>' : '';
+                  html += `
+                    <a href="${item.url}" class="list-group-item list-group-item-action d-flex align-items-center gap-3 p-2 hover-bg">
+                      <img src="${item.image_url}" alt="IMG" style="width:40px;height:40px;object-fit:cover;border-radius:6px;background:#f0f0f0">
+                      <div class="flex-grow-1 overflow-hidden">
+                        <div class="text-truncate" style="font-size:0.9rem;font-weight:600;color:var(--text-color)">${item.title} ${badge}</div>
+                        <div class="text-danger fw-bold" style="font-size:0.85rem">${priceFmt}</div>
+                      </div>
+                    </a>
+                  `;
+                });
+                searchContent.innerHTML = html;
+                searchDropdown.style.display = 'block';
+              } else {
+                searchContent.innerHTML = '<div class="p-3 text-center text-muted" style="font-size:0.9rem">Không tìm thấy sản phẩm nào phù hợp.</div>';
+                searchDropdown.style.display = 'block';
+              }
+            })
+            .catch(e => console.error('Search error:', e));
+        }, 350); // debounce 350ms
+      });
+
+      // Đóng dropdown khi click ra ngoài
+      document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+          searchDropdown.style.display = 'none';
+        }
+      });
+      // Mở lại nếu click vào ô input và đang có text
+      searchInput.addEventListener('focus', function() {
+        if (this.value.trim().length >= 2 && searchContent.innerHTML !== '') {
+          searchDropdown.style.display = 'block';
+        }
+      });
+    }
   });
 </script>
 </body>

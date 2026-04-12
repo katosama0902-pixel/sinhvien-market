@@ -187,6 +187,13 @@ $p = $product;
         </div>
       <?php endif; ?>
 
+      <!-- ─── Nút Chia sẻ QR Code ────────────────────────────── -->
+      <div class="mt-4 pt-4 border-top">
+        <button class="btn btn-outline-dark w-100 btn-lg rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2 hover-lift" data-bs-toggle="modal" data-bs-target="#qrShareModal">
+            <i class="bi bi-qr-code-scan"></i> Chia sẻ Mã QR Sản Phẩm
+        </button>
+      </div>
+
     </div>
   </div>
 
@@ -228,7 +235,12 @@ $p = $product;
             </div>
             <div>
               <div class="fw-700 text-primary-hover"><?= htmlspecialchars($p['seller_name'], ENT_QUOTES) ?></div>
-              <div class="small text-muted">Sinh viên / Thành viên</div>
+              <div class="small text-muted">
+                Sinh viên / 
+                <span class="badge bg-<?= $sellerRank['color'] ?? 'secondary' ?> rounded-pill">
+                  <i class="bi bi-<?= $sellerRank['icon'] ?? 'person' ?> me-1"></i><?= $sellerRank['name'] ?? 'Thành viên' ?>
+                </span>
+              </div>
             </div>
             <div class="ms-auto text-muted">
               <i class="bi bi-chevron-right"></i>
@@ -236,16 +248,22 @@ $p = $product;
           </a>
         </div>
         
-        <!-- Nút Liên hệ người bán (Bổ sung do Bug 1) -->
+        <!-- Nút Liên hệ người bán & Nút Trả Giá -->
         <?php if ($user && (int)$p['user_id'] !== (int)$user['id']): ?>
-          <form action="<?= $appUrl ?>/chat/start" method="POST" class="mt-3">
-            <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf, ENT_QUOTES) ?>">
-            <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
-            <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 mb-2" style="padding: .6rem 1rem">
-              <i class="bi bi-chat-dots-fill"></i> Liên hệ người bán
+          <div class="d-flex gap-2 mb-2 mt-3">
+            <form action="<?= $appUrl ?>/chat/start" method="POST" class="flex-fill m-0">
+              <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf, ENT_QUOTES) ?>">
+              <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
+              <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" style="padding: .6rem 1rem">
+                <i class="bi bi-chat-dots-fill"></i> Nhanh
+              </button>
+            </form>
+            <?php if ($p['type'] === 'sale' && $p['status'] === 'active'): ?>
+            <button type="button" class="btn btn-warning flex-fill rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" style="padding: .6rem 1rem; color: #b45309;" data-bs-toggle="modal" data-bs-target="#offerModal">
+              <i class="bi bi-tag-fill"></i> Trả giá
             </button>
-          </form>
-          
+            <?php endif; ?>
+          </div>
           <form action="<?= $appUrl ?>/wishlist/toggle" method="POST">
             <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf, ENT_QUOTES) ?>">
             <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
@@ -580,3 +598,107 @@ document.addEventListener("DOMContentLoaded", function() {
 </script>
 <?php endif; ?>
 
+
+<!-- ─── Modal QR Code Sharing ──────────────────────────────────────── -->
+<div class="modal fade" id="qrShareModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content border-0 shadow" style="border-radius: 20px; overflow: hidden;">
+      <div class="modal-header border-0 bg-light pb-0">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center pt-0 pb-4">
+        <h5 class="fw-bold mb-3 d-flex align-items-center justify-content-center gap-2 text-dark">
+            <i class="bi bi-qr-code text-primary"></i> Quét mã để xem
+        </h5>
+        <div class="bg-white p-3 rounded-4 shadow-sm d-inline-block border">
+            <img id="qrCodeImage" src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=<?= urlencode($appUrl . '/products/show?id=' . $p['id']) ?>" alt="QR Code" style="width: 200px; height: 200px;" crossorigin="anonymous">
+        </div>
+        <p class="small text-muted mt-3 mb-4 text-truncate px-3"><?= htmlspecialchars($p['title'], ENT_QUOTES) ?></p>
+        
+        <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="downloadQRCode()">
+            <i class="bi bi-download me-2"></i>Tải QR xuống
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function downloadQRCode() {
+    const img = document.getElementById('qrCodeImage');
+    fetch(img.src)
+        .then(response => response.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'SVMarket_QR_<?= $p['id'] ?>.png';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        })
+        .catch(() => alert('Lỗi tải ảnh QR. Hãy chụp màn hình thay thế!'));
+}
+</script>
+
+<!-- ─── Modal Make an Offer ──────────────────────────────────────── -->
+<div class="modal fade" id="offerModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow" style="border-radius: 20px; overflow: hidden;">
+      <div class="modal-header border-0 bg-light">
+        <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-tag-fill text-warning me-2"></i> Trả giá sản phẩm</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-3 pb-4 px-4">
+          <div class="d-flex gap-3 mb-4">
+              <img src="<?= $p['image'] ? ($appUrl . '/public/uploads/' . $p['image']) : ($appUrl . '/public/assets/img/og-fallback.png') ?>" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;" alt="Product">
+              <div>
+                  <div class="fw-bold text-dark text-truncate" style="max-width: 300px;"><?= htmlspecialchars($p['title'], ENT_QUOTES) ?></div>
+                  <div class="text-danger fw-bold fs-5 mt-1"><?= number_format((int)$p['price']) ?> đ</div>
+              </div>
+          </div>
+          <form id="formOffer">
+              <input type="hidden" id="offer_productId" value="<?= $p['id'] ?>">
+              <label class="form-label fw-bold small text-muted">MỨC GIÁ BẠN MUỐN MUA (VNĐ)</label>
+              <div class="input-group mb-3 shadow-sm rounded-3 overflow-hidden border">
+                  <span class="input-group-text bg-white border-0 text-danger fw-bold">₫</span>
+                  <input type="number" class="form-control border-0 fw-bold fs-5 text-dark" id="offerPriceInput" value="<?= round((int)$p['price'] * 0.8) ?>" step="1000" min="1000">
+              </div>
+              <p class="small text-muted mb-4"><i class="bi bi-info-circle me-1"></i> Gợi ý: Thương lượng ở mức giá 80% - 90% sẽ dễ thành công!</p>
+              
+              <button type="button" class="btn btn-warning w-100 btn-lg rounded-pill fw-bold shadow-sm" onclick="submitOffer(this)" style="color: #b45309;">
+                Gửi đề nghị ngay
+              </button>
+          </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function submitOffer(btn) {
+    const price = document.getElementById('offerPriceInput').value;
+    const productId = document.getElementById('offer_productId').value;
+    if(!price || price <= 0) {
+        alert("Vui lòng nhập giá trị lớn hơn 0"); return;
+    }
+    
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Đang xử lý...`;
+    btn.disabled = true;
+    
+    try {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '<?= $appUrl ?>/chat/start';
+        
+        form.appendChild(Object.assign(document.createElement('input'), {type:'hidden', name:'_csrf', value:'<?= htmlspecialchars($csrf, ENT_QUOTES) ?>'}));
+        form.appendChild(Object.assign(document.createElement('input'), {type:'hidden', name:'product_id', value: productId}));
+        form.appendChild(Object.assign(document.createElement('input'), {type:'hidden', name:'offer_price', value: price}));
+        
+        document.body.appendChild(form);
+        form.submit();
+    } catch(e) { console.error(e); }
+}
+</script>

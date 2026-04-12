@@ -91,7 +91,7 @@ class RatingController extends Controller
         $userModel = new User();
         $profile   = $userModel->findById($targetId);
 
-        if (!$profile || $profile['role'] !== 'student') {
+        if (!$profile) {
             http_response_code(404);
             include APP_PATH . '/views/errors/404.php';
             exit;

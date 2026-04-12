@@ -272,13 +272,59 @@ class User extends Model
     }
 
     /**
-     * Thực hiện check-in: +10 xu, cập nhật last_checkin
+     * Thực hiện check-in: Tính toán streak 7 ngày và số xu thưởng
+     * Trả về mảng ['bonus' => int, 'streak' => int]
      */
-    public function doCheckin(int $userId): void
+    public function doCheckin(int $userId): array
     {
+        $row = $this->queryOne('SELECT checkin_streak, last_checkin FROM users WHERE id = ?', [$userId]);
+        $streak = (int)($row['checkin_streak'] ?? 0);
+        $lastCheckin = $row['last_checkin'] ?? null;
+        
+        $bonus = 10;
+        
+        // Tính toán chuỗi liên tiếp
+        if ($lastCheckin) {
+            $diff = (new \DateTime())->diff(new \DateTime($lastCheckin))->days;
+            if ($diff == 1) {
+                $streak++; // Check-in liên tiếp
+            } else {
+                $streak = 1; // Bị đứt chuỗi
+            }
+        } else {
+            $streak = 1;
+        }
+
+        // Nếu đạt mốc 7 ngày, thưởng lớn 50 xu và reset hoặc giữ nguyên.
+        // Ở đây thiết kế: Vừa đạt ngày 7 được thưởng 50 xu.
+        if ($streak == 7) {
+            $bonus = 50;
+        } elseif ($streak > 7) {
+            $streak = 1; // Qua chu kỳ mới
+            $bonus = 10;
+        }
+
         $this->execute(
-            'UPDATE users SET coins = COALESCE(coins, 0) + 10, last_checkin = CURDATE() WHERE id = ?',
-            [$userId]
+            'UPDATE users SET coins = COALESCE(coins, 0) + ?, checkin_streak = ?, last_checkin = CURDATE() WHERE id = ?',
+            [$bonus, $streak, $userId]
         );
+
+        return ['bonus' => $bonus, 'streak' => $streak];
+    }
+    /**
+     * Lấy thứ hạng/cấp bậc người bán dựa trên số lượng sản phẩm đã đăng
+     * Trả về mảng chứa name, color, icon để render UI
+     */
+    public function getRankLevel(int $userId): array
+    {
+        $countRow = $this->queryOne('SELECT COUNT(*) as total FROM products WHERE user_id = ?', [$userId]);
+        $total = (int)($countRow['total'] ?? 0);
+
+        if ($total >= 5) {
+            return ['name' => 'Uy tín', 'color' => 'warning', 'icon' => 'star-fill'];
+        } elseif ($total >= 1) {
+            return ['name' => 'Tích cực', 'color' => 'info', 'icon' => 'activity'];
+        }
+        return ['name' => 'Tân binh', 'color' => 'secondary', 'icon' => 'person'];
     }
 }

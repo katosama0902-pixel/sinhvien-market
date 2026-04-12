@@ -110,6 +110,11 @@ class ChatController extends Controller
         $sellerId = (int)$product['user_id'];
         $convId   = $this->convModel->findOrCreate($productId, $user['id'], $sellerId);
 
+        $offerPrice = (int)($_POST['offer_price'] ?? 0);
+        if ($offerPrice > 0) {
+            $this->msgModel->sendOffer($convId, $user['id'], $offerPrice);
+        }
+
         $this->redirect('chat/show?id=' . $convId);
     }
 
@@ -212,6 +217,64 @@ class ChatController extends Controller
         ]);
     }
 
+    public function sendOffer(): void
+    {
+        Middleware::requireAuth();
+        if (!$this->verifyCsrf()) {
+            $this->json(['success' => false, 'message' => 'CSRF không hợp lệ.'], 403);
+        }
+        $user   = $this->currentUser();
+        $convId = (int)($_POST['conversation_id'] ?? 0);
+        $price  = (int)($_POST['offer_price'] ?? 0);
+
+        if ($convId <= 0 || $price <= 0) {
+            $this->json(['success' => false, 'message' => 'Giá trả phải lớn hơn 0.'], 400);
+        }
+        $conv = $this->convModel->findByIdForUser($convId, $user['id']);
+        if (!$conv) {
+            $this->json(['success' => false, 'message' => 'Không có quyền.'], 403);
+        }
+
+        // Chỉ người mua mới có quyền gửi Trả giá.
+        if ((int)$conv['buyer_id'] !== (int)$user['id']) {
+            $this->json(['success' => false, 'message' => 'Chỉ người mua mới được gửi đề nghị.'], 400);
+        }
+
+        $msgId = $this->msgModel->sendOffer($convId, $user['id'], $price);
+        $this->json(['success' => true, 'message' => 'Đã gửi đề nghị thành công.']);
+    }
+
+    public function respondOffer(): void
+    {
+        Middleware::requireAuth();
+        if (!$this->verifyCsrf()) {
+            $this->json(['success' => false, 'message' => 'CSRF không hợp lệ.'], 403);
+        }
+        $user   = $this->currentUser();
+        $msgId  = (int)($_POST['message_id'] ?? 0);
+        $status = $_POST['status'] ?? ''; // 'accepted' or 'rejected'
+        $convId = (int)($_POST['conversation_id'] ?? 0);
+
+        if (!in_array($status, ['accepted', 'rejected'])) {
+            $this->json(['success' => false, 'message' => 'Logic lỗi.'], 400);
+        }
+
+        $conv = $this->convModel->findByIdForUser($convId, $user['id']);
+        if (!$conv) {
+            $this->json(['success' => false, 'message' => 'Không có quyền.'], 403);
+        }
+        if ((int)$conv['seller_id'] !== (int)$user['id']) {
+            $this->json(['success' => false, 'message' => 'Chỉ người bán mới có quyền duyệt offer.'], 400);
+        }
+
+        $this->msgModel->updateOfferStatus($msgId, $status);
+        
+        $replyText = ($status === 'accepted') ? "✅ Mình đồng ý với mức giá đề nghị của bạn. Giao dịch nhé!" : "❌ Mình chưa thể bán với mức giá này nha. Bạn có thể trả thêm chút không?";
+        $this->msgModel->send($convId, $user['id'], $replyText);
+
+        $this->json(['success' => true]);
+    }
+
     // ─── API: Polling tin nhắn mới ───────────────────────────────────────────
 
     public function apiPoll(): void
@@ -240,6 +303,9 @@ class ChatController extends Controller
         $formatted = array_map(fn($m) => [
             'id'          => $m['id'],
             'body'        => htmlspecialchars($m['body'], ENT_QUOTES, 'UTF-8'),
+            'msg_type'    => $m['msg_type'] ?? 'text',
+            'offer_price' => $m['offer_price'] ?? null,
+            'offer_status'=> $m['offer_status'] ?? null,
             'sender_name' => $m['sender_name'],
             'sender_id'   => $m['sender_id'],
             'time'        => date('H:i', strtotime($m['created_at'])),

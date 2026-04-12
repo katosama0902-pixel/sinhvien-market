@@ -50,8 +50,9 @@
 
 ### 💬 Tương Tác Cộng Đồng
 - **Chat realtime** giữa người mua và người bán (Polling thân thiện chống duplicate data)
-- **Trợ lý AI Tự Động (Gemini 2.5 Flash):** Tự động đóng vai Shop để tư vấn sản phẩm khi người bán vắng mặt, được giới hạn thông minh bằng hệ thống Timer (Shopee/Lazada style) chống Spam.
-- **Bản đồ Vị trí (Leaflet/Maps):** Dễ dàng hẹn lịch giao dịch nhờ hiển thị vùng an toàn trên bản đồ.
+- **Trợ lý AI Tự Động (Gemini 2.5 Flash):** Tự động đóng vai Shop để tư vấn sản phẩm khi người bán vắng mặt.
+- **Hệ thống "Make an Offer" (Trả giá / Mặc cả):** Người mua gửi đề nghị giá tự chọn ngay trên trang sản phẩm, người bán nhận **Offer Card** trong Chat với nút Đồng ý / Từ chối (real-time).
+- **Bản đồ Vị trí (Leaflet/OpenStreetMap):** Hiển thị vùng giao dịch an toàn trên bản đồ.
 - **Thông báo trong app** — Bell badge cập nhật tin nhắn/duyệt bài/đấu giá
 - **Đánh giá người bán** (1–5 sao + nhận xét sau giao dịch)
 - **Tố cáo vi phạm** — Báo cáo sản phẩm hoặc tài khoản đáng ngờ
@@ -220,18 +221,24 @@ http://localhost:8080/sinhvien-market
 | Testing (Automated) | 2/10 | 🔴 Chưa có |
 | Git Workflow | 8/10 | 🟢 Đạt |
 
-**Điểm trung bình: 7.4/10** *(cập nhật sau kiểm thử 11/04/2026)*
+**Điểm trung bình: 7.8/10** *(cập nhật 12/04/2026 — v1.5.0)*
 
 ---
 
 ## 🗺️ Roadmap
 
-- [ ] Bộ lọc sản phẩm nâng cao (khoảng giá, tình trạng hàng)
-- [ ] Live Search (hiển thị kết quả khi đang gõ)
+- [x] Bộ lọc sản phẩm nâng cao (khoảng giá, tình trạng hàng)
+- [x] Live Search (hiển thị kết quả khi đang gõ) — Autocomplete dạng dropdown, debounce 350ms
+- [x] Hệ thống Điểm Danh 7 Ngày (Shopee-style) — Trang /rewards độc lập
+- [x] Rank Badge Uy Tín Người Bán (Tân binh / Tích cực / Uy tín)
+- [x] QR Code Chia sẻ Sản phẩm + Open Graph SEO Meta
+- [x] Make an Offer (Hệ thống Mặc cả / Trả giá trong Chat)
 - [ ] Rate Limiting (chống spam login/OTP)
 - [ ] Wishlist Alerts (thông báo khi giá giảm)
 - [ ] Unit Tests (PHPUnit)
 - [ ] Database Migrations (thay thế schema.sql tĩnh)
+- [ ] Leaderboard Người Bán (Top theo số đơn / rating)
+- [ ] Minigames nhận Xu tại /rewards
 
 ---
 

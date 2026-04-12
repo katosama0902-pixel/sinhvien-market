@@ -8,6 +8,7 @@ use Core\Flash;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Auction;
+use App\Models\User;
 
 /**
  * ProductController — Phase 4
@@ -101,10 +102,31 @@ class ProductController extends Controller
             ]);
         }
 
+        $userModel = new User();
+        $seller = $userModel->findById($product['user_id']);
+        if (!$seller) {
+            $seller = ['name' => 'Người dùng ẩn', 'is_student_verified' => 0];
+            $sellerRank = ['name' => 'Tân binh', 'color' => 'secondary', 'icon' => 'person'];
+        } else {
+            $sellerRank = $userModel->getRankLevel($seller['id']);
+        }
+
+        $appUrl = rtrim($_ENV['APP_URL'] ?? 'http://localhost:8080/sinhvien-market', '/');
+        $og = [
+            'title'       => $product['title'],
+            'description' => mb_substr(strip_tags($product['description']), 0, 150) . '...',
+            'image'       => $product['image'] ? ($appUrl . '/public/uploads/' . $product['image']) : ($appUrl . '/public/assets/img/og-fallback.png'),
+            'url'         => $appUrl . '/products/show?id=' . $product['id'],
+            'type'        => 'product'
+        ];
+
         $this->render('products/detail', [
             'title'        => $product['title'],
             'product'      => $product,
             'auctionPrice' => $auctionPrice,
+            'seller'       => $seller,
+            'sellerRank'   => $sellerRank,
+            'og'           => $og,
         ]);
     }
 
@@ -277,6 +299,28 @@ class ProductController extends Controller
         $this->productModel->updateStatus($productId, 'cancelled');
         Flash::set('success', 'Đã thu hồi bài đăng thành công.');
         $this->redirect('products/my');
+    }
+
+    // ─── API Live Search ─────────────────────────────────────────────────
+
+    public function apiSearch(): void
+    {
+        $keyword = trim($_GET['q'] ?? '');
+        if ($keyword === '') {
+            $this->json([]);
+            return;
+        }
+
+        $results = $this->productModel->searchAjax($keyword);
+        
+        $appUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
+        foreach ($results as &$r) {
+            $r['image_url'] = $r['image'] ? ($appUrl . '/public/uploads/' . $r['image']) : '';
+            $r['url'] = $appUrl . '/products/show?id=' . $r['id'];
+        }
+        unset($r);
+
+        $this->json($results);
     }
 
     // ─── Private helpers ─────────────────────────────────────────────────

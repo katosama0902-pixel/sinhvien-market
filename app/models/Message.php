@@ -51,6 +51,29 @@ class Message extends Model
     }
 
     /**
+     * Gửi tin nhắn Offer (Hệ thống Mặc cả)
+     */
+    public function sendOffer(int $convId, int $senderId, int $offerPrice): int
+    {
+        return $this->insert(
+            "INSERT INTO messages (conversation_id, sender_id, msg_type, offer_status, offer_price, body) VALUES (?, ?, 'offer', 'pending', ?, ?)",
+            [$convId, $senderId, $offerPrice, "Đã gửi đề nghị trả giá: " . number_format($offerPrice) . "đ"]
+        );
+    }
+
+    /**
+     * Cập nhật trạng thái của Offer
+     */
+    public function updateOfferStatus(int $messageId, string $status): void
+    {
+        // status có thể là 'accepted' hoặc 'rejected'
+        $this->execute(
+            "UPDATE messages SET offer_status = ? WHERE id = ? AND msg_type = 'offer'",
+            [$status, $messageId]
+        );
+    }
+
+    /**
      * Đánh dấu tất cả tin nhắn của đối phương trong cuộc hội thoại là đã đọc
      */
     public function markAsRead(int $convId, int $currentUserId): void

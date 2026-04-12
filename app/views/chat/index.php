@@ -36,6 +36,12 @@ $me     = $_SESSION['user'] ?? [];
 .chat-send-btn { background:linear-gradient(135deg,#4f46e5,#8b5cf6); color:#fff; border:none; border-radius:12px; width:44px; height:44px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:.2s; flex-shrink:0; }
 .chat-send-btn:hover { transform:scale(1.05); opacity:.9; }
 .no-conv-selected { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:12px; color:#9ca3af; }
+/* Offer UI */
+.offer-card { background:#fffcf2; border:1px solid #ffd43b; border-radius:12px; padding:12px; min-width:200px; text-align:center; }
+.offer-card-title { font-weight:700; color:#d97706; font-size:.85rem; margin-bottom:6px; }
+.offer-price-lbl { font-size:1.3rem; font-weight:800; color:#dc2626; margin-bottom:6px; font-family:monospace; }
+.offer-actions { display:flex; gap:8px; }
+.offer-status { font-size:.8rem; font-weight:700; padding:5px 10px; border-radius:6px; display:inline-block; }
 </style>
 
 <div class="container-fluid px-3 py-3">
@@ -110,7 +116,30 @@ $me     = $_SESSION['user'] ?? [];
                   <div style="font-size:.72rem;color:#9ca3af;margin-bottom:3px"><?= htmlspecialchars($msg['sender_name'], ENT_QUOTES) ?></div>
                 <?php endif; ?>
                 <div class="msg-bubble <?= $isMe ? 'me' : 'other' ?>">
-                  <?= nl2br(htmlspecialchars($msg['body'], ENT_QUOTES)) ?>
+                  <?php if (($msg['msg_type'] ?? 'text') === 'offer'): ?>
+                      <div class="offer-card text-dark">
+                         <div class="offer-card-title"><i class="bi bi-tag-fill me-1"></i>Đề nghị trả giá</div>
+                         <div class="offer-price-lbl"><?= number_format((int)$msg['offer_price']) ?> đ</div>
+                         <?php if ($msg['offer_status'] === 'pending'): ?>
+                             <?php if ((int)$activeConv['seller_id'] === (int)$me['id']): ?>
+                                 <div class="offer-actions mt-2" id="offer-act-<?= $msg['id'] ?>">
+                                     <button class="btn btn-sm btn-success fw-bold flex-fill" onclick="respondOffer(<?= $msg['id'] ?>, 'accepted')">Đồng ý</button>
+                                     <button class="btn btn-sm btn-danger fw-bold flex-fill" onclick="respondOffer(<?= $msg['id'] ?>, 'rejected')">Từ chối</button>
+                                 </div>
+                             <?php else: ?>
+                                 <div class="offer-status bg-warning text-dark mt-2"><i class="bi bi-hourglass-split me-1"></i>Chờ duyệt</div>
+                             <?php endif; ?>
+                         <?php else: ?>
+                             <?php 
+                                $stClass = $msg['offer_status'] === 'accepted' ? 'bg-success text-white' : 'bg-secondary text-white';
+                                $stText = $msg['offer_status'] === 'accepted' ? '<i class="bi bi-check-circle-fill me-1"></i>Đã chốt' : '<i class="bi bi-x-circle-fill me-1"></i>Từ chối';
+                             ?>
+                             <div class="offer-status <?= $stClass ?> mt-2"><?= $stText ?></div>
+                         <?php endif; ?>
+                      </div>
+                  <?php else: ?>
+                      <?= nl2br(htmlspecialchars($msg['body'], ENT_QUOTES)) ?>
+                  <?php endif; ?>
                   <div class="msg-time"><?= date('H:i', strtotime($msg['created_at'])) ?></div>
                 </div>
               </div>
@@ -188,19 +217,82 @@ async function sendMsg() {
 
 // Append bubble
 function appendMsg(m) {
-  if (document.getElementById('msg-' + m.id)) return; // Tránh lặp tin nhắn do Polling
+  if (document.getElementById('msg-' + m.id)) {
+      // Nêú là offer và có thay đổi status thì update UI
+      if (m.msg_type === 'offer') {
+          let act = document.getElementById('offer-act-' + m.id);
+          if (act && m.offer_status !== 'pending') {
+              let stClass = m.offer_status === 'accepted' ? 'bg-success text-white' : 'bg-secondary text-white';
+              let stText = m.offer_status === 'accepted' ? '<i class="bi bi-check-circle-fill me-1"></i>Đã chốt' : '<i class="bi bi-x-circle-fill me-1"></i>Từ chối';
+              act.outerHTML = `<div class="offer-status ${stClass} mt-2">${stText}</div>`;
+          }
+      }
+      return; 
+  }
 
   const wrap = document.getElementById('chatMessages');
   const el   = document.createElement('div');
   el.id = 'msg-' + m.id;
   el.className = 'msg-row ' + (m.is_me ? 'me' : '');
+  
+  let content = '';
+  if (m.msg_type === 'offer') {
+      let isSeller = (<?= (int)$activeConv['seller_id'] ?> === <?= (int)$me['id'] ?>);
+      let actionsHtml = '';
+      if (m.offer_status === 'pending') {
+         if (isSeller) {
+             actionsHtml = `<div class="offer-actions mt-2" id="offer-act-${m.id}">
+                 <button class="btn btn-sm btn-success fw-bold flex-fill" onclick="respondOffer(${m.id}, 'accepted')">Đồng ý</button>
+                 <button class="btn btn-sm btn-danger fw-bold flex-fill" onclick="respondOffer(${m.id}, 'rejected')">Từ chối</button>
+             </div>`;
+         } else {
+             actionsHtml = `<div class="offer-status bg-warning text-dark mt-2"><i class="bi bi-hourglass-split me-1"></i>Chờ duyệt</div>`;
+         }
+      } else {
+         let stClass = m.offer_status === 'accepted' ? 'bg-success text-white' : 'bg-secondary text-white';
+         let stText = m.offer_status === 'accepted' ? '<i class="bi bi-check-circle-fill me-1"></i>Đã chốt' : '<i class="bi bi-x-circle-fill me-1"></i>Từ chối';
+         actionsHtml = `<div class="offer-status ${stClass} mt-2">${stText}</div>`;
+      }
+      content = `
+        <div class="offer-card text-dark">
+           <div class="offer-card-title"><i class="bi bi-tag-fill me-1"></i>Đề nghị trả giá</div>
+           <div class="offer-price-lbl">${new Intl.NumberFormat('vi-VN').format(m.offer_price)} đ</div>
+           ${actionsHtml}
+        </div>
+      `;
+  } else {
+      content = m.body.replace(/\n/g,'<br>');
+  }
+
   el.innerHTML = `
     ${!m.is_me ? `<div style="font-size:.72rem;color:#9ca3af;margin-bottom:3px">${escHtml(m.sender_name)}</div>` : ''}
     <div class="msg-bubble ${m.is_me ? 'me' : 'other'}">
-      ${m.body.replace(/\n/g,'<br>')}
+      ${content}
       <div class="msg-time">${m.time}</div>
     </div>`;
   wrap.appendChild(el);
+}
+
+async function respondOffer(msgId, status) {
+    if (!confirm('Bạn chắc chắn muốn ' + (status === 'accepted' ? 'ĐỒNG Ý' : 'TỪ CHỐI') + ' mức giá này?')) return;
+    try {
+        const res = await fetch(BASE + '/api/chat/offer/respond', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `message_id=${msgId}&status=${status}&conversation_id=${convId}&_csrf=${document.getElementById('csrfToken').value}`
+        });
+        const data = await res.json();
+        if (data.success) {
+            let act = document.getElementById('offer-act-' + msgId);
+            if(act) {
+                let stClass = status === 'accepted' ? 'bg-success text-white' : 'bg-secondary text-white';
+                let stText = status === 'accepted' ? '<i class="bi bi-check-circle-fill me-1"></i>Đã chốt' : '<i class="bi bi-x-circle-fill me-1"></i>Từ chối';
+                act.outerHTML = `<div class="offer-status ${stClass} mt-2">${stText}</div>`;
+            }
+        } else {
+            alert(data.message || 'Lỗi');
+        }
+    } catch(e) { console.error(e); }
 }
 
 function escHtml(s) {

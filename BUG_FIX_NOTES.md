@@ -341,14 +341,38 @@ line-clamp: 2;  /* + Thêm dòng này */
 
 ---
 
+---
+
+### [BF-020] Lỗi `Class 'App\Controllers\User' not found` tại trang Chi tiết Sản Phẩm
+- **Ngày phát hiện:** 12/04/2026
+- **Mức độ:** High (Crash khi vào trang)
+- **Mô tả:** Trang `/products/show?id=X` bị lỗi fatal khi hiển thị Rank Badge của người bán.
+- **Nguyên nhân:** Method `ProductController::show()` gọi `new User()` khi tính rank badge, nhưng không có `use App\Models\User;` ở đầu file. PHP tìm `User` trong namespace `App\Controllers` nên báo lỗi.
+- **Cách fix:** Bổ sung `use App\Models\User;` vào danh sách import ở đầu `ProductController.php`.
+- **Files liên quan:**
+  - `app/controllers/ProductController.php`
+
+---
+
+### [BF-021] Trang Hồ sơ người bán luôn báo 404
+- **Ngày phát hiện:** 12/04/2026
+- **Mức độ:** Medium (Tính năng không dùng được)
+- **Mô tả:** Bấm vào tên người bán trên trang chi tiết sản phẩm luôn đối diện 404.
+- **Nguyên nhân:** `RatingController::profile()` có điều kiện `$profile['role'] !== 'student'` — nếu người bán là admin, hoặc bất kỳ trường hợp nào role không khớp chuỗi chính xác, hệ thống sẽ tự trả 404. Logic khá gắng gượng và không cần thiết.
+- **Cách fix:** Xóa bỏ điều kiện `$profile['role'] !== 'student'`. Chỉ giữ điều kiện `!$profile` (để xử lý user không tồn tại).
+- **Files liên quan:**
+  - `app/controllers/RatingController.php`
+
+---
+
 ## 📊 Tổng Kết
 
 | # | Mức độ | Số lượng | Trạng thái |
 |---|--------|----------|------------|
-| 🔴 | High (Crash/Blocker) | 7 | ✅ Đã fix tất cả |
-| 🟡 | Medium | 7 | ✅ Đã fix tất cả |
+| 🔴 | High (Crash/Blocker) | 8 | ✅ Đã fix tất cả |
+| 🟡 | Medium | 8 | ✅ Đã fix tất cả |
 | 🟢 | Low (Visual/Warning) | 5 | ✅ Đã fix tất cả |
-| | **Tổng** | **19 bugs** | **100% resolved** |
+| | **Tổng** | **21 bugs** | **100% resolved** |
 
 ---
 

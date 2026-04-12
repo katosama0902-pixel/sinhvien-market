@@ -354,4 +354,3 @@ line-clamp: 2;  /* + Thêm dòng này */
 
 > **Lưu ý cho maintainer:** Nếu phát hiện lỗi mới, hãy thêm vào file này theo đúng format `[BF-XXX]` để đảm bảo truy xuất được lỗi khi cần.
 
-

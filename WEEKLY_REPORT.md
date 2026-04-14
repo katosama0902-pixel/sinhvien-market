@@ -226,6 +226,7 @@ Triển khai các tính năng thực chiến mà thầy giáo đề xuất, tậ
 | 5 | Nâng cấp CSDL: thêm `msg_type`, `offer_status`, `offer_price` vào bảng `messages` | *(Tên)* | ✅ | Migration trực tiếp qua PDO |
 | 6 | Sửa lỗi `Class 'App\Controllers\User' not found` (BF-020) | *(Tên)* | ✅ | Missing `use App\Models\User` trong ProductController |
 | 7 | Sửa lỗi 404 khi xem hồ sơ người bán (BF-021) | *(Tên)* | ✅ | Bỏ kiểm tra `role !== 'student'` không cần thiết |
+| 8 | Nâng cấp Bản đồ lên Google Maps API | *(Tên)* | ✅ | Thay thế Leaflet/OSM, sử dụng Google Maps SDK & Geocoding |
 
 ### 🐛 Lỗi Phát Sinh & Cách Xử Lý
 

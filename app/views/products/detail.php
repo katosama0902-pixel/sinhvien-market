@@ -599,6 +599,27 @@ function initMap() {
         <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="downloadQRCode()">
             <i class="bi bi-download me-2"></i>Tải QR xuống
         </button>
+
+        <!-- ─── Chia sẻ đường link ─── -->
+        <div class="mt-3 px-2">
+          <div class="small text-muted fw-semibold mb-2 d-flex align-items-center justify-content-center gap-1">
+            <i class="bi bi-link-45deg"></i> Hoặc sao chép đường link
+          </div>
+          <div class="input-group input-group-sm" style="border-radius: 50px; overflow: hidden;">
+            <input type="text" id="productShareUrl" class="form-control text-center border-end-0"
+                   value="<?= htmlspecialchars($appUrl . '/products/show?id=' . $p['id'], ENT_QUOTES) ?>"
+                   readonly style="font-size: .78rem; background: var(--card-bg); color: var(--text-primary); cursor: pointer; border-radius: 50px 0 0 50px !important;">
+            <button class="btn btn-outline-secondary border-start-0" id="copyLinkBtn"
+                    onclick="copyProductLink()" title="Sao chép link"
+                    style="border-radius: 0 50px 50px 0 !important; padding: 0 14px;">
+              <i class="bi bi-clipboard" id="copyLinkIcon"></i>
+            </button>
+          </div>
+          <div id="copySuccessMsg" class="small text-success mt-1 fw-semibold" style="display:none; font-size:.75rem;">
+            <i class="bi bi-check-circle-fill me-1"></i>Đã sao chép!
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -621,6 +642,30 @@ function downloadQRCode() {
             document.body.removeChild(a);
         })
         .catch(() => alert('Lỗi tải ảnh QR. Hãy chụp màn hình thay thế!'));
+}
+
+function copyProductLink() {
+    const input = document.getElementById('productShareUrl');
+    const icon  = document.getElementById('copyLinkIcon');
+    const msg   = document.getElementById('copySuccessMsg');
+
+    navigator.clipboard.writeText(input.value).then(() => {
+        // Feedback trực quan
+        icon.className = 'bi bi-clipboard-check-fill text-success';
+        msg.style.display = 'block';
+
+        // Reset sau 2.5 giây
+        setTimeout(() => {
+            icon.className = 'bi bi-clipboard';
+            msg.style.display = 'none';
+        }, 2500);
+    }).catch(() => {
+        // Fallback cho trình duyệt cũ
+        input.select();
+        document.execCommand('copy');
+        msg.style.display = 'block';
+        setTimeout(() => { msg.style.display = 'none'; }, 2500);
+    });
 }
 </script>
 

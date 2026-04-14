@@ -188,7 +188,7 @@ Tích hợp các tiện ích tương tác chuyên sâu nâng cao: Trợ lý bán
 | 1 | Tích hợp Trợ lý bán hàng AI (Gemini Flash) | *(Tên)* | ✅ | Dùng Google AI Studio API Key |
 | 2 | Áp dụng Shopee/Lazada Auto-Reply Cooldown | *(Tên)* | ✅ | 12h Cooldown & 5m Session protect |
 | 3 | Sửa lỗi Duplicate Chat (Race Condition) | *(Tên)* | ✅ | Cắm cờ ID `msg-{{id}}` vào DOM |
-| 4 | Thử nghiệm Google Maps & Places Autocomplete | *(Tên)* | 🔄 | Script đã viết sẵn nhưng tạm ẩn chờ Config Cloud billing |
+| 4 | Thử nghiệm Google Maps & Places Autocomplete | *(Tên)* | ✅ | Hoàn thành ở Tuần 7 sau khi setup GCP billing đúng — dùng Hybrid Architecture |
 | 5 | Tối ưu hóa UI Chatbox (isSending Lock) | *(Tên)* | ✅ | Ngăn double-submit |
 
 ### 🐛 Lỗi Phát Sinh & Cách Xử Lý
@@ -197,11 +197,11 @@ Tích hợp các tiện ích tương tác chuyên sâu nâng cao: Trợ lý bán
 |-----|--------|------------|
 | 🐛 Tin nhắn chat bị đúp 2 lần | Fetch AJAX bắt nhầm tin cũ | ✅ Đã fix (ID mapping) |
 | 🐛 Bot AI Spam liên tục | AI Reply bị trigger sai chuẩn | ✅ Đã fix (Áp dụng bộ đếm thời gian thực) |
-| 🐛 API Key Google Maps không chạy | Key AI Studio không hỗ trợ quyền Maps | 🔄 Tạm Restore Leaflet, chờ Setup GCP gốc |
+| 🐛 API Key Google Maps không chạy | Key AI Studio không hỗ trợ quyền Maps | ✅ Hoàn thành ở Tuần 7 (Hybrid: Google Maps UI + Nominatim geocoding) |
 
 ### 📊 Tiến Độ Tổng Thể
-- **Hoàn thành:** 4/5 công việc (80%)
-- **Bugs phát sinh:** 3 — Đã fix: 2, Chờ config: 1
+- **Hoàn thành:** 5/5 công việc (100%) — *Task 4 hoàn thành tại Tuần 7*
+- **Bugs phát sinh:** 3 — Đã fix: 3
 
 ### 💬 Nhận Xét / Kế Hoạch Tuần Sau
 Tính năng AI đã hoạt động đúng thiết kế thông minh (nhường lời cho người bán nếu người bán đang online). Tuần sau sẽ tập trung vào live test toàn diện toàn bộ quy trình mua bán lần cuối và chỉnh sửa nốt config Google Cloud cho map.
@@ -226,7 +226,7 @@ Triển khai các tính năng thực chiến mà thầy giáo đề xuất, tậ
 | 5 | Nâng cấp CSDL: thêm `msg_type`, `offer_status`, `offer_price` vào bảng `messages` | *(Tên)* | ✅ | Migration trực tiếp qua PDO |
 | 6 | Sửa lỗi `Class 'App\Controllers\User' not found` (BF-020) | *(Tên)* | ✅ | Missing `use App\Models\User` trong ProductController |
 | 7 | Sửa lỗi 404 khi xem hồ sơ người bán (BF-021) | *(Tên)* | ✅ | Bỏ kiểm tra `role !== 'student'` không cần thiết |
-| 8 | Nâng cấp Bản đồ lên Google Maps API | *(Tên)* | ✅ | Thay thế Leaflet/OSM, sử dụng Google Maps SDK & Geocoding |
+| 8 | Nâng cấp Bản đồ lên Google Maps API (Hybrid Architecture) | *(Tên)* | ✅ | Google Maps UI + Nominatim Geocoding miễn phí, Marker animation, Circle 200m |
 
 ### 🐛 Lỗi Phát Sinh & Cách Xử Lý
 
@@ -234,13 +234,16 @@ Triển khai các tính năng thực chiến mà thầy giáo đề xuất, tậ
 |-----|--------|------------|
 | 🐛 [BF-020] Missing `use` statement | `ProductController::show()` gọi `User` mà không import namespace | ✅ Đã fix |
 | 🐛 [BF-021] Hồ sơ người bán 404 | Logic check `role !== 'student'` quá khắt, chặn cả user hợp lệ | ✅ Đã fix |
+| 🐛 Google Maps `InvalidKeyMapError` | API Key được tạo trong trạng thái form lỗi, key bị lock | ✅ Tạo key mới |
+| 🐛 Google Maps `Geocoding API not activated` | Bản billing được link nhưng Geocoding API cần billing riêng | ✅ Dùng Nominatim thay thế |
+| 🐛 Google Maps `Permission Denied` (Map API Key Ver2) | Google tự gán “2 APIs” restriction không bao gồm Maps JS API | ✅ Quay lại dùng Map API Key gốc |
 
 ### 📊 Tiến Độ Tổng Thể
-- **Hoàn thành:** 7/7 công việc (100%)
-- **Bugs phát sinh:** 2 — Đã fix: 2
+- **Hoàn thành:** 8/8 công việc (100%)
+- **Bugs phát sinh:** 5 — Đã fix: 5
 
 ### 💬 Nhận Xét / Kế Hoạch Tuần Sau
-V1.5.0 đã hoàn chỉnh với 2 tính năng thực chiến cao: QR Sharing và Make an Offer. Tuần sau nếu có thời gian có thể phát triển tiếp Leaderboard Người Bán và hệ thống Minigame nhận Xu tại /rewards.
+V1.5.0 đã hoàn chỉnh với 3 tính năng thực chiến: QR Sharing, Make an Offer và Google Maps (Hybrid Architecture). Bản đồ dùng Google Maps làm giao diện chính (premium) kết hợp Nominatim để geocoding miễn phí — giải quyết triệt để vấn đề billing. Tuần sau nếu có thời gian có thể phát triển tiếp Leaderboard Người Bán và Wanted Board.
 
 ---
 
@@ -253,9 +256,9 @@ V1.5.0 đã hoàn chỉnh với 2 tính năng thực chiến cao: QR Sharing và
 | Tuần 3 (22–25/03) | Nâng cao & An toàn | 5 | 5 | 100% ✅ |
 | Tuần 4 (26–29/03) | UI & DevOps | 10 | 10 | 100% ✅ |
 | Tuần 5 (30/03–04/04) | Tài liệu & Kiểm thử | 9 | 8 | ~88% ✅ |
-| Tuần 6 (05/04–11/04) | AI Chat & Map Dev | 5 | 4 | 80% 🔄 |
-| Tuần 7 (12/04–18/04) | Thực Chiến C2C (v1.5.0) | 7 | 7 | 100% ✅ |
-| **Tổng** | | **49** | **47** | **~96%** |
+| Tuần 6 (05/04–11/04) | AI Chat & Map Dev | 5 | 5 | 100% ✅ |
+| Tuần 7 (12/04–18/04) | Thực Chiến C2C + Google Maps (v1.5.0) | 8 | 8 | 100% ✅ |
+| **Tổng** | | **50** | **50** | **100%** |
 
 ---
 

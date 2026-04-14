@@ -52,7 +52,7 @@
 - **Chat realtime** giữa người mua và người bán (Polling thân thiện chống duplicate data)
 - **Trợ lý AI Tự Động (Gemini 2.5 Flash):** Tự động đóng vai Shop để tư vấn sản phẩm khi người bán vắng mặt.
 - **Hệ thống "Make an Offer" (Trả giá / Mặc cả):** Người mua gửi đề nghị giá tự chọn ngay trên trang sản phẩm, người bán nhận **Offer Card** trong Chat với nút Đồng ý / Từ chối (real-time).
-- **Bản đồ Vị trí (Google Maps API):** Hiển thị điểm giao dịch chính xác với Marker và vòng an toàn 200m. tích hợp Geocoding tự động.
+- **Bản đồ Vị trí (Google Maps + Nominatim Hybrid):** Hiển thị điểm giao dịch chính xác với Marker animation, InfoWindow địa chỉ và vòng an toàn 200m. Dùng kiến trúc Hybrid: Google Maps SDK cho giao diện premium, Nominatim (OpenStreetMap) cho geocoding miễn phí.
 - **Thông báo trong app** — Bell badge cập nhật tin nhắn/duyệt bài/đấu giá
 - **Đánh giá người bán** (1–5 sao + nhận xét sau giao dịch)
 - **Tố cáo vi phạm** — Báo cáo sản phẩm hoặc tài khoản đáng ngờ

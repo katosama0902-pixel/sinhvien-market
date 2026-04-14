@@ -80,6 +80,11 @@ $user    = $_SESSION['user'] ?? null;
             <i class="bi bi-grid me-1"></i>Sản phẩm
           </a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" href="<?= $appUrl ?>/leaderboard">
+            <i class="bi bi-trophy me-1"></i>Bảng XH
+          </a>
+        </li>
 
         <?php if ($user): ?>
           <li class="nav-item">

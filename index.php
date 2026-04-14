@@ -110,6 +110,9 @@ $router->get('rewards',        'Coin', 'index');
 $router->post('coins/checkin', 'Coin', 'checkIn');
 $router->post('coins/bump',    'Coin', 'bump');
 
+// Leaderboard (Feature v1.6.0)
+$router->get('leaderboard', 'Leaderboard', 'index');
+
 
 $router->get('dashboard', 'Home', 'dashboard'); // Student dashboard
 

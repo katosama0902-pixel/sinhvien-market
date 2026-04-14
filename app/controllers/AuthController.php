@@ -304,12 +304,28 @@ class AuthController extends Controller
             $this->redirect('login'); return;
         }
 
+        // Rate limiting: tối đa 5 lần nhập sai OTP / session
+        $failCount = (int)($_SESSION['otp_fail_count'] ?? 0);
+        if ($failCount >= 5) {
+            unset($_SESSION['verify_email'], $_SESSION['otp_fail_count'], $_SESSION['otp_resend_count'], $_SESSION['otp_resend_first_at']);
+            Flash::set('danger', 'Quá nhiều lần nhập sai OTP. Phiên xác minh đã bị hủy viên an toàn. Đăng nhập lại.');
+            $this->redirect('login'); return;
+        }
+
         $email = $_SESSION['verify_email'];
         $otp   = $this->input('otp_code');
         $user  = $this->userModel->findByEmail($email);
 
         if (!$user || $user['otp_code'] !== $otp) {
-            Flash::set('danger', 'Mã OTP không chính xác.');
+            // Tăng bộ đếm sai
+            $_SESSION['otp_fail_count'] = ($failCount + 1);
+            $remaining = 5 - $_SESSION['otp_fail_count'];
+            if ($remaining <= 0) {
+                unset($_SESSION['verify_email'], $_SESSION['otp_fail_count']);
+                Flash::set('danger', 'Quá nhiều lần nhập sai. Phiên xác minh bị hủy.');
+                $this->redirect('login'); return;
+            }
+            Flash::set('danger', "Mã OTP không chính xác. Còn {$remaining} lần thử.");
             $this->redirect('verify-otp'); return;
         }
 
@@ -354,10 +370,33 @@ class AuthController extends Controller
         if (empty($_SESSION['verify_email'])) {
             $this->redirect('login'); return;
         }
+
+        // Rate limiting: tối đa 3 lần gửi lại / 10 phút
+        $resendCount   = (int)($_SESSION['otp_resend_count']   ?? 0);
+        $resendFirstAt = (int)($_SESSION['otp_resend_first_at'] ?? 0);
+        $windowSeconds = 10 * 60; // 10 phút
+
+        // Reset cửa sổ nếu đã qua 10 phút
+        if ($resendFirstAt > 0 && (time() - $resendFirstAt) >= $windowSeconds) {
+            $resendCount = 0;
+            $_SESSION['otp_resend_count']   = 0;
+            $_SESSION['otp_resend_first_at'] = 0;
+        }
+
+        if ($resendCount >= 3) {
+            $minsLeft = max(1, (int)ceil(($windowSeconds - (time() - $resendFirstAt)) / 60));
+            Flash::set('danger', "Bạn đã gửi lại OTP quá nhiều lần. Vui lòng đợi {$minsLeft} phút rồi thử lại.");
+            $this->redirect('verify-otp'); return;
+        }
         $email = $_SESSION['verify_email'];
         $user  = $this->userModel->findByEmail($email);
         
         if ($user) {
+            // Tăng bộ đếm resend
+            if ($resendCount === 0) {
+                $_SESSION['otp_resend_first_at'] = time();
+            }
+            $_SESSION['otp_resend_count'] = $resendCount + 1;
             $otp = sprintf("%06d", mt_rand(100000, 999999));
             $otpExp = date('Y-m-d H:i:s', time() + 15 * 60);
             $this->userModel->updateOtp($user['id'], $otp, $otpExp);

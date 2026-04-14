@@ -42,7 +42,17 @@ use Core\Flash;
 
     <div class="text-center mt-4 pt-3 border-top">
       <p class="text-muted mb-2">Chưa nhận được mã?</p>
-      <a href="<?= $appUrl ?>/resend-otp" class="btn btn-outline-secondary btn-sm rounded-pill px-3">Gửi lại mã OTP</a>
+      <?php
+        $resendCount = (int)($_SESSION['otp_resend_count'] ?? 0);
+        $remaining   = max(0, 3 - $resendCount);
+      ?>
+      <?php if ($remaining > 0): ?>
+        <a href="<?= $appUrl ?>/resend-otp" class="btn btn-outline-secondary btn-sm rounded-pill px-3">Gửi lại mã OTP</a>
+        <div class="text-muted mt-1" style="font-size:.76rem">Còn <strong><?= $remaining ?></strong>/3 lượt gửi lại</div>
+      <?php else: ?>
+        <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" disabled>Gửi lại mã OTP</button>
+        <div class="text-danger mt-1" style="font-size:.76rem"><i class="bi bi-lock-fill me-1"></i>Đã dùng hết lượt. Đợi 10 phút để gửi lại.</div>
+      <?php endif; ?>
     </div>
   </div>
 </div>

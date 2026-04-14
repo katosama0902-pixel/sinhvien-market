@@ -327,4 +327,61 @@ class User extends Model
         }
         return ['name' => 'Tân binh', 'color' => 'secondary', 'icon' => 'person'];
     }
+
+    /**
+     * Lấy bảng xếp hạng người bán (Top Sellers)
+     * Scoring: sold_count × 5 + avg_rating × 10 + product_count × 1
+     * @return array<int, array<string, mixed>>
+     */
+    public function getLeaderboard(int $limit = 10): array
+    {
+        return $this->query(
+            "SELECT
+                u.id, u.name, u.avatar, u.avatar_url, u.is_student_verified,
+                COUNT(DISTINCT p.id)                                                AS product_count,
+                COUNT(DISTINCT CASE WHEN p.status = 'sold' THEN p.id END)          AS sold_count,
+                COALESCE(ROUND(AVG(r.stars), 1), 0)                                AS avg_rating,
+                COUNT(DISTINCT r.id)                                                AS rating_count,
+                (COUNT(DISTINCT CASE WHEN p.status = 'sold' THEN p.id END) * 5
+                    + COALESCE(AVG(r.stars), 0) * 10
+                    + COUNT(DISTINCT p.id) * 1)                                     AS score
+             FROM users u
+             LEFT JOIN products p ON p.user_id = u.id
+             LEFT JOIN ratings  r ON r.ratee_id = u.id
+             WHERE u.role = 'student' AND u.is_locked = 0
+             GROUP BY u.id
+             ORDER BY score DESC, sold_count DESC, avg_rating DESC
+             LIMIT ?",
+            [$limit]
+        );
+    }
+
+    /**
+     * Lấy thứ hạng của 1 user cụ thể trong bảng xếp hạng
+     */
+    public function getMyRank(int $userId): int
+    {
+        $result = $this->queryOne(
+            "SELECT ranked.rank_pos FROM (
+                SELECT u.id,
+                       RANK() OVER (
+                           ORDER BY
+                               (COUNT(DISTINCT CASE WHEN p.status = 'sold' THEN p.id END) * 5
+                                + COALESCE(AVG(r.stars), 0) * 10
+                                + COUNT(DISTINCT p.id) * 1) DESC,
+                               COUNT(DISTINCT CASE WHEN p.status = 'sold' THEN p.id END) DESC,
+                               COALESCE(AVG(r.stars), 0) DESC
+                       ) AS rank_pos
+                FROM users u
+                LEFT JOIN products p ON p.user_id = u.id
+                LEFT JOIN ratings  r ON r.ratee_id = u.id
+                WHERE u.role = 'student' AND u.is_locked = 0
+                GROUP BY u.id
+             ) ranked
+             WHERE ranked.id = ?",
+            [$userId]
+        );
+        return (int)($result['rank_pos'] ?? 0);
+    }
 }
+

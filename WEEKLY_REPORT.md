@@ -157,7 +157,7 @@ Hoàn thiện tài liệu, kiểm tra toàn bộ hệ thống và chuẩn bị n
 | 4 | Bổ sung Tính năng Huy hiệu Xác thực Sinh Viên | *(Tên)* | ✅ | Xác thực qua mail .edu.vn + UI Badges |
 | 5 | Bổ sung Tính năng Điểm Xu & Check-in & Đẩy tin | *(Tên)* | ✅ | Check-in +10, Đẩy tin -50 xu |
 | 6 | Live Search (gợi ý khi gõ) | *(Tên)* | ⏸️ | Chưa bắt đầu |
-| 7 | Rate Limiting (chống spam OTP) | *(Tên)* | ⏸️ | Chưa bắt đầu |
+| 7 | Rate Limiting (chống spam OTP) | *(Tên)* | ✅ | Hoàn thành ở Tuần 7 (v1.6.0) |
 | 8 | Smoke Testing toàn bộ luồng | *(Tên)* | ✅ | Đã test thủ công UI |
 | 9 | Hoàn thiện báo cáo + tài liệu đồ án | *(Tên)* | 🔄 | Đang soạn thảo |
 
@@ -168,7 +168,7 @@ Hoàn thiện tài liệu, kiểm tra toàn bộ hệ thống và chuẩn bị n
 | 🐛 Lỗi báo "Tổng: 0 xu" khi mới checkin lần đầu | Biến `coins` bị gán NULL trong phép tính do dữ liệu DB cũ. | ✅ Đã fix (dùng `COALESCE`) |
 
 ### 📊 Tiến Độ Tổng Thể
-- **Hoàn thành:** 6/9 công việc (~67%)
+- **Hoàn thành:** 7/9 công việc (~78%)
 - **Dự kiến hoàn thành cuối tuần:** 100%
 
 ### 💬 Nhận Xét / Kế Hoạch Tuần Sau
@@ -227,6 +227,10 @@ Triển khai các tính năng thực chiến mà thầy giáo đề xuất, tậ
 | 6 | Sửa lỗi `Class 'App\Controllers\User' not found` (BF-020) | *(Tên)* | ✅ | Missing `use App\Models\User` trong ProductController |
 | 7 | Sửa lỗi 404 khi xem hồ sơ người bán (BF-021) | *(Tên)* | ✅ | Bỏ kiểm tra `role !== 'student'` không cần thiết |
 | 8 | Nâng cấp Bản đồ lên Google Maps API (Hybrid Architecture) | *(Tên)* | ✅ | Google Maps UI + Nominatim Geocoding miễn phí, Marker animation, Circle 200m |
+| 9 | Phát triển bảng xếp hạng Leaderboard (v1.6.0) | *(Tên)* | ✅ | Tính điểm (sold*5 + rating*10 + products*1), vinh danh Top 3 & 4-10 |
+| 10 | Triển khai OTP Rate Limiting chống Spam | *(Tên)* | ✅ | Max 3 lần resend/10p, max 5 lần nhập sai/session |
+| 11 | Cải tiến tính năng chia sẻ link dưới mã QR | *(Tên)* | ✅ | Có nút copy nhanh với JS `navigator.clipboard`, hiển thị báo "Đã sao chép" |
+
 
 ### 🐛 Lỗi Phát Sinh & Cách Xử Lý
 
@@ -239,11 +243,12 @@ Triển khai các tính năng thực chiến mà thầy giáo đề xuất, tậ
 | 🐛 Google Maps `Permission Denied` (Map API Key Ver2) | Google tự gán “2 APIs” restriction không bao gồm Maps JS API | ✅ Quay lại dùng Map API Key gốc |
 
 ### 📊 Tiến Độ Tổng Thể
-- **Hoàn thành:** 8/8 công việc (100%)
+- **Hoàn thành:** 11/11 công việc (100%)
 - **Bugs phát sinh:** 5 — Đã fix: 5
 
 ### 💬 Nhận Xét / Kế Hoạch Tuần Sau
-V1.5.0 đã hoàn chỉnh với 3 tính năng thực chiến: QR Sharing, Make an Offer và Google Maps (Hybrid Architecture). Bản đồ dùng Google Maps làm giao diện chính (premium) kết hợp Nominatim để geocoding miễn phí — giải quyết triệt để vấn đề billing. Tuần sau nếu có thời gian có thể phát triển tiếp Leaderboard Người Bán và Wanted Board.
+V1.6.0 đã hoàn chỉnh với 5 tính năng thực chiến: QR Sharing + Copy Link, Make an Offer, Google Maps (Hybrid), Leaderboard bảng xếp hạng và hệ thống OTP Rate Limiting. Bản đồ dùng Google Maps làm giao diện chính (premium) kết hợp Nominatim để geocoding miễn phí — giải quyết triệt để vấn đề billing. Các lỗi vặt từ Tuần 5 và Tuần 4 cũng được dọn sạch hoàn toàn, ứng dụng sẵn sàng cho người dùng thực.
+
 
 ---
 
@@ -255,10 +260,10 @@ V1.5.0 đã hoàn chỉnh với 3 tính năng thực chiến: QR Sharing, Make a
 | Tuần 2 (15–21/03) | Tính năng cốt lõi | 7 | 7 | 100% ✅ |
 | Tuần 3 (22–25/03) | Nâng cao & An toàn | 5 | 5 | 100% ✅ |
 | Tuần 4 (26–29/03) | UI & DevOps | 10 | 10 | 100% ✅ |
-| Tuần 5 (30/03–04/04) | Tài liệu & Kiểm thử | 9 | 8 | ~88% ✅ |
+| Tuần 5 (30/03–04/04) | Tài liệu & Kiểm thử | 9 | 9 | 100% ✅ |
 | Tuần 6 (05/04–11/04) | AI Chat & Map Dev | 5 | 5 | 100% ✅ |
-| Tuần 7 (12/04–18/04) | Thực Chiến C2C + Google Maps (v1.5.0) | 8 | 8 | 100% ✅ |
-| **Tổng** | | **50** | **50** | **100%** |
+| Tuần 7 (12/04–18/04) | Thực Chiến C2C, Maps, Leaderboard (v1.6.0) | 11 | 11 | 100% ✅ |
+| **Tổng** | | **53** | **53** | **100%** |
 
 ---
 

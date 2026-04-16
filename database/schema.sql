@@ -110,6 +110,7 @@ CREATE TABLE `products` (
     KEY `idx_condition`   (`condition`),
     KEY `idx_bumped_at`   (`bumped_at`),
     KEY `idx_created_at`  (`created_at`),
+    KEY `idx_status_created` (`status`, `created_at`),
     -- FULLTEXT index cho tìm kiếm nhanh theo title và description
     FULLTEXT KEY `ft_search` (`title`, `description`),
     CONSTRAINT `fk_products_user`     FOREIGN KEY (`user_id`)     REFERENCES `users`(`id`)       ON DELETE CASCADE,
@@ -243,6 +244,7 @@ CREATE TABLE IF NOT EXISTS `messages` (
     KEY `idx_conv_id`   (`conversation_id`),
     KEY `idx_sender_id` (`sender_id`),
     KEY `idx_is_read`   (`is_read`),
+    KEY `idx_conv_created` (`conversation_id`, `created_at`),
     CONSTRAINT `fk_msg_conv`   FOREIGN KEY (`conversation_id`) REFERENCES `conversations`(`id`) ON DELETE CASCADE,
     CONSTRAINT `fk_msg_sender` FOREIGN KEY (`sender_id`)       REFERENCES `users`(`id`)         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci

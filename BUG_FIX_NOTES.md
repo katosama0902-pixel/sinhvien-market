@@ -13,7 +13,7 @@
 | [Tuần 4 (26–29/03)](#-tuần-4-2629032026--ui--devops) | UI & DevOps, Tích hợp Google OAuth | 11 |
 | [Tuần 5 (30/03–04/04)](#-tuần-5-3003-04042026--tài-liệu--kiểm-thử) | Tài liệu & Kiểm thử | 1 |
 | [Tuần 6 (05–11/04)](#-tuần-6-0511042026--ai-chat--map-dev) | AI Chat & Bot, Smoke Testing | 7 |
-| [Tuần 7 (12–18/04)](#-tuần-7-1218042026--thực-chiến-c2c--google-maps) | C2C features, Google Maps Migration | 6 |
+| [Tuần 7 (12–18/04)](#-tuần-7-1218042026--thực-chiến-c2c--google-maps) | C2C features, Google Maps, Bảo mật sau Code Review | 10 |
 
 ---
 
@@ -334,6 +334,67 @@ fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURICom
 
 ---
 
+### [BF-025] `CURLOPT_SSL_VERIFYPEER = false` hardcoded trong production code
+- **Ngày phát hiện:** 18/04/2026
+- **Mức độ:** 🔴 High (Lỗ hổng Bảo mật — Man-in-the-Middle)
+- **Mô tả:** `GoogleAiService.php` luôn tắt SSL verify peer dù ứng dụng chạy trên server production. Kẻ tấn công có thể chèn MITM proxy để đọc/sửa request gửi tới Google Gemini API.
+- **Nguyên nhân:** Người viết code tắt SSL verify để tránh lỗi SSL của Laragon local nhưng quên không giới hạn chỉ ở môi trường development.
+- **Cách fix:** Đọc biến môi trường `APP_ENV` — chỉ tắt SSL ở `local`/`development`, bắt buộc bật ở `production`:
+```php
+$isLocal = in_array($_ENV['APP_ENV'] ?? 'production', ['local', 'development']);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, !$isLocal);
+```
+- **Files liên quan:**
+  - `app/services/GoogleAiService.php`
+
+---
+
+### [BF-026] CSRF check thủ công trong `AdminController::toggleUser()` không nhất quán
+- **Ngày phát hiện:** 18/04/2026
+- **Mức độ:** 🟡 Medium (Bảo mật / Code Quality)
+- **Mô tả:** Hàm `toggleUser()` thực hiện kiểm tra CSRF thủ công (tự so sánh session token với POST) thay vì dùng `$this->verifyCsrf()` của base Controller. Hai implementation khác nhau dễ dẫn đến sai sót khi refactor.
+- **Nguyên nhân:** Bug được viết từ giai đoạn debug session lúc chưa có `verifyCsrf()` trong base class, sau đó không được chuẩn hóa lại.
+- **Cách fix:** Xóa 6 dòng CSRF logic thủ công, thay bằng:
+```php
+if (!$this->verifyCsrf()) {
+    Flash::set('danger', 'Token bảo mật không hợp lệ.');
+    $this->redirect('admin/users');
+    return;
+}
+```
+- **Files liên quan:**
+  - `app/controllers/AdminController.php`
+
+---
+
+### [BF-027] `AdminController::resolveReport()` bỏ qua CSRF hoàn toàn
+- **Ngày phát hiện:** 18/04/2026
+- **Mức độ:** 🔴 High (Lỗ hổng CSRF Bypass)
+- **Mô tả:** Hàm xử lý tố cáo vi phạm có comment `// Không kiểm tra CSRF tạm thời` nhưng chưa bao giờ được tưất bỏ. Kẻ tấn công có thể đưa Admin click vào link độc hại để tự động đóng/bỏ qua báo cáo mà admin không hay biết (CSRF attack).
+- **Nguyên nhân:** Trong quá trình dev nhanh, CSRF bị "tạm thời" bỏ qua và chưa được quay lại hoàn thiện. Form trong view cũng không gắn `_csrf` token.
+- **Cách fix:**
+  1. Thêm `$this->verifyCsrf()` vào `resolveReport()` trong controller.
+  2. Gắn `<input type="hidden" name="_csrf">` vào cả 2 form trong `system_reports.php`.
+- **Files liên quan:**
+  - `app/controllers/AdminController.php`
+  - `app/views/admin/system_reports.php`
+
+---
+
+### [BF-028] Thu mục `database/` và `scratch/` lộ trước public web
+- **Ngày phát hiện:** 18/04/2026
+- **Mức độ:** 🔴 High (Rủi ro bảo mật nghiêm trọng khi deploy)
+- **Mô tả:** Các file như `database/alter_giveaway_FINAL.php`, `scratch/fix_countdown.php` nằm trong web root và có thể bị gọi trực tiếp qua trình duyệt. Nếu deploy lên server thật, bất kỳ ai cũng có thể chạy các script ALTER TABLE/DROP này.
+- **Nguyên nhân:** Quá trình phát triển nhanh tạo nhiều file migration tạm thời trong các thư mục nằm trong web root nhưng không có biện pháp chặn truy cập HTTP.
+- **Cách fix:** Thêm rule block vào `.htaccess` để trả về **403 Forbidden** cho mọi request vào các thư mục nhạy cảm:
+```apache
+RewriteRule ^(database|scratch|scripts|storage)(/|$) - [F,L]
+```
+- **Files liên quan:**
+  - `.htaccess`
+
+---
+
 ## 📊 Tổng Kết
 
 | Tuần | Giai đoạn | 🔴 High | 🟡 Medium | 🟢 Low | Tổng |
@@ -341,15 +402,15 @@ fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURICom
 | Tuần 4 (26–29/03) | UI & DevOps | 3 | 4 | 3 | 11 |
 | Tuần 5 (30/03–04/04) | Tài liệu & Kiểm thử | 0 | 1 | 0 | 1 |
 | Tuần 6 (05–11/04) | AI Chat & Map Dev | 3 | 2 | 2 | 7 |
-| Tuần 7 (12–18/04) | C2C + Google Maps | 5 | 1 | 0 | 6 |
-| **Tổng** | | **11** | **8** | **5** | **24** |
+| Tuần 7 (12–18/04) | C2C + Google Maps + Bảo mật | 8 | 2 | 0 | 10 |
+| **Tổng** | | **14** | **9** | **5** | **28** |
 
 | Mức độ | Số lượng | Trạng thái |
 |--------|----------|------------|
-| 🔴 High (Crash/Blocker) | 11 | ✅ Đã fix tất cả |
-| 🟡 Medium | 8 | ✅ Đã fix tất cả |
+| 🔴 High (Crash/Blocker/Security) | 14 | ✅ Đã fix tất cả |
+| 🟡 Medium | 9 | ✅ Đã fix tất cả |
 | 🟢 Low (Visual/Warning) | 5 | ✅ Đã fix tất cả |
-| **Tổng** | **24 bugs** | **100% resolved** |
+| **Tổng** | **28 bugs** | **100% resolved** |
 
 ---
 

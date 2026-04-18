@@ -40,8 +40,9 @@ class GoogleAiService
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
         // Để tránh delay đồ án quá lâu và timeout, set tối đa 10 giây
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        // SSL verify false cho môi trường Laragon local
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        // SSL verify: tắt chỉ ở môi trường local (Laragon), BẮT BUỘC bật khi production
+        $isLocal = in_array($_ENV['APP_ENV'] ?? 'production', ['local', 'development']);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, !$isLocal);
 
         $response = curl_exec($ch);
         $error = curl_error($ch);

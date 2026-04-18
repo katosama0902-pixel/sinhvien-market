@@ -94,12 +94,8 @@ class AdminController extends Controller
     {
         Middleware::requireAdmin();
 
-        // CSRF validation
-        if (empty($_SESSION['csrf_token'])) {
-            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-        }
-        $tokenFromPost = $_POST['_csrf'] ?? '';
-        if (!hash_equals($_SESSION['csrf_token'], $tokenFromPost)) {
+        // CSRF validation — dùng chuẩn từ base Controller
+        if (!$this->verifyCsrf()) {
             Flash::set('danger', 'Token bảo mật không hợp lệ. Vui lòng tải lại trang và thử lại.');
             $this->redirect('admin/users');
             return;
@@ -558,7 +554,11 @@ class AdminController extends Controller
     public function resolveReport(): void
     {
         Middleware::requireAdmin();
-        // Không kiểm tra CSRF tạm thời để dễ tích hợp với button, xử lý qua POST
+        if (!$this->verifyCsrf()) {
+            Flash::set('danger', 'CSRF không hợp lệ.');
+            $this->redirect('admin/system-reports');
+            return;
+        }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = (int)$this->input('id');
             $status = $this->input('status'); // resolved / ignored

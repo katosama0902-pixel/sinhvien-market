@@ -1,6 +1,10 @@
 Options -Indexes
 RewriteEngine On
 
+# ─── Block truy cập trực tiếp vào thư mục nhạy cảm ───────────────────
+# Ngăn hacker gọi database/alter_*.php, scratch/*.php qua trình duyệt
+RewriteRule ^(database|scratch|scripts|storage)(/|$) - [F,L]
+
 # Serve existing files/directories directly
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

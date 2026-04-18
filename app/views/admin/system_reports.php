@@ -102,6 +102,7 @@ foreach ($reports as $r) {
                       <i class="bi bi-check2-all"></i>
                     </button>
                     <form action="<?= $appUrl ?>/admin/system-reports/resolve" method="POST" class="d-inline">
+                      <input type="hidden" name="_csrf" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>">
                       <input type="hidden" name="id" value="<?= $r['id'] ?>">
                       <input type="hidden" name="status" value="ignored">
                       <button type="submit" class="btn btn-sm btn-outline-secondary" onclick="return confirm('Bạn chắc chắn muốn bỏ qua tố cáo này chứ?');" title="Bỏ qua">
@@ -137,6 +138,7 @@ foreach ($reports as $r) {
           </div>
           <form action="<?= $appUrl ?>/admin/system-reports/resolve" method="POST">
             <div class="modal-body p-4 pt-3">
+              <input type="hidden" name="_csrf" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>">
               <input type="hidden" name="id" value="<?= $r['id'] ?>">
               <input type="hidden" name="status" value="resolved">
               

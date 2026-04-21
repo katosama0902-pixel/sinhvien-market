@@ -6,6 +6,7 @@ use Core\Controller;
 use Core\Middleware;
 use Core\Flash;
 use App\Models\User;
+use App\Models\LoginSession;
 
 /**
  * ProfileController — Hồ sơ cá nhân người dùng
@@ -39,10 +40,19 @@ class ProfileController extends Controller
             $rank = $this->userModel->getRankLevel($user['id']);
         }
 
+        // Lịch sử đăng nhập (Feature 3B)
+        $loginHistory = [];
+        try {
+            $loginHistory = (new LoginSession())->getByUser((int)$sessionUser['id'], 15);
+        } catch (\Throwable $e) {
+            // Bảng chưa tồn tại — bỏ qua
+        }
+
         $this->render('profile/edit', [
-            'title' => 'Hồ sơ của tôi',
-            'user'  => $user,
-            'rank'  => $rank,
+            'title'        => 'Hồ sơ của tôi',
+            'user'         => $user,
+            'rank'         => $rank,
+            'loginHistory' => $loginHistory,
         ]);
     }
 

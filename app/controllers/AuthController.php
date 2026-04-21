@@ -8,6 +8,7 @@ use Core\Flash;
 use Core\Mailer;
 use App\Models\User;
 use App\Models\LoginAttempt;
+use App\Models\LoginSession;
 use App\Services\EmailTemplate;
 
 class AuthController extends Controller
@@ -215,6 +216,28 @@ class AuthController extends Controller
             'is_student_verified' => $user['is_student_verified'] ?? 0,
             'coins'               => $this->userModel->getCoins($user['id']),
         ];
+
+        // ─── Feature 3A: Ghi lịch sử đăng nhập + cảnh báo thiết bị lạ ─────────────
+        try {
+            $ip        = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+            $ip        = explode(',', $ip)[0]; // proxy trước
+            $ua        = $_SERVER['HTTP_USER_AGENT'] ?? '';
+            $sessionMdl = new LoginSession();
+            $isNewDevice = $sessionMdl->record($user['id'], $ip, $ua);
+
+            if ($isNewDevice) {
+                $time = date('d/m/Y H:i:s');
+                $device = $_SERVER['HTTP_USER_AGENT'] ?? 'Không rõ';
+                Mailer::send(
+                    $user['email'],
+                    'Cảnh báo bảo mật: Đăng nhập từ thiết bị lạ — SinhVienMarket',
+                    EmailTemplate::newDeviceLogin($user['name'], $ip, $time, $device)
+                );
+            }
+        } catch (\Throwable $e) {
+            // Không để lỗi ghi log phá vỡ luồng đăng nhập
+            error_log('LoginSession error: ' . $e->getMessage());
+        }
 
         Flash::set('success', 'Chào mừng trở lại, ' . $user['name'] . '!');
         $this->redirect($redirectSuccess);

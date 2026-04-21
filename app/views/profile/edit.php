@@ -252,6 +252,51 @@ $tab = $_GET['tab'] ?? 'info'; // 'info' hoặc 'security'
                         </div>
                     </div>
                 </div>
+
+                <!-- Feature 3B: L\u1ecbch s\u1eed \u0111\u0103ng nh\u1eadp -->
+                <div class="card border-0 shadow-sm rounded-4 mt-4">
+                  <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex align-items-center justify-content-between">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>L\u1ecbch s\u1eed \u0111\u0103ng nh\u1eadp</h5>
+                    <span class="badge bg-light text-muted" style="font-size:.75rem;">15 phi\u00ean g\u1ea7n nh\u1ea5t</span>
+                  </div>
+                  <div class="card-body px-4 pb-4">
+                    <?php if (empty($loginHistory)): ?>
+                      <p class="text-muted small mb-0"><i class="bi bi-info-circle me-1"></i>Ch\u01b0a c\u00f3 d\u1eef li\u1ec7u \u0111\u0103ng nh\u1eadp n\u00e0o.</p>
+                    <?php else: ?>
+                      <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0" style="font-size:.85rem;">
+                          <thead>
+                            <tr style="color:#94a3b8;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;">
+                              <th class="border-0 ps-0">Th\u1eddi gian</th>
+                              <th class="border-0">\u0110\u1ecba ch\u1ec9 IP</th>
+                              <th class="border-0">Thi\u1ebft b\u1ecb</th>
+                              <th class="border-0 text-end">Tr\u1ea1ng th\u00e1i</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <?php foreach ($loginHistory as $i => $log): ?>
+                            <tr class="<?= $i === 0 ? 'fw-semibold' : '' ?>">
+                              <td class="ps-0 text-nowrap"><?= date('d/m/Y H:i', strtotime($log['logged_at'])) ?></td>
+                              <td><code style="font-size:.8rem;background:var(--bg);padding:2px 6px;border-radius:6px;"><?= htmlspecialchars($log['ip_address'], ENT_QUOTES) ?></code></td>
+                              <td class="text-muted"><?= htmlspecialchars($log['device_info'], ENT_QUOTES) ?></td>
+                              <td class="text-end">
+                                <?php if ($i === 0): ?>
+                                  <span class="badge bg-success" style="font-size:.72rem;">\ud83d\udfe2 Hi\u1ec7n t\u1ea1i</span>
+                                <?php elseif ($log['is_new_device']): ?>
+                                  <span class="badge bg-warning text-dark" style="font-size:.72rem;">\u26a0\ufe0f Thi\u1ebft b\u1ecb l\u1ea1</span>
+                                <?php else: ?>
+                                  <span class="badge bg-light text-muted" style="font-size:.72rem;">\u2713 B\u00ecnh th\u01b0\u1eddng</span>
+                                <?php endif; ?>
+                              </td>
+                            </tr>
+                            <?php endforeach; ?>
+                          </tbody>
+                        </table>
+                      </div>
+                    <?php endif; ?>
+                  </div>
+                </div>
+
             <?php endif; ?>
     </div>
 </div>

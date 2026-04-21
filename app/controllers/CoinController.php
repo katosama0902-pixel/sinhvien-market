@@ -74,6 +74,12 @@ class CoinController extends Controller
 
         $result = $this->userModel->doCheckin($userId);
 
+        if ($result['bonus'] === 0) {
+            Flash::set('warning', '⏰ Yêu cầu quá nhanh hoặc bạn đã điểm danh hôm nay rồi!');
+            $this->redirect('rewards');
+            return;
+        }
+
         // Cập nhật session tiếp theo với coins mới
         $coins = $this->userModel->getCoins($userId);
         $_SESSION['user']['coins'] = $coins;

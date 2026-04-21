@@ -296,7 +296,6 @@ class User extends Model
         }
 
         // Nếu đạt mốc 7 ngày, thưởng lớn 50 xu và reset hoặc giữ nguyên.
-        // Ở đây thiết kế: Vừa đạt ngày 7 được thưởng 50 xu.
         if ($streak == 7) {
             $bonus = 50;
         } elseif ($streak > 7) {
@@ -304,10 +303,16 @@ class User extends Model
             $bonus = 10;
         }
 
-        $this->execute(
-            'UPDATE users SET coins = COALESCE(coins, 0) + ?, checkin_streak = ?, last_checkin = CURDATE() WHERE id = ?',
+        // Fix race condition (spam click): bắt điều kiện ở UPDATE chứ không chỉ qua check SELECT
+        $affectedRows = $this->execute(
+            'UPDATE users SET coins = COALESCE(coins, 0) + ?, checkin_streak = ?, last_checkin = CURDATE() WHERE id = ? AND (last_checkin IS NULL OR last_checkin < CURDATE())',
             [$bonus, $streak, $userId]
         );
+
+        // Nếu lệnh UPDATE không tác động dòng nào -> bị trùng (spam click) đã điểm danh
+        if ($affectedRows === 0) {
+            return ['bonus' => 0, 'streak' => $streak];
+        }
 
         return ['bonus' => $bonus, 'streak' => $streak];
     }

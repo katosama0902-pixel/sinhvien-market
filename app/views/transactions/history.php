@@ -124,6 +124,8 @@ $typeLabel = [
                     if ($t['payment_method'] === 'cod') echo '<i class="bi bi-cash text-success me-1"></i>COD';
                     elseif ($t['payment_method'] === 'banking') echo '<i class="bi bi-bank text-primary me-1"></i>Chuyển khoản';
                     elseif ($t['payment_method'] === 'zalopay') echo '<i class="bi bi-wallet2 text-info me-1"></i>ZaloPay';
+                    elseif ($t['payment_method'] === 'vnpay') echo '<i class="bi bi-credit-card text-danger me-1"></i>VNPay';
+                    elseif ($t['payment_method'] === 'momo') echo '<i class="bi bi-phone text-success me-1"></i>MoMo';
                     else echo 'N/A';
                   ?>
                   <?php if ($t['payment_status'] === 'paid'): ?>

@@ -5,7 +5,8 @@ namespace App\Controllers;
 use Core\Controller;
 use Core\Middleware;
 use App\Models\Transaction;
-
+use App\Services\VnpayService;
+use App\Services\MomoService;
 use Core\Flash;
 
 /**
@@ -63,6 +64,10 @@ class TransactionController extends Controller
             $this->redirect("transactions/bank?id=$txId");
         } elseif ($method === 'zalopay') {
             $this->redirect("transactions/zalopay?id=$txId");
+        } elseif ($method === 'vnpay') {
+            $this->redirect("transactions/vnpay?id=$txId");
+        } elseif ($method === 'momo') {
+            $this->redirect("transactions/momo?id=$txId");
         } else {
             Flash::set('success', 'Đặt hàng thành công! Đơn hàng sẽ thanh toán khi nhận (COD).');
             $this->redirect('transactions/history');
@@ -112,6 +117,137 @@ class TransactionController extends Controller
             Flash::set('success', 'Thanh toán ZaloPay Sandbox thành công!');
         }
         $this->redirect('transactions/history');
+    }
+
+    // ─── VNPay Sandbox ───────────────────────────────────────────────────────
+
+    public function vnpay(): void
+    {
+        Middleware::requireAuth();
+        $id = (int)($_GET['id'] ?? 0);
+        $tx = (new Transaction())->findById($id);
+        if (!$tx || (int)$tx['buyer_id'] !== (int)$this->currentUser()['id']) {
+            $this->redirect('transactions/history'); return;
+        }
+
+        // Tạo URL thanh toán VNPay và redirect thẳng
+        $payUrl = VnpayService::buildPaymentUrl(
+            $id,
+            (int)$tx['amount'],
+            'Thanh toán SinhVienMarket #' . $id
+        );
+
+        header('Location: ' . $payUrl);
+        exit;
+    }
+
+    public function vnpayReturn(): void
+    {
+        // VNPay gửi GET sau khi người dùng hoàn tất thanh toán
+        $vnpData = $_GET;
+        $txnRef  = (int)($vnpData['vnp_TxnRef'] ?? 0);
+        $txModel = new Transaction();
+        $tx      = $txModel->findById($txnRef);
+
+        if (!$tx) {
+            Flash::set('danger', 'Không tìm thấy giao dịch.');
+            $this->redirect('transactions/history'); return;
+        }
+
+        // Xác minh chữ ký từ VNPay
+        if (!VnpayService::verifyReturnSignature($vnpData)) {
+            Flash::set('danger', 'Chữ ký không hợp lệ! Có thể bị giả mạo.');
+            $this->redirect('transactions/history'); return;
+        }
+
+        if (VnpayService::isSuccess($vnpData)) {
+            $txModel->updatePaymentStatus($txnRef, 'paid');
+            Flash::set('success', '✅ Thanh toán VNPay thành công! Mã GD: ' . ($vnpData['vnp_TransactionNo'] ?? ''));
+        } else {
+            $code = $vnpData['vnp_ResponseCode'] ?? '??';
+            Flash::set('warning', '⚠️ Giao dịch bị hủy hoặc thất bại (Mã lỗi: ' . htmlspecialchars($code, ENT_QUOTES) . ').');
+        }
+
+        $this->redirect('transactions/history');
+    }
+
+    // ─── MoMo Sandbox ────────────────────────────────────────────────────────
+
+    public function momo(): void
+    {
+        Middleware::requireAuth();
+        $id = (int)($_GET['id'] ?? 0);
+        $tx = (new Transaction())->findById($id);
+        if (!$tx || (int)$tx['buyer_id'] !== (int)$this->currentUser()['id']) {
+            $this->redirect('transactions/history'); return;
+        }
+
+        // Gọi MoMo API để lấy payUrl
+        $result = MomoService::createPayment(
+            $id,
+            (int)$tx['amount'],
+            'SinhVienMarket ĐH #' . $id
+        );
+
+        if ($result['success']) {
+            header('Location: ' . $result['payUrl']);
+            exit;
+        }
+
+        Flash::set('danger', 'Khởng thể kết nối MoMo: ' . $result['message']);
+        $this->redirect('transactions/history');
+    }
+
+    public function momoReturn(): void
+    {
+        // MoMo gửi GET sau khi người dùng hoàn tất
+        $data = $_GET;
+
+        // Parse orderId để lấy transaction ID (format: SVMkt_{id}_{time})
+        $parts  = explode('_', $data['orderId'] ?? '');
+        $txnRef = (int)($parts[1] ?? 0);
+        $txModel = new Transaction();
+        $tx = $txModel->findById($txnRef);
+
+        if (!$tx) {
+            Flash::set('danger', 'Không tìm thấy giao dịch.');
+            $this->redirect('transactions/history'); return;
+        }
+
+        // Xác minh chữ ký
+        if (!empty($data['signature']) && !MomoService::verifySignature($data)) {
+            Flash::set('danger', 'Chữ ký MoMo không hợp lệ!');
+            $this->redirect('transactions/history'); return;
+        }
+
+        if (MomoService::isSuccess($data)) {
+            $txModel->updatePaymentStatus($txnRef, 'paid');
+            Flash::set('success', '✅ Thanh toán MoMo thành công!');
+        } else {
+            Flash::set('warning', '⚠️ Giao dịch MoMo bị hủy hoặc thất bại.');
+        }
+
+        $this->redirect('transactions/history');
+    }
+
+    public function momoIpn(): void
+    {
+        // IPN (Instant Payment Notification) — MoMo gọi server-to-server
+        $data = json_decode(file_get_contents('php://input'), true) ?? [];
+
+        if (empty($data)) {
+            http_response_code(400); exit;
+        }
+
+        $parts  = explode('_', $data['orderId'] ?? '');
+        $txnRef = (int)($parts[1] ?? 0);
+
+        if ($txnRef && MomoService::isSuccess($data)) {
+            (new Transaction())->updatePaymentStatus($txnRef, 'paid');
+        }
+
+        http_response_code(204);
+        exit;
     }
 
     public function history(): void

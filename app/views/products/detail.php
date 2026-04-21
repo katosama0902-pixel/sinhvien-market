@@ -346,6 +346,27 @@ $p = $product;
               </div>
               <i class="bi bi-wallet2 fs-4" style="color:#0068ff"></i>
             </label>
+
+            <!-- VNPay Sandbox -->
+            <label class="list-group-item d-flex align-items-center cursor-pointer p-3 py-3">
+              <input class="form-check-input me-3" type="radio" name="payment_method" value="vnpay">
+              <div class="flex-grow-1">
+                <div class="fw-600">VNPay Sandbox <span class="badge bg-danger ms-1" style="font-size:.65rem">HOT</span></div>
+                <small class="text-muted">ATM/QR Code — Môi trường thử nghiệm</small>
+              </div>
+              <img src="https://vnpay.vn/s1/statics/img/Logo-VNPAY-QR-1x.jpg" alt="VNPay" style="height:24px;border-radius:4px">
+            </label>
+
+            <!-- MoMo Sandbox -->
+            <label class="list-group-item d-flex align-items-center cursor-pointer p-3 py-3">
+              <input class="form-check-input me-3" type="radio" name="payment_method" value="momo">
+              <div class="flex-grow-1">
+                <div class="fw-600">Ví MoMo Sandbox <span class="badge bg-success ms-1" style="font-size:.65rem">NEW</span></div>
+                <small class="text-muted">Ví điện tử — Môi trường thử nghiệm</small>
+              </div>
+              <img src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png" alt="MoMo" style="height:24px;border-radius:4px">
+            </label>
+
           </div>
         </div>
         <div class="modal-footer border-top-0 pt-0 pb-4 px-4">

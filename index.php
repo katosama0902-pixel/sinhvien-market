@@ -137,6 +137,13 @@ $router->get('transactions/bank', 'Transaction', 'bank');
 $router->post('transactions/bank-confirm', 'Transaction', 'bankConfirm');
 $router->get('transactions/zalopay', 'Transaction', 'zalopay');
 $router->post('transactions/zalopay-callback', 'Transaction', 'zalopayCallback');
+// VNPay Sandbox
+$router->get('transactions/vnpay', 'Transaction', 'vnpay');
+$router->get('transactions/vnpay-return', 'Transaction', 'vnpayReturn');
+// MoMo Sandbox
+$router->get('transactions/momo', 'Transaction', 'momo');
+$router->get('transactions/momo-return', 'Transaction', 'momoReturn');
+$router->post('transactions/momo-ipn', 'Transaction', 'momoIpn');
 
 $router->get('transactions/history', 'Transaction', 'history');
 $router->post('transactions/update-status', 'Transaction', 'updateStatus');

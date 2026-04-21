@@ -157,7 +157,7 @@ CREATE TABLE `transactions` (
     `type`       ENUM('auction', 'direct') NOT NULL DEFAULT 'direct'
                  COMMENT 'auction = đấu giá ngược, direct = mua thường',
     `order_status` ENUM('pending', 'shipping', 'delivered', 'received', 'completed', 'cancelled') NOT NULL DEFAULT 'pending',
-    `payment_method`  ENUM('cod', 'banking', 'zalopay') NOT NULL DEFAULT 'cod',
+    `payment_method`  ENUM('cod', 'banking', 'zalopay', 'vnpay', 'momo') NOT NULL DEFAULT 'cod',
     `shipping_address` TEXT DEFAULT NULL,
     `payment_status`  ENUM('pending', 'paid', 'refunded') NOT NULL DEFAULT 'pending',
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

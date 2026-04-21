@@ -55,7 +55,11 @@ class TransactionController extends Controller
                 $this->redirect('products'); return;
             }
             $sellerId = $product['user_id'];
-            $pModel->updateStatus($productId, 'sold');
+            // Chỉ mark sold ngay với COD/banking/zalopay (thanh toán offline)
+            // VNPay/MoMo sẽ được mark trong callback khi xác nhận thành công
+            if (!in_array($method, ['vnpay', 'momo'])) {
+                $pModel->updateStatus($productId, 'sold');
+            }
         }
 
         $txId = $txModel->createTransaction($userId, $sellerId, $productId, $price, $method, $address);
@@ -143,7 +147,6 @@ class TransactionController extends Controller
 
     public function vnpayReturn(): void
     {
-        // VNPay gửi GET sau khi người dùng hoàn tất thanh toán
         $vnpData = $_GET;
         $txnRef  = (int)($vnpData['vnp_TxnRef'] ?? 0);
         $txModel = new Transaction();
@@ -154,7 +157,6 @@ class TransactionController extends Controller
             $this->redirect('transactions/history'); return;
         }
 
-        // Xác minh chữ ký từ VNPay
         if (!VnpayService::verifyReturnSignature($vnpData)) {
             Flash::set('danger', 'Chữ ký không hợp lệ! Có thể bị giả mạo.');
             $this->redirect('transactions/history'); return;
@@ -162,6 +164,8 @@ class TransactionController extends Controller
 
         if (VnpayService::isSuccess($vnpData)) {
             $txModel->updatePaymentStatus($txnRef, 'paid');
+            // Mark sản phẩm là sold sau khi thanh toán thành công
+            (new \App\Models\Product())->updateStatus($tx['product_id'], 'sold');
             Flash::set('success', '✅ Thanh toán VNPay thành công! Mã GD: ' . ($vnpData['vnp_TransactionNo'] ?? ''));
         } else {
             $code = $vnpData['vnp_ResponseCode'] ?? '??';
@@ -200,10 +204,7 @@ class TransactionController extends Controller
 
     public function momoReturn(): void
     {
-        // MoMo gửi GET sau khi người dùng hoàn tất
         $data = $_GET;
-
-        // Parse orderId để lấy transaction ID (format: SVMkt_{id}_{time})
         $parts  = explode('_', $data['orderId'] ?? '');
         $txnRef = (int)($parts[1] ?? 0);
         $txModel = new Transaction();
@@ -214,7 +215,6 @@ class TransactionController extends Controller
             $this->redirect('transactions/history'); return;
         }
 
-        // Xác minh chữ ký
         if (!empty($data['signature']) && !MomoService::verifySignature($data)) {
             Flash::set('danger', 'Chữ ký MoMo không hợp lệ!');
             $this->redirect('transactions/history'); return;
@@ -222,6 +222,8 @@ class TransactionController extends Controller
 
         if (MomoService::isSuccess($data)) {
             $txModel->updatePaymentStatus($txnRef, 'paid');
+            // Mark sản phẩm là sold sau khi thanh toán thành công
+            (new \App\Models\Product())->updateStatus($tx['product_id'], 'sold');
             Flash::set('success', '✅ Thanh toán MoMo thành công!');
         } else {
             Flash::set('warning', '⚠️ Giao dịch MoMo bị hủy hoặc thất bại.');

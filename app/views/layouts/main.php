@@ -87,13 +87,27 @@ $user    = $_SESSION['user'] ?? null;
         </li>
 
         <?php if ($user): ?>
+          <!-- Đăng bán — Ẩn với admin -->
+          <?php if (($user['role'] ?? '') !== 'admin'): ?>
           <li class="nav-item">
             <a class="nav-link" href="<?= $appUrl ?>/products/create">
               <i class="bi bi-plus-circle me-1"></i>Đăng bán
             </a>
           </li>
+          <?php endif; ?>
 
-          <!-- CHAT ICON -->
+          <!-- Admin badge trên navbar (chỉ hiện với admin) -->
+          <?php if (($user['role'] ?? '') === 'admin'): ?>
+          <li class="nav-item">
+            <a href="<?= $appUrl ?>/admin" class="btn btn-sm d-flex align-items-center gap-1 ms-1 text-decoration-none"
+               style="background:rgba(239,68,68,.18);color:#fca5a5;border:1px solid rgba(239,68,68,.35);border-radius:20px;padding:3px 12px;font-size:.82rem;font-weight:700">
+              <i class="bi bi-shield-lock-fill"></i> Admin Panel
+            </a>
+          </li>
+          <?php endif; ?>
+
+          <!-- CHAT ICON — Ẩn với admin -->
+          <?php if (($user['role'] ?? '') !== 'admin'): ?>
           <li class="nav-item" style="position:relative">
             <a class="nav-link px-2" href="<?= $appUrl ?>/chat" title="Tin nhắn">
               <i class="bi bi-chat-dots" style="font-size:1.2rem"></i>
@@ -101,6 +115,7 @@ $user    = $_SESSION['user'] ?? null;
                     style="display:none;font-size:.65rem"></span>
             </a>
           </li>
+          <?php endif; ?>
 
           <!-- 🪙 COINS & CHECK-IN -->
           <?php if (($user['role'] ?? '') !== 'admin'): ?>
@@ -143,54 +158,68 @@ $user    = $_SESSION['user'] ?? null;
               <span><?= htmlspecialchars($user['name'] ?? 'Tài khoản', ENT_QUOTES) ?></span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end border-0 rounded-4 mt-1 p-2" style="min-width:220px">
-              <li>
-                <a class="dropdown-item rounded-3 py-2" href="<?= $appUrl ?>/dashboard">
-                  <i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard của tôi
-                </a>
-              </li>
-              <li>
-                <a class="dropdown-item rounded-3 py-2" href="<?= $appUrl ?>/profile">
-                  <i class="bi bi-person-circle me-2 text-primary"></i>Hồ sơ của tôi
-                </a>
-              </li>
-              <li>
-                <a class="dropdown-item rounded-3 py-2" href="<?= $appUrl ?>/products/my">
-                  <i class="bi bi-box-seam me-2 text-primary"></i>Sản phẩm của tôi
-                </a>
-              </li>
-              <li>
-                <a class="dropdown-item rounded-3 py-2" href="<?= $appUrl ?>/transactions/history">
-                  <i class="bi bi-receipt me-2 text-primary"></i>Lịch sử giao dịch
-                </a>
-              </li>
-              <li>
-                <a class="dropdown-item rounded-3 py-2" href="<?= $appUrl ?>/chat">
-                  <i class="bi bi-chat-dots me-2 text-primary"></i>Tin nhắn
-                </a>
-              </li>
-              <li>
-                <a class="dropdown-item rounded-3 py-2 fw-600 text-warning" href="<?= $appUrl ?>/#giveaway">
-                  <i class="bi bi-gift-fill me-2"></i>Sự kiện Giveaway
-                </a>
-              </li>
-              <?php if ($user['role'] === 'admin'): ?>
+              <?php if (($user['role'] ?? '') === 'admin'): ?>
+                <!-- ─── Admin dropdown \u2014 g\u1ecdn nh\u1eb9 ─────────────────────── -->
+                <li>
+                  <div class="px-3 py-1" style="font-size:11px;color:#94a3b8;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+                    Qu\u1ea3n tr\u1ecb vi\u00ean
+                  </div>
+                </li>
+                <li>
+                  <a class="dropdown-item rounded-3 py-2" href="<?= $appUrl ?>/profile">
+                    <i class="bi bi-person-circle me-2 text-primary"></i>H\u1ed3 s\u01a1 c\u1ee7a t\u00f4i
+                  </a>
+                </li>
                 <li><hr class="dropdown-divider my-2"></li>
                 <li>
-                  <a class="dropdown-item rounded-3 py-2 text-danger" href="<?= $appUrl ?>/admin">
-                    <i class="bi bi-shield-lock me-2"></i>Admin Panel
+                  <a class="dropdown-item rounded-3 py-2 fw-700" href="<?= $appUrl ?>/admin"
+                     style="color:#6366f1">
+                    <i class="bi bi-shield-lock-fill me-2"></i>Admin Panel
+                  </a>
+                </li>
+              <?php else: ?>
+                <!-- ─── Student dropdown \u2014 \u0111\u1ea7y \u0111\u1ee7 ──────────────────────── -->
+                <li>
+                  <a class="dropdown-item rounded-3 py-2" href="<?= $appUrl ?>/dashboard">
+                    <i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard c\u1ee7a t\u00f4i
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item rounded-3 py-2" href="<?= $appUrl ?>/profile">
+                    <i class="bi bi-person-circle me-2 text-primary"></i>H\u1ed3 s\u01a1 c\u1ee7a t\u00f4i
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item rounded-3 py-2" href="<?= $appUrl ?>/products/my">
+                    <i class="bi bi-box-seam me-2 text-primary"></i>S\u1ea3n ph\u1ea9m c\u1ee7a t\u00f4i
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item rounded-3 py-2" href="<?= $appUrl ?>/transactions/history">
+                    <i class="bi bi-receipt me-2 text-primary"></i>L\u1ecbch s\u1eed giao d\u1ecbch
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item rounded-3 py-2" href="<?= $appUrl ?>/chat">
+                    <i class="bi bi-chat-dots me-2 text-primary"></i>Tin nh\u1eafn
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item rounded-3 py-2 fw-600 text-warning" href="<?= $appUrl ?>/#giveaway">
+                    <i class="bi bi-gift-fill me-2"></i>S\u1ef1 ki\u1ec7n Giveaway
                   </a>
                 </li>
               <?php endif; ?>
               <li><hr class="dropdown-divider my-2"></li>
               <li>
                 <a class="dropdown-item rounded-3 py-2" href="#" id="themeToggleBtn">
-                  <i class="bi bi-moon-stars me-2 text-warning"></i>Giao diện Tối
+                  <i class="bi bi-moon-stars me-2 text-warning"></i>Giao di\u1ec7n T\u1ed1i
                 </a>
               </li>
               <li><hr class="dropdown-divider my-2"></li>
               <li>
                 <a class="dropdown-item rounded-3 py-2 text-danger" href="<?= $appUrl ?>/logout">
-                  <i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
+                  <i class="bi bi-box-arrow-right me-2"></i>\u0110\u0103ng xu\u1ea5t
                 </a>
               </li>
             </ul>

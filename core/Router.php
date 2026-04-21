@@ -68,8 +68,9 @@ class Router
         // Bỏ query string nếu có trong url param
         $url = strtok($url, '?');
         $url = trim($url, '/');
-        // Sanitize cơ bản
-        return htmlspecialchars(strip_tags($url), ENT_QUOTES, 'UTF-8');
+        // Chỉ cho phép ký tự an toàn trong URL path (a-z, 0-9, -, _, /)
+        $url = preg_replace('/[^a-zA-Z0-9\-_\/]/', '', $url);
+        return $url;
     }
 
     /**

@@ -57,14 +57,56 @@ $tab = $_GET['tab'] ?? 'info'; // 'info' hoặc 'security'
                                 <?php endif; ?>
                             </div>
                             <div>
-                                <form action="<?= $appUrl ?>/profile/avatar" method="POST" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
-                                    <input type="hidden" name="_csrf" value="<?= $_SESSION['csrf_token'] ?>">
-                                    <input type="file" name="avatar" id="avatar" class="d-none" accept="image/jpeg,image/png,image/webp,image/gif" onchange="this.form.submit()">
-                                    <button type="button" class="btn btn-outline-primary rounded-pill px-4" onclick="document.getElementById('avatar').click()">
-                                        <i class="bi bi-upload me-2"></i>Tải ảnh lên
+                            <div>
+                                <!-- Input file ẩn — chỉ dùng để chọn ảnh, không submit trực tiếp -->
+                                <input type="file" id="avatarFileInput" class="d-none"
+                                       accept="image/jpeg,image/png,image/webp">
+
+                                <button type="button" class="btn btn-outline-primary rounded-pill px-4"
+                                        onclick="document.getElementById('avatarFileInput').click()">
+                                    <i class="bi bi-scissors me-2"></i>Chọn &amp; Cắt ảnh
+                                </button>
+                                <div class="text-muted small mt-2">JPG, PNG hoặc WEBP. Tối đa 10MB.</div>
+                            </div>
+
+                            <!-- Modal Crop ảnh -->
+                            <div class="modal fade" id="cropModal" tabindex="-1" data-bs-backdrop="static">
+                              <div class="modal-dialog modal-dialog-centered modal-lg">
+                                <div class="modal-content rounded-4 border-0 shadow">
+                                  <div class="modal-header border-0 pb-0">
+                                    <h5 class="modal-title fw-bold">
+                                      <i class="bi bi-crop me-2 text-primary"></i>Cắt ảnh đại diện
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                  </div>
+                                  <div class="modal-body px-4">
+                                    <div style="max-height:420px;overflow:hidden;border-radius:12px;background:#f1f3f9;">
+                                      <img id="cropImage" src="" alt="Crop" style="max-width:100%;display:block;">
+                                    </div>
+                                    <p class="text-muted small text-center mt-2 mb-0">
+                                      <i class="bi bi-info-circle me-1"></i>
+                                      Kéo để di chuyển · Cuộn để zoom · Tỷ lệ 1:1 (ảnh tròn)
+                                    </p>
+                                  </div>
+                                  <div class="modal-footer border-0 pt-0">
+                                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">
+                                      <i class="bi bi-x me-1"></i>Hủy
                                     </button>
-                                </form>
-                                <div class="text-muted small mt-2">Được phép JPG, PNG, WEBP hoặc GIF. Tối đa 10MB.</div>
+                                    <button type="button" class="btn btn-primary rounded-3 px-4" id="btnConfirmCrop">
+                                      <i class="bi bi-check2 me-1"></i>Xác nhận &amp; Đặt làm ảnh đại diện
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Form submit ẩn (nhận canvas blob từ Cropper) -->
+                            <form id="avatarCropForm" action="<?= $appUrl ?>/profile/avatar"
+                                  method="POST" enctype="multipart/form-data" class="d-none">
+                              <input type="hidden" name="_csrf" value="<?= $_SESSION['csrf_token'] ?>">
+                              <input type="file" name="avatar" id="avatarCroppedInput">
+                            </form>
+
                             </div>
                         </div>
                     </div>
@@ -214,3 +256,74 @@ $tab = $_GET['tab'] ?? 'info'; // 'info' hoặc 'security'
     </div>
 </div>
 
+<!-- Cropper.js CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css">
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.js"></script>
+
+<script>
+(function () {
+  const fileInput    = document.getElementById('avatarFileInput');
+  const cropImage    = document.getElementById('cropImage');
+  const btnConfirm   = document.getElementById('btnConfirmCrop');
+  const cropForm     = document.getElementById('avatarCropForm');
+  const croppedInput = document.getElementById('avatarCroppedInput');
+
+  if (!fileInput) return;
+
+  let cropperInstance = null;
+  let cropModalBS     = null;
+
+  fileInput.addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Ảnh quá lớn! Vui lòng chọn ảnh nhỏ hơn 10MB.');
+      this.value = ''; return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      cropImage.src = e.target.result;
+      if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+      if (!cropModalBS) cropModalBS = new bootstrap.Modal(document.getElementById('cropModal'));
+
+      document.getElementById('cropModal').addEventListener('shown.bs.modal', function onShown() {
+        cropperInstance = new Cropper(cropImage, {
+          aspectRatio: 1, viewMode: 1, autoCropArea: 0.85,
+          responsive: true, background: false, guides: true,
+          toggleDragModeOnDblclick: false,
+        });
+        document.getElementById('cropModal').removeEventListener('shown.bs.modal', onShown);
+      }, { once: true });
+
+      cropModalBS.show();
+    };
+    reader.readAsDataURL(file);
+    this.value = '';
+  });
+
+  btnConfirm.addEventListener('click', function () {
+    if (!cropperInstance) return;
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang xử lý...';
+
+    cropperInstance.getCroppedCanvas({ width: 400, height: 400,
+      imageSmoothingEnabled: true, imageSmoothingQuality: 'high' })
+    .toBlob(function (blob) {
+      const croppedFile = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+      const dt = new DataTransfer();
+      dt.items.add(croppedFile);
+      croppedInput.files = dt.files;
+      cropForm.submit();
+    }, 'image/jpeg', 0.92);
+  });
+
+  document.getElementById('cropModal').addEventListener('hidden.bs.modal', function () {
+    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+    cropImage.src = '';
+    btnConfirm.disabled = false;
+    btnConfirm.innerHTML = '<i class="bi bi-check2 me-1"></i>Xác nhận &amp; Đặt làm ảnh đại diện';
+  });
+})();
+</script>

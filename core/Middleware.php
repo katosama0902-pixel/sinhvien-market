@@ -28,17 +28,26 @@ class Middleware
     }
 
     /**
-     * Yêu cầu quyền Admin — nếu không phải admin, redirect về trang chủ
+     * Yêu cầu quyền Admin
+     * Ưu tiên: PIN session (admin_auth) → user role 'admin' (legacy)
      */
     public static function requireAdmin(): void
     {
-        self::requireAuth();
-
-        if (($_SESSION['user']['role'] ?? '') !== 'admin') {
-            Flash::set('error', 'Bạn không có quyền truy cập khu vực quản trị.');
-            self::redirect('');
+        // Cách 1: Admin đăng nhập qua PIN (hệ thống mới)
+        if (!empty($_SESSION['admin_auth'])) {
+            return; // ✅ Đã xác thực
         }
+
+        // Cách 2: Legacy — user có role=admin (tài khoản cũ vẫn hoạt động)
+        if (isset($_SESSION['user']) && ($_SESSION['user']['role'] ?? '') === 'admin') {
+            return; // ✅ Tương thích ngược
+        }
+
+        // Không có quyền → redirect về trang đăng nhập admin
+        Flash::set('error', 'Bạn cần đăng nhập Admin để truy cập trang này.');
+        self::redirect('admin/login');
     }
+
 
     /**
      * Chặn user đã đăng nhập truy cập trang login/register

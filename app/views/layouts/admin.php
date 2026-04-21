@@ -7,7 +7,13 @@ use Core\Flash;
 
 $appUrl = rtrim($_ENV['APP_URL'] ?? 'http://localhost:8080/sinhvien-market', '/');
 $title  = htmlspecialchars($title ?? 'Admin', ENT_QUOTES, 'UTF-8');
-$user   = $_SESSION['user'] ?? [];
+// Admin có thể login bằng PIN (admin_auth) hoặc legacy user role
+$adminName = !empty($_SESSION['admin_auth'])
+    ? 'Administrator'
+    : htmlspecialchars($_SESSION['user']['name'] ?? 'Admin', ENT_QUOTES);
+$adminInitial = mb_strtoupper(mb_substr(
+    !empty($_SESSION['admin_auth']) ? 'A' : ($_SESSION['user']['name'] ?? 'A'), 0, 1
+));
 
 // Xác định trang hiện tại để active sidebar
 $currentUrl = $_SERVER['REQUEST_URI'] ?? '';
@@ -220,12 +226,18 @@ function isActive(string $keyword, string $current): string {
         <button id="themeToggleBtnAdmin" class="btn btn-sm btn-icon border-0 me-2 d-flex align-items-center justify-content-center" style="width:34px;height:34px;border-radius:50%;background:rgba(99,102,241,.1)" title="Chuyển chế độ Sáng/Tối">
             <i class="bi bi-moon-stars-fill text-primary"></i>
         </button>
-        <div class="topbar-avatar"><?= mb_strtoupper(mb_substr($user['name'] ?? 'A', 0, 1)) ?></div>
+        <div class="topbar-avatar"><?= $adminInitial ?></div>
         <div>
-          <div class="topbar-name"><?= htmlspecialchars($user['name'] ?? 'Admin', ENT_QUOTES) ?></div>
+          <div class="topbar-name"><?= htmlspecialchars($adminName, ENT_QUOTES) ?></div>
           <div class="topbar-role">Administrator</div>
         </div>
-        <a href="<?= $appUrl ?>/logout" class="btn btn-sm ms-2" style="background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2);border-radius:8px;font-weight:700;font-size:.8rem">
+        <?php
+        // Link logout: PIN auth → /admin/logout, legacy user → /logout
+        $logoutUrl = !empty($_SESSION['admin_auth'])
+            ? $appUrl . '/admin/logout'
+            : $appUrl . '/logout';
+        ?>
+        <a href="<?= $logoutUrl ?>" class="btn btn-sm ms-2" style="background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2);border-radius:8px;font-weight:700;font-size:.8rem">
           <i class="bi bi-box-arrow-right me-1"></i>Thoát
         </a>
       </div>

@@ -152,6 +152,11 @@ $router->post('transactions/update-status', 'Transaction', 'updateStatus');
 $router->get('api/products/search', 'Product', 'apiSearch');
 $router->get('api/auction/price', 'Auction', 'apiPrice');
 
+// ─── Admin Auth (PIN-based) ──────────────────────────────────────────────────
+$router->get('admin/login',  'AdminAuth', 'loginForm');
+$router->post('admin/login', 'AdminAuth', 'login');
+$router->get('admin/logout', 'AdminAuth', 'logout');
+
 // Admin
 $router->get('admin', 'Admin', 'dashboard');
 $router->get('admin/users', 'Admin', 'users');

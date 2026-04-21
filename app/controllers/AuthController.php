@@ -8,6 +8,7 @@ use Core\Flash;
 use Core\Mailer;
 use App\Models\User;
 use App\Models\LoginAttempt;
+use App\Services\EmailTemplate;
 
 class AuthController extends Controller
 {
@@ -192,7 +193,7 @@ class AuthController extends Controller
             $otpExp = date('Y-m-d H:i:s', time() + 15 * 60);
             $this->userModel->updateOtp($user['id'], $otp, $otpExp);
             file_put_contents(__DIR__ . '/../../debug_otp.log', date('Y-m-d H:i:s') . " - Generated OTP $otp for user {$user['id']}\n", FILE_APPEND);
-            Mailer::send($email, "Xác minh tài khoản SinhVienMarket", "Mã xác minh của bạn là: <b>$otp</b>");
+            Mailer::send($email, "Xác minh tài khoản SinhVienMarket", EmailTemplate::otpVerify($user['name'], $otp, 15));
             
             $_SESSION['verify_email'] = $email;
             Flash::set('info', 'Xác minh bảo mật: Chúng tôi đã gửi mã OTP vào email của bạn.');
@@ -275,9 +276,8 @@ class AuthController extends Controller
             return;
         }
 
-        // Gửi email
-        Mailer::send($email, "Xác minh tài khoản SinhVienMarket", 
-            "Chào $name,<br>Mã OTP xác minh tài khoản của bạn là: <b style='font-size:20px;color:blue;'>$otp</b><br>Mã có hiệu lực trong 15 phút.");
+        Mailer::send($email, "Xác minh tài khoản SinhVienMarket",
+            EmailTemplate::otpVerify($name, $otp, 15));
 
         $_SESSION['verify_email'] = $email;
         Flash::set('success', "Đăng ký thành công! Vui lòng nhập mã OTP đã được gửi đến email $email.");
@@ -400,7 +400,7 @@ class AuthController extends Controller
             $otp = sprintf("%06d", mt_rand(100000, 999999));
             $otpExp = date('Y-m-d H:i:s', time() + 15 * 60);
             $this->userModel->updateOtp($user['id'], $otp, $otpExp);
-            Mailer::send($email, "Xác minh tài khoản SinhVienMarket", "Mã xác minh mới của bạn là: <b style='font-size:20px;'>$otp</b>");
+            Mailer::send($email, "Xác minh tài khoản SinhVienMarket", EmailTemplate::otpVerify($user['name'] ?? 'bạn', $otp, 15));
             Flash::set('success', 'Đã gửi lại mã OTP. Vui lòng kiểm tra email.');
         }
         $this->redirect('verify-otp');
@@ -467,10 +467,8 @@ class AuthController extends Controller
         $appUrl = $_ENV['APP_URL'] ?? 'http://localhost/sinhvien-market';
         $resetLink = "$appUrl/reset-password?token=$otp&email=".urlencode($email);
 
-        Mailer::send($email, "Khôi phục mật khẩu SinhVienMarket", 
-            "Ai đó đã yêu cầu khôi phục mật khẩu cho tài khoản $email.<br>
-            Nhấn vào link sau để đặt lại mật khẩu: <a href='$resetLink'>$resetLink</a><br>
-            Link có hiệu lực trong 15 phút.");
+        Mailer::send($email, "Khôi phục mật khẩu SinhVienMarket",
+            EmailTemplate::resetPassword($user['name'], $resetLink));
 
         Flash::set('success', 'Hãy kiểm tra email để lấy liên kết đổi mật khẩu.');
         $this->redirect('login');

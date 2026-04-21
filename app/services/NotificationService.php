@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Notification;
 use Core\Mailer;
+use App\Services\EmailTemplate;
 
 /**
  * NotificationService — Dịch vụ tập trung gửi thông báo
@@ -35,15 +36,12 @@ class NotificationService
         );
 
         // Gửi email
+        $link = self::baseUrl() . '/products/show?id=' . $productId;
         Mailer::send(
             $userEmail,
             $userName,
             '✅ Bài đăng của bạn đã được duyệt — SinhVienMarket',
-            "Xin chào $userName,<br><br>
-            Bài đăng sản phẩm <strong>\"$productTitle\"</strong> của bạn đã được Admin phê duyệt thành công!<br><br>
-            Sản phẩm của bạn hiện đang được hiển thị trên trang chủ.<br><br>
-            <a href='$link'>➡️ Xem sản phẩm của bạn</a><br><br>
-            Trân trọng,<br>Đội ngũ SinhVienMarket"
+            EmailTemplate::productApproved($userName, $productTitle, $link)
         );
     }
 
@@ -60,16 +58,13 @@ class NotificationService
             $link
         );
 
+        $link = self::baseUrl() . '/products/my';
         $reasonHtml = $reason ? "<p><strong>Lý do:</strong> $reason</p>" : '';
         Mailer::send(
             $userEmail,
             $userName,
             '❌ Bài đăng của bạn bị từ chối — SinhVienMarket',
-            "Xin chào $userName,<br><br>
-            Rất tiếc, bài đăng sản phẩm <strong>\"$productTitle\"</strong> của bạn đã bị Admin từ chối.<br>
-            $reasonHtml<br>
-            Vui lòng chỉnh sửa và đăng lại. <a href='$link'>➡️ Xem sản phẩm của tôi</a><br><br>
-            Trân trọng,<br>Đội ngũ SinhVienMarket"
+            EmailTemplate::productRejected($userName, $productTitle, $reason, $link)
         );
     }
 
@@ -86,15 +81,12 @@ class NotificationService
             $link
         );
 
+        $link = self::baseUrl() . '/transactions/history';
         Mailer::send(
             $sellerEmail,
             $sellerName,
             '🎉 Sản phẩm đã được mua — SinhVienMarket',
-            "Xin chào $sellerName,<br><br>
-            Tin vui! Sản phẩm <strong>\"$productTitle\"</strong> của bạn vừa được <strong>$buyerName</strong> mua với giá 
-            <strong>" . number_format($finalPrice, 0, ',', '.') . "đ</strong>.<br><br>
-            <a href='$link'>➡️ Xem lịch sử giao dịch</a><br><br>
-            Trân trọng,<br>Đội ngũ SinhVienMarket"
+            EmailTemplate::itemSold($sellerName, $productTitle, $buyerName, $finalPrice, $link)
         );
     }
 
@@ -117,13 +109,7 @@ class NotificationService
             $userEmail,
             $userName,
             "📉 Sản phẩm yêu thích giảm giá {$dropPct}% — SinhVienMarket",
-            "Xin chào $userName,<br><br>
-            Một sản phẩm trong danh sách yêu thích của bạn vừa giảm giá!<br><br>
-            <strong>\"$productTitle\"</strong><br>
-            Giá cũ: <del>" . number_format($oldPrice, 0, ',', '.') . "đ</del><br>
-            Giá mới: <strong style='color:red'>" . number_format($newPrice, 0, ',', '.') . "đ</strong> (giảm {$dropPct}%)<br><br>
-            <a href='$link'>➡️ Mua ngay trước khi hết!</a><br><br>
-            Trân trọng,<br>Đội ngũ SinhVienMarket"
+            EmailTemplate::wishlistDrop($userName, $productTitle, $oldPrice, $newPrice, $dropPct, $link)
         );
     }
 

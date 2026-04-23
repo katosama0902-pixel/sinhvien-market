@@ -206,6 +206,7 @@ class AdminController extends Controller
         if (!$this->verifyCsrf()) {
             Flash::set('danger', 'CSRF không hợp lệ.');
             $this->redirect('admin/products');
+            return;
         }
 
         $admin = $this->currentUser();
@@ -215,6 +216,7 @@ class AdminController extends Controller
         if (!$product) {
             Flash::set('danger', 'Sản phẩm không tồn tại.');
             $this->redirect('admin/products');
+            return;
         }
 
         $this->productModel->updateStatus($productId, 'active');
@@ -239,6 +241,7 @@ class AdminController extends Controller
         if (!$this->verifyCsrf()) {
             Flash::set('danger', 'CSRF không hợp lệ.');
             $this->redirect('admin/products');
+            return;
         }
 
         $admin = $this->currentUser();
@@ -249,6 +252,7 @@ class AdminController extends Controller
         if (!$product) {
             Flash::set('danger', 'Sản phẩm không tồn tại.');
             $this->redirect('admin/products');
+            return;
         }
 
         $this->productModel->updateStatus($productId, 'cancelled');
@@ -273,6 +277,7 @@ class AdminController extends Controller
         if (!$this->verifyCsrf()) {
             Flash::set('danger', 'CSRF không hợp lệ.');
             $this->redirect('admin/products');
+            return;
         }
 
         $admin = $this->currentUser();
@@ -282,6 +287,7 @@ class AdminController extends Controller
         if (!$product) {
             Flash::set('danger', 'Sản phẩm không tồn tại.');
             $this->redirect('admin/products');
+            return;
         }
 
         $this->productModel->updateStatus($productId, 'cancelled');
@@ -309,6 +315,7 @@ class AdminController extends Controller
         if (!$this->verifyCsrf()) {
             Flash::set('danger', 'CSRF không hợp lệ.');
             $this->redirect('admin/categories');
+            return;
         }
 
         $admin = $this->currentUser();
@@ -318,6 +325,7 @@ class AdminController extends Controller
         if (mb_strlen($name) < 2) {
             Flash::set('danger', 'Tên danh mục phải có ít nhất 2 ký tự.');
             $this->redirect('admin/categories');
+            return;
         }
 
         $slug = Category::makeSlug($name);
@@ -333,6 +341,7 @@ class AdminController extends Controller
         if (!$this->verifyCsrf()) {
             Flash::set('danger', 'CSRF không hợp lệ.');
             $this->redirect('admin/categories');
+            return;
         }
 
         $admin = $this->currentUser();
@@ -343,6 +352,7 @@ class AdminController extends Controller
         if (!$id || mb_strlen($name) < 2) {
             Flash::set('danger', 'Dữ liệu không hợp lệ.');
             $this->redirect('admin/categories');
+            return;
         }
 
         $slug = Category::makeSlug($name);
@@ -358,6 +368,7 @@ class AdminController extends Controller
         if (!$this->verifyCsrf()) {
             Flash::set('danger', 'CSRF không hợp lệ.');
             $this->redirect('admin/categories');
+            return;
         }
 
         $admin = $this->currentUser();
@@ -367,6 +378,7 @@ class AdminController extends Controller
         if (!$cat) {
             Flash::set('danger', 'Danh mục không tồn tại.');
             $this->redirect('admin/categories');
+            return;
         }
 
         try {

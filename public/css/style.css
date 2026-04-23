@@ -6,7 +6,7 @@
 /* ─── Google Fonts ─────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap');
 
-/* ─── CSS Variables ────────────────────────────────── */
+/* ─── CSS Variables (Light Mode) ────────────────────── */
 :root {
   /* Brand colors */
   --primary:        #6366f1;
@@ -19,6 +19,7 @@
   --warning:        #f59e0b;
   --danger:         #ef4444;
   --info:           #06b6d4;
+  --giveaway:       #d97706; /* Darker orange for light mode */
 
   /* Neutrals */
   --dark:           #0f172a;
@@ -29,6 +30,9 @@
   --bg:             #f8fafc;
   --card-bg:        #ffffff;
   --text:           #0f172a;
+  --img-placeholder: #f1f3f9;
+  --skeleton-base:   #e2e8f0;
+  --skeleton-shine:  #f1f5f9;
 
   /* Gradients */
   --grad-primary:   linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
@@ -78,16 +82,20 @@
   --bg:             #0f172a;
   --card-bg:        #1e293b;
   --text:           #f8fafc;
+  --img-placeholder: #0f172a;
+  --skeleton-base:   #1e293b;
+  --skeleton-shine:  #293548;
   
   --shadow-sm:      0 4px 16px rgba(0,0,0,.4);
   --shadow-md:      0 8px 32px rgba(0,0,0,.6);
   --shadow-lg:      0 20px 60px rgba(0,0,0,.8);
-  --glass-bg-light: rgba(30, 41, 59, 0.75);
+  --glass-bg-light: rgba(30, 41, 59, 0.85);
   --glass-border:   rgba(255, 255, 255, 0.08);
 
   /* Bootstrap Dropdown overrides */
   --bs-dropdown-bg: #1e293b;
   --bs-dropdown-color: #f8fafc;
+  --giveaway:       #fbbf24; /* Standard yellow/amber for dark mode */
 }
 
 [data-theme="dark"] .auth-card {
@@ -175,6 +183,66 @@
 [data-theme="dark"] .text-dark { color: #f8fafc !important; }
 [data-theme="dark"] .modal-header, [data-theme="dark"] .modal-footer { border-color: var(--border) !important; }
 [data-theme="dark"] .modal-content .bg-light { background-color: #0f172a !important; }
+
+/* ─── Dark Mode: Form Controls ─── */
+[data-theme="dark"] .form-control::placeholder,
+[data-theme="dark"] .form-select::placeholder { color: #64748b; }
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+  background: #1e293b;
+  color: #f8fafc;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(99,102,241,.2);
+}
+[data-theme="dark"] .form-check-label { color: #cbd5e1 !important; }
+[data-theme="dark"] .form-check-input { background-color: #334155; border-color: #475569; }
+[data-theme="dark"] .form-check-input:checked { background-color: var(--primary); border-color: var(--primary); }
+[data-theme="dark"] .form-label { color: #cbd5e1 !important; }
+
+/* ─── Dark Mode: Glass Card (sidebar filter) ─── */
+[data-theme="dark"] .glass-card {
+  background: rgba(30, 41, 59, 0.90) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(16px);
+}
+
+/* ─── Dark Mode: Product Card ─── */
+[data-theme="dark"] .card-sv { color: var(--text); }
+[data-theme="dark"] .card-sv h6,
+[data-theme="dark"] .card-sv .fw-600 { color: #f8fafc !important; }
+[data-theme="dark"] .card-sv .text-dark { color: #f8fafc !important; }
+[data-theme="dark"] .card-sv .img-placeholder {
+  background: #0f172a !important;
+}
+
+/* ─── Dark Mode: Countdown ─── */
+[data-theme="dark"] .countdown-box {
+  background: linear-gradient(135deg, #1e293b, #334155) !important;
+  border-color: #475569 !important;
+  color: #fbbf24 !important;
+}
+
+/* ─── Dark Mode: Skeleton ─── */
+[data-theme="dark"] .skeleton {
+  background: linear-gradient(90deg, #1e293b 25%, #293548 50%, #1e293b 75%) !important;
+}
+
+/* ─── Dark Mode: Hover/outline button ─── */
+[data-theme="dark"] .btn-outline-secondary {
+  border-color: #475569;
+  color: #94a3b8;
+}
+[data-theme="dark"] .btn-outline-secondary:hover {
+  background: #334155;
+  border-color: #64748b;
+  color: #f8fafc;
+}
+[data-theme="dark"] .btn-outline-primary { border-color: var(--primary); color: #a5b4fc; }
+[data-theme="dark"] .btn-outline-primary:hover { background: var(--primary); color: #fff; }
+
+/* ─── Dark Mode: Scrollbar ─── */
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #334155; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
 /* ─── Reset & Base ──────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
@@ -722,11 +790,12 @@ h1, h2, h3, h4, h5, h6 { font-weight: 700; letter-spacing: -.3px; }
   text-align: center;
   color: #92400e;
   font-variant-numeric: tabular-nums;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
 }
 
 /* ─── Skeleton Loading ──────────────────────────────── */
 .skeleton {
-  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-shine) 50%, var(--skeleton-base) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
   border-radius: var(--radius-sm);

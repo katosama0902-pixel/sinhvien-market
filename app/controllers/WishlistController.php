@@ -53,6 +53,7 @@ class WishlistController extends Controller
 
         if (!$this->verifyCsrf()) {
             $this->json(['success' => false, 'message' => 'CSRF không hợp lệ.'], 403);
+            return;
         }
 
         $user      = $this->currentUser();
@@ -60,6 +61,7 @@ class WishlistController extends Controller
 
         if ($productId <= 0) {
             $this->json(['success' => false, 'message' => 'Sản phẩm không hợp lệ.'], 400);
+            return;
         }
 
         $productModel = new Product();
@@ -67,6 +69,7 @@ class WishlistController extends Controller
 
         if (!$product || $product['status'] !== 'active') {
             $this->json(['success' => false, 'message' => 'Sản phẩm không tồn tại.'], 404);
+            return;
         }
 
         $exists = $this->wishlistModel->exists($user['id'], $productId);

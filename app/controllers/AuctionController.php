@@ -66,6 +66,7 @@ class AuctionController extends Controller
         // CSRF
         if (!$this->verifyCsrf()) {
             $this->json(['success' => false, 'message' => 'Phiên làm việc hết hạn.'], 403);
+            return;
         }
 
         $user      = $this->currentUser();
@@ -74,6 +75,7 @@ class AuctionController extends Controller
 
         if ($auctionId <= 0) {
             $this->json(['success' => false, 'message' => 'Dữ liệu không hợp lệ.'], 400);
+            return;
         }
 
         // Lấy auction và tính giá thực tế server-side

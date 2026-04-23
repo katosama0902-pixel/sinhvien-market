@@ -84,12 +84,12 @@ class Auction extends Model
     }
 
     /**
-     * Kết thúc phiên đấu giá
+     * Kết thúc phiên đấu giá (Đã có người thắng)
      */
     public function markAsEnded(int $auctionId, int $winnerId, float $finalPrice): void
     {
         $this->execute(
-            'UPDATE auctions SET status = "ended", winner_id = ?, final_price = ?, ended_at = NOW() WHERE id = ?',
+            'UPDATE auctions SET status = "sold", winner_id = ?, final_price = ?, ended_at = NOW() WHERE id = ?',
             [$winnerId, $finalPrice, $auctionId]
         );
     }

@@ -198,7 +198,7 @@ class TransactionController extends Controller
             exit;
         }
 
-        Flash::set('danger', 'Khởng thể kết nối MoMo: ' . $result['message']);
+        Flash::set('danger', 'Không thể kết nối MoMo: ' . $result['message']);
         $this->redirect('transactions/history');
     }
 
@@ -278,6 +278,7 @@ class TransactionController extends Controller
         $user = $this->currentUser();
 
         $txModel = new Transaction();
+        $pModel = new \App\Models\Product();
         $tx = $txModel->findById($id);
 
         if (!$tx) {
@@ -290,9 +291,16 @@ class TransactionController extends Controller
         $isSeller = (int)$tx['seller_id'] === (int)$user['id'];
 
         // Kiểm tra quyền cập nhật
-        if ($isSeller && in_array($status, ['shipping', 'delivered'])) {
+        if ($isSeller && in_array($status, ['shipping', 'delivered', 'cancelled'])) {
             $txModel->updateOrderStatus($id, $status);
-            Flash::set('success', 'Đã cập nhật trạng thái đơn hàng thành công!');
+            
+            // Nếu hủy đơn hàng, trả lại trạng thái sản phẩm là 'active'
+            if ($status === 'cancelled') {
+                $pModel->updateStatus($tx['product_id'], 'active');
+                Flash::set('success', 'Đã hủy đơn hàng và đưa sản phẩm quay trở lại sàn.');
+            } else {
+                Flash::set('success', 'Đã cập nhật trạng thái đơn hàng thành công!');
+            }
         } elseif ($isBuyer && in_array($status, ['completed'])) {
             $txModel->updateOrderStatus($id, $status);
             Flash::set('success', 'Bạn đã xác nhận nhận hàng. Cảm ơn bạn!');

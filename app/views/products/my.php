@@ -48,7 +48,7 @@ $typeMap = [
   <?php else: ?>
     <div class="table-responsive">
       <table class="table table-hover align-middle">
-        <thead class="table-light">
+        <thead style="background:var(--bg)">
           <tr>
             <th style="width:50px">#</th>
             <th>Sản phẩm</th>
@@ -72,7 +72,7 @@ $typeMap = [
               <!-- Ảnh + Tên -->
               <td>
                 <div class="d-flex align-items-center gap-3">
-                  <div style="width:52px;height:52px;flex-shrink:0;border-radius:10px;overflow:hidden;background:#f1f3f9">
+                  <div style="width:52px;height:52px;flex-shrink:0;border-radius:10px;overflow:hidden;background:var(--img-placeholder)">
                     <?php if ($p['image']): ?>
                       <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($p['image'], ENT_QUOTES) ?>"
                            style="width:100%;height:100%;object-fit:cover">
@@ -84,8 +84,8 @@ $typeMap = [
                   </div>
                   <div>
                     <a href="<?= $appUrl ?>/products/show?id=<?= $p['id'] ?>"
-                       class="fw-600 text-dark text-decoration-none d-block"
-                       style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                       class="fw-600 text-decoration-none d-block"
+                       style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)">
                       <?= htmlspecialchars($p['title'], ENT_QUOTES) ?>
                     </a>
                     <small class="text-muted"><?= htmlspecialchars($p['category_name'], ENT_QUOTES) ?></small>

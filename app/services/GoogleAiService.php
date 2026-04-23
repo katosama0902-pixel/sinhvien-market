@@ -49,7 +49,9 @@ class GoogleAiService
         curl_close($ch);
 
         if ($error) {
-            return "Lỗi kết nối Trợ lý AI: " . $error;
+            // Log lỗi cho developer xem trong storage/logs/
+            error_log("Google AI Connection Error: " . $error);
+            return "Xin lỗi, hiện tại Trợ lý AI đang bận một chút, cậu vui lòng đợi chủ shop phản hồi nha!";
         }
 
         $data = json_decode($response, true);
@@ -58,9 +60,11 @@ class GoogleAiService
         }
 
         if (isset($data['error']['message'])) {
-            return "Lỗi API AI: " . $data['error']['message'];
+            // Log lỗi API (như hết tiền/hết lượt) để dev kiểm tra
+            error_log("Google AI API Error: " . $data['error']['message']);
+            return "Xin lỗi, hiện tại Trợ lý AI đang bận một chút, cậu vui lòng đợi chủ shop phản hồi nha!";
         }
 
-        return "Xin lỗi, Trợ lý AI hiện đang gặp trục trặc khi suy nghĩ.";
+        return "Xin lỗi, hiện tại Trợ lý AI đang bận một chút, cậu vui lòng đợi chủ shop phản hồi nha!";
     }
 }

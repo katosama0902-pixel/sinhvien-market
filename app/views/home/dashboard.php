@@ -95,7 +95,7 @@ foreach ($transactions as $t) {
             <?php foreach (array_slice($products, 0, 5) as $p): ?>
               <?php [$statusLabel, $statusColor, $statusIcon] = $statusMap[$p['status']] ?? ['?','secondary','bi-dash']; ?>
               <div class="list-group-item d-flex align-items-center gap-3">
-                <div style="width:48px;height:48px;border-radius:8px;overflow:hidden;flex-shrink:0;background:#f1f3f9">
+                <div style="width:48px;height:48px;border-radius:8px;overflow:hidden;flex-shrink:0;background:var(--img-placeholder)">
                   <?php if ($p['image']): ?>
                     <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($p['image'], ENT_QUOTES) ?>"
                          style="width:100%;height:100%;object-fit:cover">
@@ -107,7 +107,7 @@ foreach ($transactions as $t) {
                 </div>
                 <div class="flex-grow-1 min-w-0">
                   <a href="<?= $appUrl ?>/products/show?id=<?= $p['id'] ?>"
-                     class="fw-600 text-dark text-decoration-none d-block text-truncate">
+                     class="fw-600 text-decoration-none d-block text-truncate" style="color:var(--text)">
                     <?= htmlspecialchars($p['title'], ENT_QUOTES) ?>
                   </a>
                   <div class="small text-muted"><?= date('d/m/Y', strtotime($p['created_at'])) ?></div>

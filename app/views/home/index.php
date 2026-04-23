@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="col-md-4 fade-in-up delay-100">
           <a href="<?= $appUrl ?>/products/show?id=<?= $p['id'] ?>" class="text-decoration-none">
             <div class="hp-auction-card">
-              <div class="hp-auction-img">
+              <div class="hp-auction-img" style="background:var(--img-placeholder)">
                 <?php if ($p['image']): ?>
                   <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($p['image'], ENT_QUOTES) ?>" alt="">
                 <?php else: ?>
@@ -290,10 +290,10 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="col-6 col-sm-4 col-md-3 col-lg-2">
         <a href="<?= $appUrl ?>/products" class="text-decoration-none">
           <div class="hp-cat-card hp-cat-all">
-            <div class="hp-cat-icon" style="background:#f1f5f9;box-shadow:none">
-              <i class="bi bi-grid" style="color:#94a3b8"></i>
+            <div class="hp-cat-icon" style="background:var(--bg);box-shadow:none">
+              <i class="bi bi-grid" style="color:var(--muted)"></i>
             </div>
-            <div class="hp-cat-name" style="color:#64748b">Tất cả</div>
+            <div class="hp-cat-name" style="color:var(--muted)">Tất cả</div>
           </div>
         </a>
       </div>
@@ -336,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   <?php if ($p['image']): ?>
                     <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($p['image'], ENT_QUOTES) ?>" alt="">
                   <?php else: ?>
-                    <div class="hp-product-placeholder"><i class="bi bi-image"></i></div>
+                    <div class="hp-product-placeholder" style="background:var(--img-placeholder)"><i class="bi bi-image"></i></div>
                   <?php endif; ?>
                   <?php if ($p['type'] === 'auction'): ?>
                     <span class="hp-product-type-badge" style="background:linear-gradient(135deg,#ef4444,#f97316)">⚡ Đấu giá</span>
@@ -605,13 +605,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ── Auction Card ────────────────────────────────── */
 .hp-auction-card {
-  background:#fff;border-radius:20px;
-  border:1.5px solid #e2e8f0;overflow:hidden;
-  transition:transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s;
+  background: var(--card-bg); border-radius: 20px;
+  border: 1.5px solid var(--border); overflow: hidden;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s;
 }
 .hp-auction-card:hover { transform:translateY(-8px);box-shadow:0 20px 50px rgba(239,68,68,.18);border-color:#fca5a5; }
 .hp-auction-img {
-  height:200px;overflow:hidden;background:#fee2e2;position:relative;
+  height:200px;overflow:hidden;background:var(--img-placeholder);position:relative;
 }
 .hp-auction-img img { width:100%;height:100%;object-fit:cover;transition:transform .4s; }
 .hp-auction-card:hover .hp-auction-img img { transform:scale(1.06); }
@@ -631,7 +631,7 @@ document.addEventListener('DOMContentLoaded', () => {
 .hp-auction-body { padding:1rem 1.1rem; }
 .hp-auction-cat { font-size:.75rem;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:.35rem; }
 .hp-auction-title {
-  font-weight:700;font-size:.95rem;color:#0f172a;line-height:1.35;
+  font-weight:700;font-size:.95rem;color:var(--text);line-height:1.35;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
 }
 .hp-auction-price { font-size:1.4rem;font-weight:900;color:#ef4444; }
@@ -649,8 +649,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ── Category Card ───────────────────────────────── */
 .hp-cat-card {
-  background:#fff;border-radius:20px;
-  border:1.5px solid #e2e8f0;padding:1.5rem 1rem;
+  background: var(--card-bg); border-radius: 20px;
+  border: 1.5px solid var(--border); padding: 1.5rem 1rem;
   text-align:center;
   transition:all .32s cubic-bezier(.34,1.56,.64,1);
   cursor:pointer;
@@ -666,16 +666,16 @@ document.addEventListener('DOMContentLoaded', () => {
   display:flex;align-items:center;justify-content:center;
   margin:0 auto 12px;font-size:1.5rem;color:#fff;
 }
-.hp-cat-name { font-size:.82rem;font-weight:700;color:#334155;line-height:1.3; }
+.hp-cat-name { font-size:.82rem;font-weight:700;color:var(--text);line-height:1.3; }
 
 /* ── Product Card ────────────────────────────────── */
 .hp-product-card {
-  background:#fff;border-radius:18px;
-  border:1.5px solid #e2e8f0;overflow:hidden;
-  transition:transform .32s cubic-bezier(.34,1.56,.64,1),box-shadow .28s;
+  background: var(--card-bg); border-radius: 18px;
+  border: 1.5px solid var(--border); overflow: hidden;
+  transition: transform .32s cubic-bezier(.34,1.56,.64,1),box-shadow .28s;
 }
 .hp-product-card:hover { transform:translateY(-7px);box-shadow:0 18px 42px rgba(99,102,241,.14);border-color:#c7d2fe; }
-.hp-product-img { height:160px;background:#f8fafc;position:relative;overflow:hidden; }
+.hp-product-img { height:160px;background:var(--img-placeholder);position:relative;overflow:hidden; }
 .hp-product-img img { width:100%;height:100%;object-fit:cover;transition:transform .4s; }
 .hp-product-card:hover .hp-product-img img { transform:scale(1.07); }
 .hp-product-placeholder { display:flex;align-items:center;justify-content:center;height:100%;font-size:2.5rem;color:rgba(100,116,139,.2); }
@@ -686,7 +686,7 @@ document.addEventListener('DOMContentLoaded', () => {
 .hp-product-body { padding:.85rem; }
 .hp-product-cat { font-size:.72rem;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:.3rem; }
 .hp-product-title {
-  font-size:.88rem;font-weight:700;color:#0f172a;line-height:1.35;
+  font-size:.88rem;font-weight:700;color:var(--text);line-height:1.35;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
   margin-bottom:.5rem;
 }
@@ -694,9 +694,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ── Empty state ─────────────────────────────────── */
 .hp-empty-icon {
-  width:80px;height:80px;background:#e0e7ff;border-radius:50%;
+  width:80px;height:80px;background:var(--primary-light);border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  margin:0 auto;font-size:2.2rem;color:#6366f1;
+  margin:0 auto;font-size:2.2rem;color:var(--primary);
 }
 
 /* ── CTA Banner ──────────────────────────────────── */

@@ -162,7 +162,7 @@ $hasFilter = $keyword || $categoryId || $condition || $priceMin || $priceMax;
               <a href="<?= $appUrl ?>/products/show?id=<?= $p['id'] ?>" class="text-decoration-none">
                 <div class="card-sv h-100 hover-lift">
                   <!-- Ảnh -->
-                  <div style="height:180px;overflow:hidden;position:relative;background:#f1f3f9">
+                  <div style="height:180px;overflow:hidden;position:relative;background:var(--img-placeholder)">
                     <?php if ($p['image']): ?>
                       <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($p['image'], ENT_QUOTES) ?>"
                            alt="<?= htmlspecialchars($p['title'], ENT_QUOTES) ?>"
@@ -199,7 +199,7 @@ $hasFilter = $keyword || $categoryId || $condition || $priceMin || $priceMax;
                     <p class="small text-muted mb-1">
                       <i class="bi bi-tag me-1"></i><?= htmlspecialchars($p['category_name'], ENT_QUOTES) ?>
                     </p>
-                    <h6 class="fw-600 mb-2 text-dark" style="line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
+                    <h6 class="fw-600 mb-2" style="color:var(--text);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
                       <?= htmlspecialchars($p['title'], ENT_QUOTES) ?>
                     </h6>
 

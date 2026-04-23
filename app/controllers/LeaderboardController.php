@@ -53,6 +53,7 @@ class LeaderboardController extends Controller
             'topSellers' => $topSellers,
             'myRank'     => $myRank,
             'myStats'    => $myStats,
+            'appUrl'     => rtrim($_ENV['APP_URL'] ?? '', '/'),
         ]);
     }
 }

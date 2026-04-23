@@ -34,6 +34,7 @@
 - **3 hình thức giao dịch:** Bán thông thường / Đấu giá ngược (Reverse Auction) / Trao đổi hiện vật
 - **Đấu giá ngược (Dutch Auction):** Giá tự động giảm dần theo thời gian, người mua nhấn "Lock & Buy" để chốt đơn
 - **Order Tracking:** Theo dõi đơn hàng qua 4 giai đoạn (Chờ xác nhận → Đang giao → Đã giao → Hoàn tất)
+- **Hủy đơn & Hoàn tác:** Người bán có quyền hủy giao dịch COD, sản phẩm sẽ tự động quay lại trạng thái "Đang bán" trên sàn.
 - **Wishlist:** Lưu sản phẩm yêu thích để theo dõi sau
 
 ### 🔐 Xác Thực & Bảo Mật

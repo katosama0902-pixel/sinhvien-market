@@ -121,7 +121,7 @@ $user    = $_SESSION['user'] ?? null;
           <?php if (($user['role'] ?? '') !== 'admin'): ?>
           <li class="nav-item">
             <a href="<?= $appUrl ?>/rewards" class="btn btn-sm d-flex align-items-center gap-1 ms-1 text-decoration-none"
-                    style="background:rgba(255,220,80,.18);color:#ffe066;border:1px solid rgba(255,220,80,.35);border-radius:20px;padding:3px 12px;font-size:.82rem;font-weight:700"
+                    style="background:rgba(255,220,80,.18);color:#fbbf24;border:1px solid rgba(255,220,80,.35);border-radius:20px;padding:3px 12px;font-size:.82rem;font-weight:700"
                     title="Đến Điểm Danh Bỏ Túi Xu">
               🪙 <?= (int)($user['coins'] ?? 0) ?> xu
             </a>
@@ -159,15 +159,15 @@ $user    = $_SESSION['user'] ?? null;
             </a>
             <ul class="dropdown-menu dropdown-menu-end border-0 rounded-4 mt-1 p-2" style="min-width:220px">
               <?php if (($user['role'] ?? '') === 'admin'): ?>
-                <!-- ─── Admin dropdown \u2014 g\u1ecdn nh\u1eb9 ─────────────────────── -->
+                <!-- ─── Admin dropdown — gọn nhẹ ─────────────────────── -->
                 <li>
                   <div class="px-3 py-1" style="font-size:11px;color:#94a3b8;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
-                    Qu\u1ea3n tr\u1ecb vi\u00ean
+                    Quản trị viên
                   </div>
                 </li>
                 <li>
                   <a class="dropdown-item rounded-3 py-2" href="<?= $appUrl ?>/profile">
-                    <i class="bi bi-person-circle me-2 text-primary"></i>H\u1ed3 s\u01a1 c\u1ee7a t\u00f4i
+                    <i class="bi bi-person-circle me-2 text-primary"></i>Hồ sơ của tôi
                   </a>
                 </li>
                 <li><hr class="dropdown-divider my-2"></li>
@@ -178,52 +178,53 @@ $user    = $_SESSION['user'] ?? null;
                   </a>
                 </li>
               <?php else: ?>
-                <!-- ─── Student dropdown \u2014 \u0111\u1ea7y \u0111\u1ee7 ──────────────────────── -->
+                <!-- ─── Student dropdown — đầy đủ ──────────────────────── -->
                 <li>
                   <a class="dropdown-item rounded-3 py-2" href="<?= $appUrl ?>/dashboard">
-                    <i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard c\u1ee7a t\u00f4i
+                    <i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard của tôi
                   </a>
                 </li>
                 <li>
                   <a class="dropdown-item rounded-3 py-2" href="<?= $appUrl ?>/profile">
-                    <i class="bi bi-person-circle me-2 text-primary"></i>H\u1ed3 s\u01a1 c\u1ee7a t\u00f4i
+                    <i class="bi bi-person-circle me-2 text-primary"></i>Hồ sơ của tôi
                   </a>
                 </li>
                 <li>
                   <a class="dropdown-item rounded-3 py-2" href="<?= $appUrl ?>/products/my">
-                    <i class="bi bi-box-seam me-2 text-primary"></i>S\u1ea3n ph\u1ea9m c\u1ee7a t\u00f4i
+                    <i class="bi bi-box-seam me-2 text-primary"></i>Sản phẩm của tôi
                   </a>
                 </li>
                 <li>
                   <a class="dropdown-item rounded-3 py-2" href="<?= $appUrl ?>/transactions/history">
-                    <i class="bi bi-receipt me-2 text-primary"></i>L\u1ecbch s\u1eed giao d\u1ecbch
+                    <i class="bi bi-receipt me-2 text-primary"></i>Lịch sử giao dịch
                   </a>
                 </li>
                 <li>
                   <a class="dropdown-item rounded-3 py-2" href="<?= $appUrl ?>/chat">
-                    <i class="bi bi-chat-dots me-2 text-primary"></i>Tin nh\u1eafn
+                    <i class="bi bi-chat-dots me-2 text-primary"></i>Tin nhắn
                   </a>
                 </li>
                 <li>
-                  <a class="dropdown-item rounded-3 py-2 fw-600 text-warning" href="<?= $appUrl ?>/#giveaway">
-                    <i class="bi bi-gift-fill me-2"></i>S\u1ef1 ki\u1ec7n Giveaway
+                  <a class="dropdown-item rounded-3 py-2 fw-600" href="<?= $appUrl ?>/#giveaway" style="color:var(--giveaway)">
+                    <i class="bi bi-gift-fill me-2" style="color:var(--giveaway)"></i>Sự kiện Giveaway
                   </a>
                 </li>
               <?php endif; ?>
               <li><hr class="dropdown-divider my-2"></li>
               <li>
                 <a class="dropdown-item rounded-3 py-2" href="#" id="themeToggleBtn">
-                  <i class="bi bi-moon-stars me-2 text-warning"></i>Giao di\u1ec7n T\u1ed1i
+                  <i class="bi bi-moon-stars me-2 text-warning"></i>Giao diện Tối
                 </a>
               </li>
               <li><hr class="dropdown-divider my-2"></li>
               <li>
                 <a class="dropdown-item rounded-3 py-2 text-danger" href="<?= $appUrl ?>/logout">
-                  <i class="bi bi-box-arrow-right me-2"></i>\u0110\u0103ng xu\u1ea5t
+                  <i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
                 </a>
               </li>
             </ul>
           </li>
+
         <?php else: ?>
           <li class="nav-item">
             <a class="nav-link" href="<?= $appUrl ?>/login-role">Đăng nhập</a>
@@ -357,13 +358,13 @@ $user    = $_SESSION['user'] ?? null;
 
   function typeIcon(type) {
     const icons = {
-      product_approved: '\u2705',
-      product_rejected: '\u274c',
-      item_sold:        '\ud83c\udf89',
-      wishlist_drop:    '\ud83d\udcc9',
-      new_message:      '\ud83d\udcac',
+      product_approved: '✅',
+      product_rejected: '❌',
+      item_sold:        '🎉',
+      wishlist_drop:    '📉',
+      new_message:      '💬',
     };
-    return icons[type] || '\ud83d\udd14';
+    return icons[type] || '🔔';
   }
 
   async function pollNotifications() {
@@ -379,9 +380,9 @@ $user    = $_SESSION['user'] ?? null;
       if (list && data.items && data.items.length > 0) {
         list.innerHTML = data.items.map(n =>
           `<li><a class="dropdown-item rounded-3 py-2" href="${n.link || BASE + '/notifications'}" style="white-space:normal">
-            <div style="font-weight:600;font-size:.8rem">${typeIcon(n.type)} ${n.title}</div>
-            ${n.body ? `<div style="font-size:.73rem;color:#6b7280">${n.body}</div>` : ''}
-            <div style="font-size:.68rem;color:#9ca3af;margin-top:2px">${n.time}</div>
+            <div style="font-weight:600;font-size:.8rem;color:var(--text)">${typeIcon(n.type)} ${n.title}</div>
+            ${n.body ? `<div style="font-size:.73rem;color:var(--muted)">${n.body}</div>` : ''}
+            <div style="font-size:.68rem;color:var(--muted);margin-top:2px;opacity:.8">${n.time}</div>
           </a></li>`
         ).join('');
       } else if (list) {
@@ -506,7 +507,7 @@ if (!empty($_activeGiveaways)):
 
       <!-- CTA Buttons -->
       <div style="display:flex; gap:.75rem; flex-direction:column">
-        <a href="<?= $appUrl ?>/#giveaway-section"
+        <a href="<?= $appUrl ?>/rewards#giveaway"
            onclick="closeGwPopup()"
            style="
              display:flex; align-items:center; justify-content:center; gap:.6rem;

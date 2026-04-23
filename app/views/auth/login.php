@@ -52,14 +52,18 @@ use Core\Flash;
     .auth-wrap { position: relative; z-index: 2; width: 100%; }
 
     .login-card {
-      background: rgba(255,255,255,.96);
-      border: 1px solid rgba(255,255,255,.7);
+      background: var(--card-bg);
+      border: 1px solid var(--border);
       border-radius: 24px;
-      box-shadow: 0 30px 80px rgba(0,0,0,.25), 0 0 0 1px rgba(255,255,255,.3);
+      box-shadow: 0 30px 80px rgba(0,0,0,.25), 0 0 0 1px rgba(255,255,255,.1);
       padding: 2.75rem;
       width: 100%; max-width: 460px;
       margin: 0 auto;
       animation: slideUp .5s cubic-bezier(.16,1,.3,1);
+    }
+    [data-theme="dark"] .login-card {
+      background: rgba(30, 41, 59, 0.96);
+      border-color: rgba(255, 255, 255, 0.1);
     }
     @keyframes slideUp {
       from { opacity:0; transform: translateY(40px) scale(.97); }
@@ -85,11 +89,13 @@ use Core\Flash;
     }
     .form-floating-custom .form-control {
       padding-left: 2.8rem;
-      border: 2px solid #e2e8f0;
+      border: 2px solid var(--border);
       border-radius: 12px;
       height: 52px;
       font-size: .95rem;
       transition: border-color .2s, box-shadow .2s;
+      background: var(--card-bg);
+      color: var(--text);
     }
     .form-floating-custom .form-control:focus {
       border-color: #6366f1;
@@ -102,9 +108,9 @@ use Core\Flash;
       border-radius: 12px 0 0 12px !important;
     }
     .form-floating-custom .password-toggle {
-      border: 2px solid #e2e8f0; border-left: none;
+      border: 2px solid var(--border); border-left: none;
       border-radius: 0 12px 12px 0 !important;
-      background: #fff; color: #94a3b8;
+      background: var(--card-bg); color: #94a3b8;
       padding: 0 14px;
       transition: color .2s;
     }
@@ -136,7 +142,7 @@ use Core\Flash;
       color: #94a3b8; font-size: .85rem; margin: 1.25rem 0;
     }
     .divider::before, .divider::after {
-      content: ''; flex: 1; height: 1px; background: #e2e8f0;
+      content: ''; flex: 1; height: 1px; background: var(--border);
     }
 
     .forgot-link {
@@ -186,7 +192,7 @@ use Core\Flash;
 
         <!-- Email -->
         <div class="mb-1 d-flex justify-content-between align-items-center">
-          <label for="email" class="form-label mb-0 fw-600" style="font-size:.88rem;color:#334155">Email</label>
+          <label for="email" class="form-label mb-0 fw-600" style="font-size:.88rem;color:var(--text)">Email</label>
         </div>
         <div class="form-floating-custom">
           <span class="field-icon"><i class="bi bi-envelope"></i></span>
@@ -204,7 +210,7 @@ use Core\Flash;
 
         <!-- Password -->
         <div class="mb-1 d-flex justify-content-between align-items-center">
-          <label for="password" class="form-label mb-0 fw-600" style="font-size:.88rem;color:#334155">Mật khẩu</label>
+          <label for="password" class="form-label mb-0 fw-600" style="font-size:.88rem;color:var(--text)">Mật khẩu</label>
           <a href="<?= $appUrl ?>/forgot-password" class="forgot-link">Quên mật khẩu?</a>
         </div>
         <div class="form-floating-custom">

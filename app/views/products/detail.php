@@ -1,14 +1,11 @@
 <?php
 /**
  * View: Chi tiết sản phẩm + Đấu giá ngược
- * Biến nhận: $product (đã join auction), $auctionPrice
+ * Biến nhận: $product (đã join auction), $auctionPrice, $sellerRank, $csrf
  */
 $appUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
 $user   = $_SESSION['user'] ?? null;
-use Core\Controller;
-
-$ctrl = new class extends Controller {};
-$csrf = $ctrl->csrfToken();
+// $csrf được truyền từ ProductController::show() — không cần khởi tạo tại đây
 
 function fmtPrice(int $price): string {
     return number_format($price, 0, ',', '.') . 'đ';
@@ -28,7 +25,7 @@ $p = $product;
                alt="<?= htmlspecialchars($p['title'], ENT_QUOTES) ?>"
                class="w-100" style="object-fit:cover;height:420px">
         <?php else: ?>
-          <div class="d-flex align-items-center justify-content-center bg-light" style="height:420px">
+          <div class="d-flex align-items-center justify-content-center" style="height:420px;background:var(--img-placeholder)">
             <i class="bi bi-image text-muted" style="font-size:5rem;opacity:.2"></i>
           </div>
         <?php endif; ?>
@@ -88,7 +85,7 @@ $p = $product;
 
       <?php if ($p['type'] === 'auction' && $auctionPrice): ?>
         <!-- ─── Khối đấu giá ngược ─────────────────────────────── -->
-        <div class="auction-card p-4 mb-4 rounded-4 hover-lift" style="background:linear-gradient(135deg,#fff5f5,#fff0f8);border:2px solid #ffcdd2">
+        <div class="auction-card p-4 mb-4 rounded-4 hover-lift" id="auctionCard">
 
           <!-- Giá hiện tại -->
           <div class="text-center mb-3">
@@ -118,13 +115,13 @@ $p = $product;
           <!-- Thông số đấu giá -->
           <div class="row g-2 mb-3 text-center">
             <div class="col-6">
-              <div class="bg-white rounded-3 p-2">
+              <div class="rounded-3 p-2" style="background:var(--bg)">
                 <div class="small text-muted">Giá khởi điểm</div>
-                <div class="fw-700 text-dark"><?= fmtPrice($auctionPrice['start_price']) ?></div>
+                <div class="fw-700" style="color:var(--text)"><?= fmtPrice($auctionPrice['start_price']) ?></div>
               </div>
             </div>
             <div class="col-6">
-              <div class="bg-white rounded-3 p-2">
+              <div class="rounded-3 p-2" style="background:var(--bg)">
                 <div class="small text-muted">Giá sàn</div>
                 <div class="fw-700 text-danger"><?= fmtPrice($auctionPrice['floor_price']) ?></div>
               </div>
@@ -136,14 +133,22 @@ $p = $product;
             <a href="<?= $appUrl ?>/login" class="btn btn-danger w-100 btn-lg">
               <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập để mua
             </a>
-          <?php elseif ((int)$p['user_id'] === (int)$user['id']): ?>
-            <p class="text-center text-muted small mb-0"><em>Đây là sản phẩm của bạn</em></p>
           <?php elseif ($p['status'] === 'active' && $p['auction_status'] === 'active'): ?>
-            <button type="button" class="btn btn-danger w-100 btn-lg" id="btnBuyNow"
-                    onclick="prepareCheckout(<?= $p['auction_id'] ?>, <?= $auctionPrice['current_price'] ?>, 'auction')">
-              <i class="bi bi-lightning-fill me-2"></i>Mua ngay với giá
-              <span id="btnPrice"><?= fmtPrice($auctionPrice['current_price']) ?></span>
-            </button>
+            <div class="d-flex flex-column gap-2">
+                <button type="button" class="btn btn-danger w-100 btn-lg" id="btnBuyNow"
+                        onclick="prepareCheckout(<?= $p['auction_id'] ?>, <?= $auctionPrice['current_price'] ?>, 'auction')">
+                  <i class="bi bi-lightning-fill me-2"></i>Mua ngay với giá
+                  <span id="btnPrice"><?= fmtPrice($auctionPrice['current_price']) ?></span>
+                </button>
+                
+                <?php if ($user && (int)$p['user_id'] === (int)$user['id']): ?>
+                <button type="button" class="btn btn-outline-warning w-100 rounded-pill fw-bold"
+                        style="border: 2px solid #f59e0b; color: #f59e0b;"
+                        onclick="confirmBump(<?= $p['id'] ?>, '<?= htmlspecialchars($p['title'], ENT_QUOTES) ?>')">
+                  <i class="bi bi-rocket-takeoff me-2"></i>Đẩy bài ngay (50 xu)
+                </button>
+                <?php endif; ?>
+            </div>
             <p class="text-center small text-muted mt-2 mb-0">
               <i class="bi bi-shield-check me-1"></i>Giao dịch được bảo vệ • Không thể hoàn tác
             </p>
@@ -164,7 +169,16 @@ $p = $product;
               <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập để mua
             </a>
         <?php elseif ((int)$p['user_id'] === (int)$user['id']): ?>
-            <p class="text-center text-muted small"><em>Đây là sản phẩm của bạn</em></p>
+            <div class="d-flex flex-column gap-2">
+                <p class="text-center text-muted small mb-0"><em>Đây là sản phẩm của bạn</em></p>
+                <?php if ($p['status'] === 'active'): ?>
+                <button type="button" class="btn btn-warning w-100 btn-lg rounded-pill fw-bold shadow-sm" 
+                        style="background: linear-gradient(135deg, #f59e0b, #ea580c); border: none; color: #fff;"
+                        onclick="confirmBump(<?= $p['id'] ?>, '<?= htmlspecialchars($p['title'], ENT_QUOTES) ?>')">
+                  <i class="bi bi-rocket-takeoff me-2"></i>Đẩy bài lên đầu (50 xu)
+                </button>
+                <?php endif; ?>
+            </div>
         <?php elseif ($p['status'] === 'active'): ?>
           <button type="button" class="btn btn-primary w-100 btn-lg mb-2" onclick="prepareCheckout(<?= $p['id'] ?>, <?= $p['price'] ?>, 'sale')">
             <i class="bi bi-cart-check me-2"></i>Mua ngay
@@ -188,7 +202,7 @@ $p = $product;
       <?php endif; ?>
 
       <!-- ─── Nút Chia sẻ QR Code ────────────────────────────── -->
-      <div class="mt-4 pt-4 border-top">
+      <div class="mt-4 pt-4 border-top" style="border-top:1px solid var(--border) !important">
         <button class="btn btn-outline-dark w-100 btn-lg rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2 hover-lift" data-bs-toggle="modal" data-bs-target="#qrShareModal">
             <i class="bi bi-qr-code-scan"></i> Chia sẻ Mã QR Sản Phẩm
         </button>
@@ -228,7 +242,7 @@ $p = $product;
           <?php endif; ?>
         </div>
         <div class="d-flex align-items-center gap-3">
-          <a href="<?= $appUrl ?>/users/profile?id=<?= $p['user_id'] ?>" class="text-decoration-none text-dark d-flex align-items-center gap-3 w-100 hover-opacity">
+          <a href="<?= $appUrl ?>/users/profile?id=<?= $p['user_id'] ?>" class="text-decoration-none d-flex align-items-center gap-3 w-100 hover-opacity" style="color:var(--text)">
             <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
                  style="width:48px;height:48px;font-size:1.4rem;font-weight:700">
               <?= mb_strtoupper(mb_substr($p['seller_name'], 0, 1)) ?>
@@ -259,7 +273,7 @@ $p = $product;
               </button>
             </form>
             <?php if ($p['type'] === 'sale' && $p['status'] === 'active'): ?>
-            <button type="button" class="btn btn-warning flex-fill rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" style="padding: .6rem 1rem; color: #b45309;" data-bs-toggle="modal" data-bs-target="#offerModal">
+            <button type="button" class="btn btn-warning flex-fill rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" style="padding: .6rem 1rem; color: #78350f;" data-bs-toggle="modal" data-bs-target="#offerModal">
               <i class="bi bi-tag-fill"></i> Trả giá
             </button>
             <?php endif; ?>
@@ -283,6 +297,16 @@ $p = $product;
       .hover-opacity:hover { opacity: 0.85; }
       .text-primary-hover { transition: color 0.2s; }
       .hover-opacity:hover .text-primary-hover { color: #0d6efd; }
+      
+      /* Dark mode specific for detail page */
+      #auctionCard {
+        background: linear-gradient(135deg, #fff5f5, #fff0f8);
+        border: 2px solid #ffcdd2;
+      }
+      [data-theme="dark"] #auctionCard {
+        background: linear-gradient(135deg, #2d1b1b, #2d1b24);
+        border-color: #5d2b2b;
+      }
       </style>
     </div>
   </div>
@@ -305,7 +329,7 @@ $p = $product;
 
         <div class="modal-body p-4 pt-3">
           <!-- Thông tin tóm tắt -->
-          <div class="d-flex justify-content-between align-items-center mb-4 p-3 rounded-3 bg-white border border-light shadow-sm">
+          <div class="d-flex justify-content-between align-items-center mb-4 p-3 rounded-3 shadow-sm border" style="background:var(--bg); border-color:var(--border) !important">
             <span class="text-muted">Tổng thanh toán:</span>
             <span class="text-danger fw-bold fs-4" id="checkoutTotalDisplay">0đ</span>
           </div>
@@ -457,7 +481,7 @@ $p = $product;
   
 })();
 
-</style>
+</script>
 <?php endif; ?>
 
 <script>
@@ -529,76 +553,96 @@ document.getElementById('checkoutForm').addEventListener('submit', function() {
   </div>
 </div>
 
-<!-- ─── Tích hợp Bản đồ Google Maps (UI) + Nominatim Geocoding (Free) ── -->
+<!-- ─── Bản đồ Leaflet.js (OpenStreetMap) — Miễn phí, không cần API key ── -->
 <?php if (!empty($p['seller_address'])): ?>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
-// Khởi tạo Google Maps sau khi SDK load xong
-function initMap() {
-    const defaultLocation = { lat: 10.8700, lng: 106.8030 }; // ĐHQG mặc định
-    const addressLabel = <?= json_encode(htmlspecialchars($p['seller_address'], ENT_QUOTES)) ?>;
+(function() {
+    const DEFAULT_LAT  = 10.8700;
+    const DEFAULT_LNG  = 106.8030;
+    const addressLabel = <?= json_encode($p['seller_address']) ?>;
+    const searchQuery  = <?= json_encode($p['seller_address'] . ' Làng Đại Học Quốc Gia TP.HCM') ?>;
 
-    const map = new google.maps.Map(document.getElementById("osm-map"), {
+    // ── Khởi tạo bản đồ Leaflet ──────────────────────────────────────────────
+    const map = L.map('osm-map', {
+        center: [DEFAULT_LAT, DEFAULT_LNG],
         zoom: 14,
-        center: defaultLocation,
-        mapTypeId: "roadmap",
-        styles: [
-            { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }
-        ],
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: true
+        zoomControl: true,
+        scrollWheelZoom: false   // tránh scroll trang bị bắt nhầm
     });
 
-    // Dùng Nominatim (OpenStreetMap) để geocode địa chỉ — MIỄN PHÍ, không cần key
-    const query = <?= json_encode($p['seller_address'] . " Làng Đại Học Quốc Gia TP.HCM") ?>;
-    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(query), {
+    // Tile layer OpenStreetMap - Sử dụng Voyager (CartoDB) nhìn đẹp và sáng hơn
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap contributors © CARTO',
+        subdomains: 'abcd',
+        maxZoom: 20
+    }).addTo(map);
+
+    // Custom marker icon (màu xanh primary)
+    const pinIcon = L.divIcon({
+        className: '',
+        html: `<div style="
+            width:36px; height:36px; background:#0d6efd;
+            border-radius:50% 50% 50% 0; transform:rotate(-45deg);
+            border:3px solid #fff; box-shadow:0 4px 12px rgba(13,110,253,.45);
+            display:flex; align-items:center; justify-content:center;
+        ">
+            <span style="transform:rotate(45deg); font-size:14px; line-height:1;">📍</span>
+        </div>`,
+        iconSize: [36, 36],
+        iconAnchor: [18, 36],
+        popupAnchor: [0, -36]
+    });
+
+    // ── Geocode bằng Nominatim (miễn phí) ───────────────────────────────────
+    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(searchQuery), {
         headers: { 'Accept-Language': 'vi' }
     })
     .then(r => r.json())
     .then(data => {
-        const position = (data && data.length > 0)
-            ? { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
-            : defaultLocation;
+        const lat = (data && data.length > 0) ? parseFloat(data[0].lat) : DEFAULT_LAT;
+        const lng = (data && data.length > 0) ? parseFloat(data[0].lon) : DEFAULT_LNG;
 
-        map.setCenter(position);
-        map.setZoom(16);
+        map.setView([lat, lng], 16);
 
-        const marker = new google.maps.Marker({
-            map: map,
-            position: position,
-            animation: google.maps.Animation.DROP,
-            title: "Điểm giao dịch dự kiến"
-        });
+        // Marker + Popup
+        const marker = L.marker([lat, lng], { icon: pinIcon }).addTo(map);
+        marker.bindPopup(`
+            <div style="font-family:'Plus Jakarta Sans',sans-serif; min-width:180px; padding:4px 2px">
+                <div style="color:#0d6efd; font-weight:700; margin-bottom:4px; font-size:13px">
+                    📍 Điểm giao dịch dự kiến
+                </div>
+                <div style="color:#6c757d; font-size:12px; line-height:1.5">${addressLabel}</div>
+                <div style="color:#adb5bd; font-size:11px; margin-top:6px">
+                    ⚠️ Vị trí mang tính tương đối
+                </div>
+            </div>
+        `);
 
-        const infoWindow = new google.maps.InfoWindow({
-            content: `<div style="font-family:'Outfit',sans-serif;padding:6px 4px">
-                        <div style="color:#0d6efd;font-weight:700;margin-bottom:4px">📍 Điểm giao dịch dự kiến</div>
-                        <div style="color:#6c757d;font-size:13px">${addressLabel}</div>
-                      </div>`
-        });
+        // Force invalidate size sau khi load tiles để tránh bị xám xịt
+        setTimeout(() => { map.invalidateSize(); }, 500);
 
-        marker.addListener("click", () => infoWindow.open(map, marker));
-        infoWindow.open(map, marker);
-
-        new google.maps.Circle({
-            map: map,
-            center: position,
+        // Vòng tròn phạm vi giao dịch ~200m
+        L.circle([lat, lng], {
             radius: 200,
-            fillColor: "#ffc107",
-            fillOpacity: 0.2,
-            strokeColor: "#ffc107",
-            strokeWeight: 1.5,
-            clickable: false
-        });
+            color: '#ffc107',
+            fillColor: '#ffc107',
+            fillOpacity: 0.15,
+            weight: 1.5
+        }).addTo(map);
     })
     .catch(() => {
-        // Fallback: hiện bản đồ ĐHQG nếu geocode thất bại
-        new google.maps.Marker({ map, position: defaultLocation, title: "Khu ĐHQG TP.HCM" });
+        // Fallback: hiện marker tại ĐHQG nếu geocode thất bại
+        L.marker([DEFAULT_LAT, DEFAULT_LNG], { icon: pinIcon })
+            .addTo(map)
+            .bindPopup('<b>📍 Khu ĐHQG TP.HCM</b><br><small>Không xác định được địa chỉ cụ thể</small>')
+            .openPopup();
     });
-}
+})();
 </script>
-<script async src="https://maps.googleapis.com/maps/api/js?key=<?= $_ENV['GOOGLE_MAPS_API_KEY'] ?? '' ?>&callback=initMap"></script>
-<?php endif; ?>
+<?php endif ?>
+
 
 
 <!-- ─── Modal QR Code Sharing ──────────────────────────────────────── -->

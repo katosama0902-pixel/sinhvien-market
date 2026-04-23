@@ -171,17 +171,29 @@ $typeLabel = [
                     <input type="hidden" name="id" value="<?= $t['id'] ?>">
                     
                     <?php if (!$isBuyer): // Seller actions ?>
-                      <?php if ($os === 'pending'): ?>
-                        <input type="hidden" name="status" value="shipping">
-                        <button type="submit" class="btn btn-sm btn-info text-white rounded-pill px-3 shadow-sm" onclick="return confirm('Xác nhận bạn đã đóng gói và bắt đầu giao hàng?');">
-                          <i class="bi bi-truck me-1"></i>Gửi hàng
+                      <div class="d-flex flex-wrap gap-2 mt-2">
+                        <?php if ($os === 'pending'): ?>
+                          <input type="hidden" name="status" value="shipping">
+                          <button type="submit" class="btn btn-sm btn-info text-white rounded-pill px-3 shadow-sm" onclick="return confirm('Xác nhận bạn đã đóng gói và bắt đầu giao hàng?');">
+                            <i class="bi bi-truck me-1"></i>Gửi hàng
+                          </button>
+                        <?php elseif ($os === 'shipping'): ?>
+                          <input type="hidden" name="status" value="delivered">
+                          <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm">
+                            <i class="bi bi-geo me-1"></i>Đã đến nơi
+                          </button>
+                        <?php endif; ?>
+
+                        <!-- Nút Hủy Đơn (Chỉ cho phép khi chưa hoàn tất/đã giao) -->
+                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" 
+                                onclick="if(confirm('Bạn có chắc chắn muốn hủy đơn hàng này không? Sản phẩm sẽ quay lại trạng thái ĐANG BÁN trên sàn.')) { 
+                                  const f = this.closest('form');
+                                  f.querySelector('[name=status]') ? f.querySelector('[name=status]').value = 'cancelled' : f.innerHTML += '<input type=&quot;hidden&quot; name=&quot;status&quot; value=&quot;cancelled&quot;>';
+                                  f.submit();
+                                }">
+                          <i class="bi bi-x-circle me-1"></i>Hủy đơn
                         </button>
-                      <?php elseif ($os === 'shipping'): ?>
-                        <input type="hidden" name="status" value="delivered">
-                        <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm">
-                          <i class="bi bi-geo me-1"></i>Đã đến nơi
-                        </button>
-                      <?php endif; ?>
+                      </div>
                     <?php else: // Buyer actions ?>
                       <?php if ($os === 'shipping' || $os === 'delivered'): ?>
                         <input type="hidden" name="status" value="completed">

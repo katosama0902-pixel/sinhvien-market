@@ -60,7 +60,7 @@ $user = $_SESSION['user'] ?? null;
     height: 80px;
     border-radius: 50%;
     object-fit: cover;
-    border: 4px solid #fff;
+    border: 4px solid var(--card-bg);
     box-shadow: 0 8px 24px rgba(0,0,0,0.3);
 }
 .podium-avatar-1 { width: 96px; height: 96px; }
@@ -88,7 +88,7 @@ $user = $_SESSION['user'] ?? null;
     justify-content: center;
     font-size: 0.75rem;
     font-weight: 800;
-    border: 2px solid #fff;
+    border: 2px solid var(--card-bg);
     color: #fff;
 }
 .rank-1 { background: linear-gradient(135deg, #f59e0b, #d97706); }
@@ -98,14 +98,14 @@ $user = $_SESSION['user'] ?? null;
 .podium-name {
     font-weight: 700;
     font-size: 0.9rem;
-    color: #1e293b;
+    color: var(--text);
     text-align: center;
     max-width: 100px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.podium-score { font-size: 0.75rem; color: #64748b; }
+.podium-score { font-size: 0.75rem; color: var(--muted); }
 .podium-box {
     border-radius: 16px 16px 0 0;
     width: 110px;
@@ -125,14 +125,14 @@ $user = $_SESSION['user'] ?? null;
 .lb-card {
     background: var(--card-bg);
     border-radius: 20px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border);
     overflow: hidden;
 }
 .lb-row {
     display: flex;
     align-items: center;
     padding: 0.9rem 1.25rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border);
     transition: background 0.2s;
     gap: 1rem;
 }
@@ -142,7 +142,7 @@ $user = $_SESSION['user'] ?? null;
     width: 32px;
     font-size: 1rem;
     font-weight: 800;
-    color: #94a3b8;
+    color: var(--muted);
     flex-shrink: 0;
     text-align: center;
 }
@@ -152,10 +152,10 @@ $user = $_SESSION['user'] ?? null;
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
-    border: 2px solid var(--border-color);
+    border: 2px solid var(--border);
 }
-.lb-user-name { font-weight: 700; font-size: 0.92rem; color: var(--text-primary); }
-.lb-user-meta { font-size: 0.76rem; color: #94a3b8; }
+.lb-user-name { font-weight: 700; font-size: 0.92rem; color: var(--text); }
+.lb-user-meta { font-size: 0.76rem; color: var(--muted); }
 .lb-stats {
     margin-left: auto;
     display: flex;
@@ -166,8 +166,8 @@ $user = $_SESSION['user'] ?? null;
     text-align: center;
     min-width: 48px;
 }
-.lb-stat-value { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); }
-.lb-stat-label { font-size: 0.68rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.03em; }
+.lb-stat-value { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+.lb-stat-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
 
 /* ─── My Rank Card ──────────────────────────────────── */
 .my-rank-card {
@@ -175,6 +175,10 @@ $user = $_SESSION['user'] ?? null;
     border: 2px solid rgba(99,102,241,0.4);
     border-radius: 16px;
     padding: 1.25rem 1.5rem;
+}
+[data-theme="dark"] .my-rank-card {
+    background: linear-gradient(135deg, rgba(99,102,241,0.05), rgba(168,85,247,0.04));
+    border-color: rgba(99,102,241,0.2);
 }
 </style>
 
@@ -236,7 +240,7 @@ $user = $_SESSION['user'] ?? null;
   <div class="lb-card mb-4">
     <?php foreach ($rest as $i => $s): ?>
     <?php $rank = $i + 4; ?>
-    <a href="<?= $appUrl ?>/profile/<?= $s['id'] ?>" class="lb-row text-decoration-none" style="color:inherit">
+    <a href="<?= $appUrl ?>/users/profile?id=<?= $s['id'] ?>" class="lb-row text-decoration-none" style="color:inherit">
       <div class="lb-rank-num"><?= $rank ?></div>
       <img class="lb-user-avatar"
            src="<?= !empty($s['avatar']) ? $appUrl . '/public/uploads/' . htmlspecialchars($s['avatar']) : (!empty($s['avatar_url']) ? htmlspecialchars($s['avatar_url']) : 'https://ui-avatars.com/api/?name=' . urlencode($s['name']) . '&background=6366f1&color=fff') ?>"

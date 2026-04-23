@@ -19,13 +19,13 @@ $appUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
 .stars-display { color:#fbbf24; font-size:1.1rem; }
 .stars-display .empty { color:rgba(255,255,255,.3); }
 
-.rating-card { background:#fff; border-radius:14px; border:1.5px solid #e8ecf0; padding:16px 20px; margin-bottom:12px; }
+.rating-card { background:var(--card-bg); border-radius:14px; border:1.5px solid var(--border); padding:16px 20px; margin-bottom:12px; }
 .rating-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
 .rating-stars { color:#fbbf24; }
-.rating-rater { font-weight:600; font-size:.875rem; }
-.rating-product { font-size:.78rem; color:#6b7280; }
-.rating-comment { font-size:.875rem; color:#374151; border-left:3px solid #e8ecf0; padding-left:12px; margin-top:10px; }
-.rating-date { font-size:.72rem; color:#9ca3af; }
+.rating-rater { font-weight:600; font-size:.875rem; color:var(--text); }
+.rating-product { font-size:.78rem; color:var(--muted); }
+.rating-comment { font-size:.875rem; color:var(--text); border-left:3px solid var(--border); padding-left:12px; margin-top:10px; }
+.rating-date { font-size:.72rem; color:var(--muted); }
 </style>
 
 <div class="profile-wrap">
@@ -83,7 +83,7 @@ $appUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
       <h6 class="text-primary fw-bold text-uppercase mb-3" style="font-size: 0.85rem; letter-spacing: 1px;"><i class="bi bi-person-lines-fill me-2"></i>Giới thiệu</h6>
       
       <?php if (!empty($profile['bio'])): ?>
-        <p class="mb-4" style="font-size:0.95rem; color:#4b5563; line-height:1.6;">
+        <p class="mb-4" style="font-size:0.95rem; color:var(--muted); line-height:1.6;">
           "<em><?= nl2br(htmlspecialchars($profile['bio'], ENT_QUOTES)) ?></em>"
         </p>
       <?php endif; ?>
@@ -94,7 +94,7 @@ $appUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
           <div class="text-muted me-2 mt-1"><i class="bi bi-building"></i></div>
           <div>
             <div class="small text-muted fw-semibold">Trường / Khoa</div>
-            <div class="fw-medium text-dark"><?= htmlspecialchars($profile['university'], ENT_QUOTES) ?></div>
+            <div class="fw-medium" style="color:var(--text)"><?= htmlspecialchars($profile['university'], ENT_QUOTES) ?></div>
           </div>
         </div>
         <?php endif; ?>
@@ -104,7 +104,7 @@ $appUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
           <div class="text-muted me-2 mt-1"><i class="bi bi-geo-alt"></i></div>
           <div>
             <div class="small text-muted fw-semibold">Khu vực / KTX</div>
-            <div class="fw-medium text-dark"><?= htmlspecialchars($profile['dormitory_address'], ENT_QUOTES) ?></div>
+            <div class="fw-medium" style="color:var(--text)"><?= htmlspecialchars($profile['dormitory_address'], ENT_QUOTES) ?></div>
           </div>
         </div>
         <?php endif; ?>
@@ -128,7 +128,7 @@ $appUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
           <div class="text-muted me-2 mt-1"><i class="bi bi-clock"></i></div>
           <div>
             <div class="small text-muted fw-semibold">Thời gian online</div>
-            <div class="fw-medium text-dark"><?= htmlspecialchars($profile['available_time'], ENT_QUOTES) ?></div>
+            <div class="fw-medium" style="color:var(--text)"><?= htmlspecialchars($profile['available_time'], ENT_QUOTES) ?></div>
           </div>
         </div>
         <?php endif; ?>
@@ -210,7 +210,7 @@ $appUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
           </div>
         </div>
         
-        <div class="modal-footer bg-light border-top-0 rounded-bottom-4">
+        <div class="modal-footer border-top-0 rounded-bottom-4" style="background:var(--bg)">
           <button type="button" class="btn btn-secondary px-4 rounded-pill" data-bs-dismiss="modal">Hủy</button>
           <button type="submit" class="btn btn-danger px-4 rounded-pill fw-semibold"><i class="bi bi-send-fill me-2"></i>Gửi báo cáo</button>
         </div>

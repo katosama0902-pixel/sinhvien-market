@@ -83,6 +83,7 @@ class ChatController extends Controller
         if (!$this->verifyCsrf()) {
             Flash::set('danger', 'Phiên hết hạn.');
             $this->redirect('products');
+            return;
         }
 
         $user      = $this->currentUser();
@@ -91,6 +92,7 @@ class ChatController extends Controller
         if ($productId <= 0) {
             Flash::set('danger', 'Sản phẩm không hợp lệ.');
             $this->redirect('products');
+            return;
         }
 
         $productModel = new Product();
@@ -99,12 +101,14 @@ class ChatController extends Controller
         if (!$product) {
             Flash::set('danger', 'Sản phẩm không tồn tại.');
             $this->redirect('products');
+            return;
         }
 
         // Không thể chat với chính mình
         if ((int)$product['user_id'] === (int)$user['id']) {
             Flash::set('warning', 'Bạn không thể liên hệ với chính mình.');
             $this->redirect('products/show?id=' . $productId);
+            return;
         }
 
         $sellerId = (int)$product['user_id'];
@@ -126,6 +130,7 @@ class ChatController extends Controller
 
         if (!$this->verifyCsrf()) {
             $this->json(['success' => false, 'message' => 'CSRF không hợp lệ.'], 403);
+            return;
         }
 
         $user   = $this->currentUser();
@@ -134,17 +139,20 @@ class ChatController extends Controller
 
         if ($convId <= 0 || $body === '') {
             $this->json(['success' => false, 'message' => 'Dữ liệu không hợp lệ.'], 400);
+            return;
         }
 
         // Kiểm tra quyền truy cập cuộc hội thoại
         $conv = $this->convModel->findByIdForUser($convId, $user['id']);
         if (!$conv) {
             $this->json(['success' => false, 'message' => 'Không có quyền.'], 403);
+            return;
         }
 
         // Giới hạn độ dài tin nhắn
         if (mb_strlen($body) > 1000) {
             $this->json(['success' => false, 'message' => 'Tin nhắn tối đa 1000 ký tự.'], 400);
+            return;
         }
 
         $msgId = $this->msgModel->send($convId, $user['id'], $body);
@@ -222,6 +230,7 @@ class ChatController extends Controller
         Middleware::requireAuth();
         if (!$this->verifyCsrf()) {
             $this->json(['success' => false, 'message' => 'CSRF không hợp lệ.'], 403);
+            return;
         }
         $user   = $this->currentUser();
         $convId = (int)($_POST['conversation_id'] ?? 0);
@@ -229,10 +238,12 @@ class ChatController extends Controller
 
         if ($convId <= 0 || $price <= 0) {
             $this->json(['success' => false, 'message' => 'Giá trả phải lớn hơn 0.'], 400);
+            return;
         }
         $conv = $this->convModel->findByIdForUser($convId, $user['id']);
         if (!$conv) {
             $this->json(['success' => false, 'message' => 'Không có quyền.'], 403);
+            return;
         }
 
         // Chỉ người mua mới có quyền gửi Trả giá.
@@ -249,6 +260,7 @@ class ChatController extends Controller
         Middleware::requireAuth();
         if (!$this->verifyCsrf()) {
             $this->json(['success' => false, 'message' => 'CSRF không hợp lệ.'], 403);
+            return;
         }
         $user   = $this->currentUser();
         $msgId  = (int)($_POST['message_id'] ?? 0);
@@ -257,11 +269,13 @@ class ChatController extends Controller
 
         if (!in_array($status, ['accepted', 'rejected'])) {
             $this->json(['success' => false, 'message' => 'Logic lỗi.'], 400);
+            return;
         }
 
         $conv = $this->convModel->findByIdForUser($convId, $user['id']);
         if (!$conv) {
             $this->json(['success' => false, 'message' => 'Không có quyền.'], 403);
+            return;
         }
         if ((int)$conv['seller_id'] !== (int)$user['id']) {
             $this->json(['success' => false, 'message' => 'Chỉ người bán mới có quyền duyệt offer.'], 400);
@@ -329,6 +343,7 @@ class ChatController extends Controller
                 'data'    => ['count' => 0],
                 'message' => ''
             ]);
+            return;
         }
         $user  = $this->currentUser();
         $count = $this->convModel->countTotalUnread($user['id']);

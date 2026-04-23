@@ -395,6 +395,32 @@ RewriteRule ^(database|scratch|scripts|storage)(/|$) - [F,L]
 
 ---
 
+---
+
+## 🗓 Tuần 8 (19–23/04/2026) — Hardening & Admin Features
+
+### [BF-029] Lỗi SQL `Data truncated for column 'status'` khi thanh toán đấu giá
+- **Ngày phát hiện:** 23/04/2026
+- **Mức độ:** 🔴 High (Gây crash luồng thanh toán)
+- **Mô tả:** Khi mua hàng qua chuyển khoản ngân hàng trong phiên đấu giá, hệ thống báo lỗi SQL do giá trị enum không hợp lệ.
+- **Nguyên nhân:** Hàm `markAsEnded` trong `Auction.php` cố gắng update status thành `"ended"`, nhưng ENUM trong DB chỉ cho phép `'active', 'sold', 'cancelled'`.
+- **Cách fix:** Đổi trạng thái từ `"ended"` thành `"sold"` trong câu lệnh UPDATE.
+- **Files liên quan:**
+  - `app/models/Auction.php`
+
+---
+
+### [BF-030] Lỗi `Undefined variable $pModel` trong TransactionController
+- **Ngày phát hiện:** 23/04/2026
+- **Mức độ:** 🔴 High (Crash tính năng mới)
+- **Mô tả:** Khi người bán nhấn "Hủy đơn", trang web bắn lỗi biến `$pModel` chưa được khai báo.
+- **Nguyên nhân:** Sử dụng `$pModel->updateStatus()` trong hàm `updateStatus()` mà quên khởi tạo `new Product()`.
+- **Cách fix:** Khởi tạo `$pModel = new \App\Models\Product();` ở đầu hàm.
+- **Files liên quan:**
+  - `app/controllers/TransactionController.php`
+
+---
+
 ## 📊 Tổng Kết
 
 | Tuần | Giai đoạn | 🔴 High | 🟡 Medium | 🟢 Low | Tổng |
@@ -402,8 +428,9 @@ RewriteRule ^(database|scratch|scripts|storage)(/|$) - [F,L]
 | Tuần 4 (26–29/03) | UI & DevOps | 3 | 4 | 3 | 11 |
 | Tuần 5 (30/03–04/04) | Tài liệu & Kiểm thử | 0 | 1 | 0 | 1 |
 | Tuần 6 (05–11/04) | AI Chat & Map Dev | 3 | 2 | 2 | 7 |
-| Tuần 7 (12–18/04) | C2C + Google Maps + Bảo mật | 8 | 2 | 0 | 10 |
-| **Tổng** | | **14** | **9** | **5** | **28** |
+| Tuần 7 (12–18/04) | C2C + Google Maps | 8 | 2 | 0 | 10 |
+| Tuần 8 (19–23/04) | Hardening & Admin | 2 | 0 | 0 | 2 |
+| **Tổng** | | **16** | **9** | **5** | **31** |
 
 | Mức độ | Số lượng | Trạng thái |
 |--------|----------|------------|

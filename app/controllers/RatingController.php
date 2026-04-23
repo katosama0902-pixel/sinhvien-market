@@ -30,6 +30,7 @@ class RatingController extends Controller
         if (!$this->verifyCsrf()) {
             Flash::set('danger', 'Phiên hết hạn, thử lại.');
             $this->redirect('transactions/history');
+            return;
         }
 
         $user  = $this->currentUser();
@@ -41,6 +42,7 @@ class RatingController extends Controller
         if ($stars < 1 || $stars > 5) {
             Flash::set('danger', 'Vui lòng chọn từ 1 đến 5 sao.');
             $this->redirect('transactions/history');
+            return;
         }
 
         // Lấy giao dịch và kiểm tra người dùng có quyền đánh giá không
@@ -50,12 +52,14 @@ class RatingController extends Controller
         if (!$tx || (int)$tx['buyer_id'] !== (int)$user['id']) {
             Flash::set('danger', 'Không tìm thấy giao dịch hoặc bạn không có quyền đánh giá.');
             $this->redirect('transactions/history');
+            return;
         }
 
         // Kiểm tra đã đánh giá chưa
         if ($this->ratingModel->existsForTransaction($txId)) {
             Flash::set('warning', 'Bạn đã đánh giá giao dịch này rồi.');
             $this->redirect('transactions/history');
+            return;
         }
 
         $success = $this->ratingModel->create(

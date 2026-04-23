@@ -252,6 +252,37 @@ V1.6.0 đã hoàn chỉnh với 5 tính năng thực chiến: QR Sharing + Copy 
 
 ---
 
+## TUẦN 8 — 19/04/2026 đến 23/04/2026
+
+### 🎯 Mục Tiêu Tuần Này
+Củng cố hệ thống (Hardening), nâng cấp giao diện Dark Mode và xây dựng lộ trình nâng cấp Admin Dashboard.
+
+### 📝 Công Việc Đã Thực Hiện
+
+| STT | Công việc | Người thực hiện | Trạng thái | Ghi chú |
+|-----|-----------|-----------------|------------|---------|
+| 1 | Cải thiện độ tương phản Navbar (Coin badge, Giveaway link) | *(Tên)* | ✅ | Dùng biến `--giveaway` động |
+| 2 | Soạn thảo `PROPOSAL_ADMIN_UPGRADE.md` (Strike, Banner, Moderation) | *(Tên)* | ✅ | Bản đề xuất 5 tính năng lớn |
+| 3 | Triển khai tính năng "Hủy đơn & Hoàn tác sản phẩm" | *(Tên)* | ✅ | Người bán có thể Reject COD order |
+| 4 | Fix lỗi SQL Enum invalid value trong Auction model | *(Tên)* | ✅ | `ended` -> `sold` |
+| 5 | Fix lỗi undefined variable `$pModel` trong Transaction logic | *(Tên)* | ✅ | Đã khởi tạo Product model |
+
+### 🐛 Lỗi Phát Sinh & Cách Xử Lý
+
+| Bug | Mô tả | Trạng thái |
+|-----|--------|------------|
+| 🐛 SQL Data truncated | Giá trị `status='ended'` không có trong Enum | ✅ Đã fix |
+| 🐛 Undefined variable | Thiếu khởi tạo `$pModel` khi xử lý hủy đơn | ✅ Đã fix |
+
+### 📊 Tiến Độ Tổng Thể
+- **Hoàn thành:** 5/5 công việc (100%)
+- **Bugs phát sinh:** 2 — Đã fix: 2
+
+### 💬 Nhận Xét / Kế Hoạch Tuần Sau
+Hệ thống giao dịch đã an toàn và linh hoạt hơn với tính năng hoàn tác sản phẩm. Tuần tới (sau ngày mốt) sẽ bắt đầu triển khai các tính năng Admin theo bản đề xuất đã được phê duyệt.
+
+---
+
 ## 📈 Tổng Hợp Tiến Độ Toàn Dự Án
 
 | Tuần | Giai đoạn | Số task | Hoàn thành | Tỷ lệ |
@@ -262,8 +293,9 @@ V1.6.0 đã hoàn chỉnh với 5 tính năng thực chiến: QR Sharing + Copy 
 | Tuần 4 (26–29/03) | UI & DevOps | 10 | 10 | 100% ✅ |
 | Tuần 5 (30/03–04/04) | Tài liệu & Kiểm thử | 9 | 9 | 100% ✅ |
 | Tuần 6 (05/04–11/04) | AI Chat & Map Dev | 5 | 5 | 100% ✅ |
-| Tuần 7 (12/04–18/04) | Thực Chiến C2C, Maps, Leaderboard (v1.6.0) | 11 | 11 | 100% ✅ |
-| **Tổng** | | **53** | **53** | **100%** |
+| Tuần 7 (12/04–18/04) | Thực Chiến C2C, Maps, Leaderboard | 11 | 11 | 100% ✅ |
+| Tuần 8 (19/04–23/04) | Hardening & Admin Features | 5 | 5 | 100% ✅ |
+| **Tổng** | | **58** | **58** | **100%** |
 
 ---
 

@@ -127,6 +127,7 @@ class ProductController extends Controller
             'seller'       => $seller,
             'sellerRank'   => $sellerRank,
             'og'           => $og,
+            'csrf'         => $this->csrfToken(),
         ]);
     }
 
@@ -152,6 +153,7 @@ class ProductController extends Controller
         if (!$this->verifyCsrf()) {
             Flash::set('danger', 'Phiên hết hạn, thử lại.');
             $this->redirect('products/create');
+            return;
         }
 
         $user = $this->currentUser();
@@ -280,6 +282,7 @@ class ProductController extends Controller
         Middleware::requireAuth();
         if (!$this->verifyCsrf()) {
             $this->json(['success' => false, 'message' => 'CSRF không hợp lệ'], 403);
+            return;
         }
 
         $user      = $this->currentUser();

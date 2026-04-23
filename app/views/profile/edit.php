@@ -24,7 +24,7 @@ $tab = $_GET['tab'] ?? 'info'; // 'info' hoặc 'security'
     <div class="row">
         <!-- Sidebar Navigation -->
         <div class="col-md-3 mb-4">
-            <div class="list-group list-group-flush rounded-4 bg-white shadow-sm border-0 sticky-top" style="top: 80px;">
+            <div class="list-group list-group-flush rounded-4 shadow-sm border-0 sticky-top" style="top: 80px; background: var(--card-bg)">
                 <a href="<?= $appUrl ?>/profile?tab=info" class="list-group-item list-group-item-action py-3 border-bottom-0 <?= $tab === 'info' ? 'active rounded-top-4' : '' ?>">
                     <i class="bi bi-person me-2"></i>Thông tin cá nhân
                 </a>
@@ -38,8 +38,8 @@ $tab = $_GET['tab'] ?? 'info'; // 'info' hoặc 'security'
         <div class="col-md-9">
             <?php if ($tab === 'info'): ?>
                 <!-- Tab: Thông tin cá nhân -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header bg-white border-bottom-0 pt-4 pb-2 px-4 d-flex align-items-center gap-2">
+                <div class="card border-0 shadow-sm rounded-4 mb-4" style="background:var(--card-bg)">
+                    <div class="card-header border-bottom-0 pt-4 pb-2 px-4 d-flex align-items-center gap-2" style="background:var(--card-bg)">
                         <h5 class="fw-bold mb-0">Ảnh đại diện</h5>
                         <span class="badge bg-<?= $rank['color'] ?? 'secondary' ?> rounded-pill" style="font-size: 0.8rem; letter-spacing: 0.05em">
                             <i class="bi bi-<?= $rank['icon'] ?? 'person' ?> me-1"></i><?= $rank['name'] ?? 'Tân binh' ?>
@@ -80,7 +80,7 @@ $tab = $_GET['tab'] ?? 'info'; // 'info' hoặc 'security'
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                   </div>
                                   <div class="modal-body px-4">
-                                    <div style="max-height:420px;overflow:hidden;border-radius:12px;background:#f1f3f9;">
+                                    <div style="max-height:420px;overflow:hidden;border-radius:12px;background:var(--img-placeholder);">
                                       <img id="cropImage" src="" alt="Crop" style="max-width:100%;display:block;">
                                     </div>
                                     <p class="text-muted small text-center mt-2 mb-0">
@@ -112,8 +112,8 @@ $tab = $_GET['tab'] ?? 'info'; // 'info' hoặc 'security'
                     </div>
                 </div>
 
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+                <div class="card border-0 shadow-sm rounded-4 mb-4" style="background:var(--card-bg)">
+                    <div class="card-header border-0 pt-4 pb-0 px-4" style="background:var(--card-bg)">
                         <h5 class="fw-bold mb-0">Chi tiết hồ sơ</h5>
                     </div>
                     <div class="card-body p-4">
@@ -129,7 +129,7 @@ $tab = $_GET['tab'] ?? 'info'; // 'info' hoặc 'security'
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Email</label>
-                                    <input type="email" class="form-control bg-light" value="<?= htmlspecialchars($user['email'] ?? '', ENT_QUOTES) ?>" readonly disabled>
+                                    <input type="email" class="form-control" style="background:var(--bg)" value="<?= htmlspecialchars($user['email'] ?? '', ENT_QUOTES) ?>" readonly disabled>
                                     <div class="form-text mt-1 text-success">
                                         <i class="bi bi-check-circle-fill me-1"></i>Đã được dùng để đăng nhập
                                     </div>
@@ -183,8 +183,8 @@ $tab = $_GET['tab'] ?? 'info'; // 'info' hoặc 'security'
 
             <?php elseif ($tab === 'security'): ?>
                 <!-- Tab: Bảo mật -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+                <div class="card border-0 shadow-sm rounded-4 mb-4" style="background:var(--card-bg)">
+                    <div class="card-header border-0 pt-4 pb-0 px-4" style="background:var(--card-bg)">
                         <h5 class="fw-bold mb-0">Thay đổi mật khẩu</h5>
                     </div>
                     <div class="card-body p-4">
@@ -217,7 +217,7 @@ $tab = $_GET['tab'] ?? 'info'; // 'info' hoặc 'security'
                 <!-- Info Cards cho Xác thực & Câu hỏi bảo mật -->
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <div class="card border-0 bg-light rounded-4 h-100 p-4 pb-3">
+                        <div class="card border-0 rounded-4 h-100 p-4 pb-3" style="background:var(--bg)">
                             <div class="d-flex mb-2">
                                 <div class="fs-3 text-success me-3"><i class="bi bi-envelope-check"></i></div>
                                 <div>
@@ -234,7 +234,7 @@ $tab = $_GET['tab'] ?? 'info'; // 'info' hoặc 'security'
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="card border-0 bg-light rounded-4 h-100 p-4 pb-3">
+                        <div class="card border-0 rounded-4 h-100 p-4 pb-3" style="background:var(--bg)">
                             <div class="d-flex mb-2">
                                 <div class="fs-3 text-info me-3"><i class="bi bi-shield-check"></i></div>
                                 <div>
@@ -242,7 +242,7 @@ $tab = $_GET['tab'] ?? 'info'; // 'info' hoặc 'security'
                                     <p class="text-muted small mb-0">
                                         <?php if (!empty($user['security_question'])): ?>
                                             Câu hỏi bảo mật đã được thiết lập. 
-                                            <div class="mt-1 font-monospace small bg-white border p-1 rounded d-inline-block">"<?= htmlspecialchars($user['security_question']) ?>"</div>
+                                            <div class="mt-1 font-monospace small border p-1 rounded d-inline-block" style="background:var(--card-bg); border-color:var(--border) !important">"<?= htmlspecialchars($user['security_question']) ?>"</div>
                                         <?php else: ?>
                                             Bạn chưa cài đặt câu hỏi bảo mật.
                                         <?php endif; ?>
@@ -253,39 +253,39 @@ $tab = $_GET['tab'] ?? 'info'; // 'info' hoặc 'security'
                     </div>
                 </div>
 
-                <!-- Feature 3B: L\u1ecbch s\u1eed \u0111\u0103ng nh\u1eadp -->
-                <div class="card border-0 shadow-sm rounded-4 mt-4">
-                  <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex align-items-center justify-content-between">
-                    <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>L\u1ecbch s\u1eed \u0111\u0103ng nh\u1eadp</h5>
-                    <span class="badge bg-light text-muted" style="font-size:.75rem;">15 phi\u00ean g\u1ea7n nh\u1ea5t</span>
+                <!-- Feature 3B: Lịch sử đăng nhập -->
+                <div class="card border-0 shadow-sm rounded-4 mt-4" style="background:var(--card-bg)">
+                  <div class="card-header border-0 pt-4 pb-0 px-4 d-flex align-items-center justify-content-between" style="background:var(--card-bg)">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>Lịch sử đăng nhập</h5>
+                    <span class="badge" style="background:var(--bg); color:var(--muted); font-size:.75rem;">15 phiên gần nhất</span>
                   </div>
                   <div class="card-body px-4 pb-4">
                     <?php if (empty($loginHistory)): ?>
-                      <p class="text-muted small mb-0"><i class="bi bi-info-circle me-1"></i>Ch\u01b0a c\u00f3 d\u1eef li\u1ec7u \u0111\u0103ng nh\u1eadp n\u00e0o.</p>
+                      <p class="text-muted small mb-0"><i class="bi bi-info-circle me-1"></i>Chưa có dữ liệu đăng nhập nào.</p>
                     <?php else: ?>
                       <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0" style="font-size:.85rem;">
+                        <table class="table table-sm align-middle mb-0" style="font-size:.85rem; color:var(--text)">
                           <thead>
-                            <tr style="color:#94a3b8;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;">
-                              <th class="border-0 ps-0">Th\u1eddi gian</th>
-                              <th class="border-0">\u0110\u1ecba ch\u1ec9 IP</th>
-                              <th class="border-0">Thi\u1ebft b\u1ecb</th>
-                              <th class="border-0 text-end">Tr\u1ea1ng th\u00e1i</th>
+                            <tr style="color:var(--muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.5px;">
+                              <th class="border-0 ps-0">Thời gian</th>
+                              <th class="border-0">Địa chỉ IP</th>
+                              <th class="border-0">Thiết bị</th>
+                              <th class="border-0 text-end">Trạng thái</th>
                             </tr>
                           </thead>
                           <tbody>
                             <?php foreach ($loginHistory as $i => $log): ?>
                             <tr class="<?= $i === 0 ? 'fw-semibold' : '' ?>">
                               <td class="ps-0 text-nowrap"><?= date('d/m/Y H:i', strtotime($log['logged_at'])) ?></td>
-                              <td><code style="font-size:.8rem;background:var(--bg);padding:2px 6px;border-radius:6px;"><?= htmlspecialchars($log['ip_address'], ENT_QUOTES) ?></code></td>
+                              <td><code style="font-size:.8rem;background:var(--bg);color:var(--primary);padding:2px 6px;border-radius:6px;"><?= htmlspecialchars($log['ip_address'], ENT_QUOTES) ?></code></td>
                               <td class="text-muted"><?= htmlspecialchars($log['device_info'], ENT_QUOTES) ?></td>
                               <td class="text-end">
                                 <?php if ($i === 0): ?>
-                                  <span class="badge bg-success" style="font-size:.72rem;">\ud83d\udfe2 Hi\u1ec7n t\u1ea1i</span>
+                                  <span class="badge bg-success" style="font-size:.72rem;">🟢 Hiện tại</span>
                                 <?php elseif ($log['is_new_device']): ?>
-                                  <span class="badge bg-warning text-dark" style="font-size:.72rem;">\u26a0\ufe0f Thi\u1ebft b\u1ecb l\u1ea1</span>
+                                  <span class="badge bg-warning text-dark" style="font-size:.72rem;">⚠️ Thiết bị lạ</span>
                                 <?php else: ?>
-                                  <span class="badge bg-light text-muted" style="font-size:.72rem;">\u2713 B\u00ecnh th\u01b0\u1eddng</span>
+                                  <span class="badge" style="background:var(--bg); color:var(--muted); font-size:.72rem;">✓ Bình thường</span>
                                 <?php endif; ?>
                               </td>
                             </tr>

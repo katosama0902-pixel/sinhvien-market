@@ -64,6 +64,7 @@ class ProfileController extends Controller
         if (!$this->verifyCsrf()) {
             Flash::set('danger', 'Phiên làm việc hết hạn.');
             $this->redirect('profile');
+            return;
         }
 
         $sessionUser = $this->currentUser();
@@ -73,6 +74,7 @@ class ProfileController extends Controller
         if (empty($name)) {
             Flash::set('danger', 'Họ tên không được để trống.');
             $this->redirect('profile');
+            return;
         }
 
         $this->userModel->updateProfile($userId, [
@@ -101,6 +103,7 @@ class ProfileController extends Controller
         if (!$this->verifyCsrf()) {
             Flash::set('danger', 'Phiên làm việc hết hạn.');
             $this->redirect('profile?tab=security');
+            return;
         }
 
         $sessionUser = $this->currentUser();
@@ -114,16 +117,19 @@ class ProfileController extends Controller
         if (!password_verify($oldPass, $user['password'])) {
             Flash::set('danger', '❌ Mật khẩu hiện tại không đúng.');
             $this->redirect('profile?tab=security');
+            return;
         }
 
         if (strlen($newPass) < 8) {
             Flash::set('danger', '❌ Mật khẩu mới phải có ít nhất 8 ký tự.');
             $this->redirect('profile?tab=security');
+            return;
         }
 
         if ($newPass !== $confirm) {
             Flash::set('danger', '❌ Mật khẩu xác nhận không khớp.');
             $this->redirect('profile?tab=security');
+            return;
         }
 
         $this->userModel->updatePassword($userId, $newPass);
@@ -139,6 +145,7 @@ class ProfileController extends Controller
         if (!$this->verifyCsrf()) {
             Flash::set('danger', 'Phiên làm việc hết hạn.');
             $this->redirect('profile');
+            return;
         }
 
         $sessionUser = $this->currentUser();
@@ -147,6 +154,7 @@ class ProfileController extends Controller
         if (empty($_FILES['avatar']['tmp_name'])) {
             Flash::set('danger', 'Vui lòng chọn ảnh để tải lên.');
             $this->redirect('profile');
+            return;
         }
 
         $file     = $_FILES['avatar'];
@@ -156,11 +164,13 @@ class ProfileController extends Controller
         if (!in_array($ext, $allowed)) {
             Flash::set('danger', 'Chỉ chấp nhận ảnh JPG, PNG, WEBP, GIF.');
             $this->redirect('profile');
+            return;
         }
 
         if ($file['size'] > 10 * 1024 * 1024) { // 10MB
             Flash::set('danger', 'Ảnh không được vượt quá 10MB.');
             $this->redirect('profile');
+            return;
         }
 
         $uploadDir = ROOT . '/public/uploads/avatars/';
@@ -174,6 +184,7 @@ class ProfileController extends Controller
         if (!move_uploaded_file($file['tmp_name'], $dest)) {
             Flash::set('danger', 'Tải ảnh lên thất bại. Vui lòng thử lại.');
             $this->redirect('profile');
+            return;
         }
 
         // Xóa ảnh cũ nếu có

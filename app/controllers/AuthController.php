@@ -178,28 +178,43 @@ class AuthController extends Controller
             if ((int)$user['is_verified'] === 0) {
                 $needsOtp = true;
             } else {
-                // Check if last verification was > 3 days ago for all users
+                // Kiểm tra last_verified_at > 3 ngày
                 $lastVerified = $user['last_verified_at'] ? strtotime($user['last_verified_at']) : 0;
                 if ((time() - $lastVerified) > (3 * 24 * 60 * 60)) {
-                    $needsOtp = true;
-                    // Temporarily mark as unverified for the flow
-                    $this->userModel->unverify($user['id']);
+                    $needsOtp    = true;
+                    $needsUnverify = true; // Đánh dấu để unverify SAU khi gửi mail thành công
                 }
             }
         }
 
+        $needsUnverify = $needsUnverify ?? false;
+
         if ($needsOtp) {
-            // Re-generate OTP
-            $otp = sprintf("%06d", mt_rand(100000, 999999));
+            $otp    = sprintf("%06d", mt_rand(100000, 999999));
             $otpExp = date('Y-m-d H:i:s', time() + 15 * 60);
             $this->userModel->updateOtp($user['id'], $otp, $otpExp);
             file_put_contents(__DIR__ . '/../../debug_otp.log', date('Y-m-d H:i:s') . " - Generated OTP $otp for user {$user['id']}\n", FILE_APPEND);
-            Mailer::send($email, "Xác minh tài khoản SinhVienMarket", EmailTemplate::otpVerify($user['name'], $otp, 15));
-            
-            $_SESSION['verify_email'] = $email;
-            Flash::set('info', 'Xác minh bảo mật: Chúng tôi đã gửi mã OTP vào email của bạn.');
-            $this->redirect('verify-otp');
-            return;
+
+            try {
+                Mailer::send($email, "Xác minh tài khoản SinhVienMarket", EmailTemplate::otpVerify($user['name'], $otp, 15));
+
+                // BUG-11 FIX: Chỉ unverify SAU KHI gửi mail thành công
+                // Nếu gửi mail lỗi, user không bị khóa khỏi tài khoản của chính mình
+                if ($needsUnverify) {
+                    $this->userModel->unverify($user['id']);
+                }
+
+                $_SESSION['verify_email'] = $email;
+                Flash::set('info', 'Xác minh bảo mật: Chúng tôi đã gửi mã OTP vào email của bạn.');
+                $this->redirect('verify-otp');
+                return;
+
+            } catch (\Throwable $e) {
+                // Gửi mail thất bại → KHÔNG unverify, cho đăng nhập bình thường
+                error_log('OTP mail failed for user ' . $user['id'] . ': ' . $e->getMessage());
+                Flash::set('warning', 'Hệ thống không thể gửi OTP lúc này. Bạn vẫn được đăng nhập bình thường.');
+                // Cho luồng tiếp tục tới phần đăng nhập bình thường bên dưới
+            }
         }
 
         $this->attemptModel->reset($ip);
@@ -277,7 +292,7 @@ class AuthController extends Controller
         elseif ($this->userModel->findByEmail($email)) { $errors['email'] = 'Email này đã tồn tại.'; }
         
         if ($phone && !preg_match('/^(0|\+84)[0-9]{8,10}$/', $phone)) { $errors['phone'] = 'Số điện thoại không hợp lệ.'; }
-        if (strlen($password) < 8) { $errors['password'] = 'Mật khẩu phải lớn hơn 8 ký tự.'; }
+        if (strlen($password) < 8) { $errors['password'] = 'Mật khẩu phải có ít nhất 8 ký tự.'; }
         if ($password !== $passwordConfirm) { $errors['password_confirm'] = 'Mật khẩu xác nhận không khớp.'; }
         if (empty($question) || empty($answer)) { $errors['security_question'] = 'Vui lòng điền câu hỏi và câu trả lời bảo mật.'; }
 
@@ -435,21 +450,22 @@ class AuthController extends Controller
     {
         Middleware::requireGuest();
         $csrf = $this->csrfToken();
-        // Nếu đã nhập email, tìm câu hỏi bảo mật
+        // BUG-10 FIX: Đọc email từ session thay vì từ URL query string
         $question = '';
-        if (isset($_GET['email'])) {
-            $email = filter_var($_GET['email'], FILTER_SANITIZE_EMAIL);
-            $user = $this->userModel->findByEmail($email);
+        if (isset($_SESSION['forgot_email'])) {
+            $email = filter_var($_SESSION['forgot_email'], FILTER_SANITIZE_EMAIL);
+            $user  = $this->userModel->findByEmail($email);
             if ($user && !empty($user['security_question'])) {
                 $questions = [
                     'q1' => 'Tên trường cấp 1 của bạn là gì?',
                     'q2' => 'Tên thú cưng đầu tiên của bạn?',
                     'q3' => 'Bạn thân thời thơ ấu của bạn tên gì?'
                 ];
-                $question = $questions[$user['security_question']] ?? 'Câu hỏi bảo mật của bạn';
+                $question     = $questions[$user['security_question']] ?? 'Câu hỏi bảo mật của bạn';
                 $old['email'] = $email;
             } else {
                 Flash::set('danger', 'Email không tồn tại hoặc chưa cài đặt câu hỏi bảo mật.');
+                unset($_SESSION['forgot_email']);
             }
         }
         include APP_PATH . '/views/auth/forgot_password.php';
@@ -473,13 +489,16 @@ class AuthController extends Controller
 
         // Chuyển sang bước 2 (trả lời bảo mật)
         if (empty($answer)) {
-            $this->redirect('forgot-password?email=' . urlencode($email)); return;
+            // BUG-10 FIX: Lưu email vào session, không đưa vào URL
+            $_SESSION['forgot_email'] = $email;
+            $this->redirect('forgot-password'); return;
         }
 
         // Kiểm tra câu trả lời
         if (!password_verify(trim(mb_strtolower($answer)), $user['security_answer'])) {
             Flash::set('danger', 'Câu trả lời bảo mật không chính xác!');
-            $this->redirect('forgot-password?email=' . urlencode($email)); return;
+            $_SESSION['forgot_email'] = $email;
+            $this->redirect('forgot-password'); return;
         }
 
         // Trả lời đúng -> Gen link reset pass
@@ -494,6 +513,7 @@ class AuthController extends Controller
             EmailTemplate::resetPassword($user['name'], $resetLink));
 
         Flash::set('success', 'Hãy kiểm tra email để lấy liên kết đổi mật khẩu.');
+        unset($_SESSION['forgot_email']); // Dọn session sau khi dùng xong
         $this->redirect('login');
     }
 

@@ -1,5 +1,11 @@
 {
+    "name": "katosama0902/sinhvien-market",
+    "description": "SinhVienMarket Application",
+    "license": "MIT",
     "require": {
+        "php": ">=8.1",
+        "ext-pdo": "*",
+        "ext-pdo_mysql": "*",
         "google/apiclient": "^2.15.0"
     },
     "require-dev": {

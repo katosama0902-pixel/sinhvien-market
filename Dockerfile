@@ -1,31 +1,36 @@
 FROM php:8.1-apache
 
-# Bật mod_rewrite cho Apache (quan trọng để chạy .htaccess)
+# Bật mod_rewrite
 RUN a2enmod rewrite
 
-# Cài đặt các extension PHP cần thiết
+# Force xóa MPM event/worker để tránh lỗi "More than one MPM loaded"
+RUN rm -f /etc/apache2/mods-enabled/mpm_event.load \
+    /etc/apache2/mods-enabled/mpm_event.conf \
+    /etc/apache2/mods-enabled/mpm_worker.load \
+    /etc/apache2/mods-enabled/mpm_worker.conf
+
 RUN apt-get update && apt-get install -y \
     libzip-dev \
     zip \
     && docker-php-ext-install pdo_mysql zip
 
-# Copy toàn bộ code vào thư mục gốc của Apache
 COPY . /var/www/html/
-
-# Phân quyền cho Apache đọc/ghi
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
-# Sửa lỗi port của Railway (Railway cấp port động qua biến môi trường PORT)
-RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
+# Ghi đè file cấu hình thay vì dùng sed để tránh lỗi regex
+RUN echo "Listen \${PORT}" > /etc/apache2/ports.conf && \
+    echo "<VirtualHost *:\${PORT}>\n\
+    DocumentRoot /var/www/html\n\
+    <Directory /var/www/html>\n\
+        AllowOverride All\n\
+        Require all granted\n\
+    </Directory>\n\
+    ErrorLog \${APACHE_LOG_DIR}/error.log\n\
+    CustomLog \${APACHE_LOG_DIR}/access.log combined\n\
+</VirtualHost>" > /etc/apache2/sites-available/000-default.conf
 
-# Cài đặt Composer và chạy install
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Fix lỗi MPM của Apache trên Railway
-RUN a2dismod mpm_event mpm_worker || true
-RUN a2enmod mpm_prefork || true
-
-# Khởi động Apache
 CMD ["apache2-foreground"]

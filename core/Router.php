@@ -65,6 +65,18 @@ class Router
     private function parseUrl(): string
     {
         $url = $_GET['url'] ?? '';
+
+        // Hỗ trợ Nginx/Railway khi $_GET['url'] không tồn tại
+        if (empty($url) && isset($_SERVER['REQUEST_URI'])) {
+            $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '';
+            // Fix cho môi trường Laragon (chạy trong thư mục con)
+            $scriptName = dirname($_SERVER['SCRIPT_NAME']);
+            if ($scriptName !== '/' && $scriptName !== '\\' && strpos($uri, $scriptName) === 0) {
+                $uri = substr($uri, strlen($scriptName));
+            }
+            $url = ltrim($uri, '/');
+        }
+
         // Bỏ query string nếu có trong url param
         $url = strtok($url, '?');
         $url = trim($url, '/');

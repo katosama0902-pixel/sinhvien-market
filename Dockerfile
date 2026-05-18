@@ -23,5 +23,9 @@ RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/a
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 RUN composer install --no-dev --optimize-autoloader
 
+# Fix lỗi MPM của Apache trên Railway
+RUN a2dismod mpm_event mpm_worker || true
+RUN a2enmod mpm_prefork || true
+
 # Khởi động Apache
 CMD ["apache2-foreground"]

@@ -1,0 +1,56 @@
+name: PHPUnit Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_sinhvien_market
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: pdo, pdo_mysql, mbstring, curl
+        coverage: none
+
+    - name: Validate composer.json and composer.lock
+      run: composer validate --strict
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress
+
+    - name: Setup test database
+      run: |
+        mysql -h 127.0.0.1 -u root -proot test_sinhvien_market < database/schema.sql
+
+    - name: Run PHPUnit
+      run: vendor/bin/phpunit
+      env:
+        DB_HOST: 127.0.0.1
+        DB_PORT: 3306
+        DB_NAME: test_sinhvien_market
+        DB_USER: root
+        DB_PASS: root
+        APP_URL: http://localhost
+        GEMINI_API_KEY: fake_key_for_testing
+        PUSHER_APP_ID: fake_app_id
+        PUSHER_APP_KEY: fake_key
+        PUSHER_APP_SECRET: fake_secret
+        PUSHER_APP_CLUSTER: ap1

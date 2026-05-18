@@ -22,9 +22,9 @@ class GoogleAuthController extends Controller
 
     public function __construct()
     {
-        $this->clientId     = $_ENV['GOOGLE_CLIENT_ID']     ?? '';
-        $this->clientSecret = $_ENV['GOOGLE_CLIENT_SECRET'] ?? '';
-        $this->redirectUri  = $_ENV['GOOGLE_REDIRECT_URI']  ?? '';
+        $this->clientId     = getenv('GOOGLE_CLIENT_ID')     ?: ($_ENV['GOOGLE_CLIENT_ID'] ?? '');
+        $this->clientSecret = getenv('GOOGLE_CLIENT_SECRET') ?: ($_ENV['GOOGLE_CLIENT_SECRET'] ?? '');
+        $this->redirectUri  = getenv('GOOGLE_REDIRECT_URI')  ?: ($_ENV['GOOGLE_REDIRECT_URI'] ?? '');
     }
 
     // ─── Bước 1: Redirect người dùng đến Google ─────────────────────────────

@@ -30,12 +30,12 @@ class Database
         // Load .env nếu chưa load
         self::loadEnv();
 
-        // Railway injects MYSQLHOST, MYSQLPORT, etc. Local dev uses DB_HOST, DB_PORT, etc.
-        $host    = $_ENV['MYSQLHOST']     ?? $_ENV['DB_HOST']  ?? '127.0.0.1';
-        $port    = $_ENV['MYSQLPORT']     ?? $_ENV['DB_PORT']  ?? '3306';
-        $dbName  = $_ENV['MYSQLDATABASE'] ?? $_ENV['DB_NAME']  ?? 'sinhvien_market';
-        $user    = $_ENV['MYSQLUSER']     ?? $_ENV['DB_USER']  ?? 'root';
-        $pass    = $_ENV['MYSQLPASSWORD'] ?? $_ENV['DB_PASS']  ?? '';
+        // Đọc biến môi trường bằng getenv() (an toàn hơn trên Railway PHP-FPM)
+        $host    = getenv('MYSQLHOST')     ?: (getenv('DB_HOST') ?: '127.0.0.1');
+        $port    = getenv('MYSQLPORT')     ?: (getenv('DB_PORT') ?: '3306');
+        $dbName  = getenv('MYSQLDATABASE') ?: (getenv('DB_NAME') ?: 'sinhvien_market');
+        $user    = getenv('MYSQLUSER')     ?: (getenv('DB_USER') ?: 'root');
+        $pass    = getenv('MYSQLPASSWORD') ?: (getenv('DB_PASS') ?: '');
 
         $dsn = "mysql:host={$host};port={$port};dbname={$dbName};charset=utf8mb4";
 
@@ -43,7 +43,6 @@ class Database
             \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,   // Throw exceptions thay vì silent fail
             \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,         // Mặc định fetch theo key
             \PDO::ATTR_EMULATE_PREPARES   => false,                     // Dùng native prepared statements
-            \PDO::MYSQL_ATTR_FOUND_ROWS   => true,                      // rowCount() trả về số dòng tìm thấy
         ];
 
         try {

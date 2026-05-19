@@ -81,7 +81,7 @@ $csrf = $_SESSION['csrf_token'] ?? '';
                 </td>
                 <td class="py-4 px-5">
                   <form method="POST" action="<?= $appUrl ?>/admin/banners/toggle" class="m-0">
-                    <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+                    <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                     <input type="hidden" name="id" value="<?= (int)$b['id'] ?>">
                     <button type="submit"
                             class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border-0 cursor-pointer w-[100px] justify-center
@@ -108,7 +108,7 @@ $csrf = $_SESSION['csrf_token'] ?? '';
                     </button>
                     <form method="POST" action="<?= $appUrl ?>/admin/banners/delete" class="m-0"
                           onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn Banner này?');">
-                      <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+                      <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                       <input type="hidden" name="id" value="<?= (int)$b['id'] ?>">
                       <button type="submit" title="Xóa"
                               class="w-9 h-9 rounded-xl border border-red-200 dark:border-red-800 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all bg-transparent cursor-pointer flex items-center justify-center">
@@ -136,7 +136,7 @@ $csrf = $_SESSION['csrf_token'] ?? '';
     <div class="text-sm font-medium text-gray-500 mb-6">Upload hình ảnh slider trang chủ</div>
 
     <form method="POST" action="<?= $appUrl ?>/admin/banners/store" enctype="multipart/form-data">
-      <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+      <input type="hidden" name="_csrf" value="<?= $csrf ?>">
       <div class="mb-4">
         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Hình ảnh (Tỉ lệ khuyên dùng 2:1) <span class="text-red-500">*</span></label>
         <input type="file" name="image" accept="image/*" required
@@ -184,7 +184,7 @@ $csrf = $_SESSION['csrf_token'] ?? '';
     <div class="text-xl font-black text-gray-800 dark:text-dark-text mb-6">Chỉnh sửa thông tin Banner</div>
 
     <form method="POST" action="<?= $appUrl ?>/admin/banners/update">
-      <input type="hidden" name="csrf_token" value="<?= $csrf ?>">
+      <input type="hidden" name="_csrf" value="<?= $csrf ?>">
       <input type="hidden" name="id" id="edit_id">
       <div class="mb-4">
         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Tiêu đề nội bộ</label>

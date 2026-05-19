@@ -541,12 +541,13 @@ $conditionMap = [
 function prepareCheckout(targetId, price, type) {
   var modalEl = document.getElementById('checkoutModal');
   if (!modalEl) { alert("Lỗi tải modal"); return; }
-  var modal = new bootstrap.Modal(modalEl);
+  
   document.getElementById('checkoutTargetId').value = targetId;
   document.getElementById('checkoutType').value     = type;
   document.getElementById('checkoutPrice').value    = price;
   document.getElementById('checkoutTotalDisplay').textContent = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-  modal.show();
+  
+  openDetailModal('checkoutModal');
 }
 
 document.getElementById('checkoutForm')?.addEventListener('submit', function() {
@@ -557,11 +558,15 @@ document.getElementById('checkoutForm')?.addEventListener('submit', function() {
 
 function downloadQRCode() {
     const img = document.getElementById('qrCodeImage');
-    fetch(img.src).then(r => r.blob()).then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = 'SVMarket_QR_<?= $p['id'] ?>.png';
-        document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url); document.body.removeChild(a);
-    }).catch(() => alert('Lỗi tải ảnh QR. Hãy chụp màn hình thay thế!'));
+    
+    // Tải ảnh qua tab mới để tránh lỗi CORS từ api.qrserver.com
+    const a = document.createElement('a');
+    a.href = img.src;
+    a.download = 'SVMarket_QR_<?= $p['id'] ?>.png';
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }
 
 function copyProductLink() {

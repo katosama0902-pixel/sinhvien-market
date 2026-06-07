@@ -463,6 +463,32 @@ CREATE TABLE `bank_accounts` (
   COMMENT='Tài khoản ngân hàng của người dùng — dùng cho thanh toán VietQR';
 
 -- ============================================================
+--  IMAGE BLOBS - Lưu ảnh trong DB (bền vững trên Railway ephemeral FS)
+--  Tách bảng riêng để SELECT * trên products/banners không kéo theo blob.
+-- ============================================================
+DROP TABLE IF EXISTS `product_images`;
+CREATE TABLE `product_images` (
+    `product_id` INT UNSIGNED NOT NULL,
+    `data`       LONGBLOB     NOT NULL,
+    `mime`       VARCHAR(50)  NOT NULL,
+    `created_at` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`product_id`),
+    CONSTRAINT `fk_product_images_product` FOREIGN KEY (`product_id`) REFERENCES `products`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Ảnh sản phẩm lưu trong DB';
+
+DROP TABLE IF EXISTS `banner_images`;
+CREATE TABLE `banner_images` (
+    `banner_id`  INT UNSIGNED NOT NULL,
+    `data`       LONGBLOB     NOT NULL,
+    `mime`       VARCHAR(50)  NOT NULL,
+    `created_at` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`banner_id`),
+    CONSTRAINT `fk_banner_images_banner` FOREIGN KEY (`banner_id`) REFERENCES `banners`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Ảnh banner lưu trong DB';
+
+-- ============================================================
 --  SEED DATA - Dữ liệu mẫu ban đầu
 -- ============================================================
 

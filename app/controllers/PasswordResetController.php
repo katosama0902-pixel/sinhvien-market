@@ -5,7 +5,9 @@ namespace App\Controllers;
 use Core\Controller;
 use Core\Middleware;
 use Core\Flash;
+use Core\Mailer;
 use App\Models\User;
+use App\Services\EmailTemplate;
 use App\Services\NotificationService;
 
 class PasswordResetController extends Controller
@@ -14,8 +16,7 @@ class PasswordResetController extends Controller
 
     public function __construct()
     {
-        $this->userModel    = new User();
-        $this->attemptModel = new LoginAttempt();
+        $this->userModel = new User();
     }
 
     public function forgotPasswordForm(): void

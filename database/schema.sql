@@ -12,12 +12,12 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO';
 
--- Tạo database nếu chưa có
-CREATE DATABASE IF NOT EXISTS `sinhvien_market`
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
-
-USE `sinhvien_market`;
+-- LƯU Ý: File này KHÔNG tự tạo/chuyển database (không CREATE DATABASE / USE)
+-- để có thể import vào BẤT KỲ database nào đang được chọn
+-- (vd: `sinhvien_market` khi cài thủ công, `test_sinhvien_market` trong CI).
+-- Hãy tạo & chọn database trước khi import, ví dụ:
+--   CREATE DATABASE sinhvien_market CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+--   mysql -u root sinhvien_market < database/schema.sql
 
 -- ============================================================
 --  1. USERS - Tài khoản sinh viên & admin

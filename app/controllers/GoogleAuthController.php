@@ -139,7 +139,6 @@ class GoogleAuthController extends Controller
             CURLOPT_TIMEOUT        => 10,
         ]);
         $response = curl_exec($ch);
-        curl_close($ch);
         return json_decode($response, true) ?? [];
     }
 
@@ -153,7 +152,6 @@ class GoogleAuthController extends Controller
             CURLOPT_TIMEOUT        => 10,
         ]);
         $response = curl_exec($ch);
-        curl_close($ch);
         return json_decode($response, true) ?? [];
     }
 

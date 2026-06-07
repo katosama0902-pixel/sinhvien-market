@@ -82,7 +82,6 @@ class MomoService
 
         $response = curl_exec($ch);
         $curlError = curl_error($ch);
-        curl_close($ch);
 
         if ($curlError) {
             return ['success' => false, 'payUrl' => '', 'message' => 'Lỗi kết nối MoMo: ' . $curlError];

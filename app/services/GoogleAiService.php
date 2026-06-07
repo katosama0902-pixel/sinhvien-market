@@ -46,7 +46,6 @@ class GoogleAiService
 
         $response = curl_exec($ch);
         $error = curl_error($ch);
-        curl_close($ch);
 
         if ($error) {
             // Log lỗi cho developer xem trong storage/logs/

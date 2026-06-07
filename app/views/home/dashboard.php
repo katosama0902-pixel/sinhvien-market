@@ -106,7 +106,7 @@ foreach ($transactions as $t) {
               <div class="flex items-center gap-4 px-6 py-4 border-b border-gray-50 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-2 transition-colors last:border-0 group">
                 <div class="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-dark-2 shadow-sm border border-gray-200 dark:border-gray-700 relative">
                   <?php if ($p['image']): ?>
-                    <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($p['image'], ENT_QUOTES) ?>" class="w-full h-full object-cover">
+                    <img src="<?= $appUrl ?>/products/image?id=<?= (int)$p['id'] ?>" class="w-full h-full object-cover">
                   <?php else: ?>
                     <div class="flex items-center justify-center h-full text-gray-300">
                       <i class="bi bi-image"></i>

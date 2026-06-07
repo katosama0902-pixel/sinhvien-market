@@ -45,10 +45,10 @@ function hp(int $price): string {
           <div class="min-w-full relative">
             <?php if (!empty($b['link'])): ?>
               <a href="<?= htmlspecialchars($b['link'], ENT_QUOTES) ?>" class="block w-full">
-                <img src="<?= htmlspecialchars($appUrl . $b['image'], ENT_QUOTES) ?>" class="block w-full aspect-[21/9] object-cover max-h-[400px]" alt="<?= htmlspecialchars($b['title'] ?? 'Banner', ENT_QUOTES) ?>">
+                <img src="<?= $appUrl ?>/banners/image?id=<?= (int)$b['id'] ?>" class="block w-full aspect-[21/9] object-cover max-h-[400px]" alt="<?= htmlspecialchars($b['title'] ?? 'Banner', ENT_QUOTES) ?>">
               </a>
             <?php else: ?>
-              <img src="<?= htmlspecialchars($appUrl . $b['image'], ENT_QUOTES) ?>" class="block w-full aspect-[21/9] object-cover max-h-[400px]" alt="<?= htmlspecialchars($b['title'] ?? 'Banner', ENT_QUOTES) ?>">
+              <img src="<?= $appUrl ?>/banners/image?id=<?= (int)$b['id'] ?>" class="block w-full aspect-[21/9] object-cover max-h-[400px]" alt="<?= htmlspecialchars($b['title'] ?? 'Banner', ENT_QUOTES) ?>">
             <?php endif; ?>
           </div>
         <?php endforeach; ?>
@@ -311,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="bg-white dark:bg-dark-card rounded-2xl border-2 border-light-border dark:border-dark-border overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(239,68,68,0.18)] hover:border-red-300">
               <div class="relative h-48 overflow-hidden bg-gray-100 dark:bg-dark-2">
                 <?php if ($p['image']): ?>
-                  <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($p['image'], ENT_QUOTES) ?>" alt="" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                  <img src="<?= $appUrl ?>/products/image?id=<?= (int)$p['id'] ?>" alt="" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
                 <?php else: ?>
                   <div class="flex items-center justify-center h-full text-5xl text-red-500/20"><i class="bi bi-lightning-fill"></i></div>
                 <?php endif; ?>
@@ -431,7 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="bg-white dark:bg-dark-card rounded-[18px] border-2 border-light-border dark:border-dark-border overflow-hidden h-full flex flex-col transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_18px_42px_rgba(99,102,241,0.14)] hover:border-indigo-200 dark:hover:border-indigo-500/30">
                 <div class="relative h-40 bg-gray-100 dark:bg-dark-2 overflow-hidden flex-shrink-0">
                   <?php if ($p['image']): ?>
-                    <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($p['image'], ENT_QUOTES) ?>" alt="" class="w-full h-full object-cover transition-transform duration-400 group-hover:scale-110">
+                    <img src="<?= $appUrl ?>/products/image?id=<?= (int)$p['id'] ?>" alt="" class="w-full h-full object-cover transition-transform duration-400 group-hover:scale-110">
                   <?php else: ?>
                     <div class="flex items-center justify-center h-full text-4xl text-gray-300"><i class="bi bi-image"></i></div>
                   <?php endif; ?>

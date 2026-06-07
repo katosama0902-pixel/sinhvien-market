@@ -158,7 +158,7 @@ $hasFilter = $keyword || $categoryId || $condition || $priceMin || $priceMax;
                   <!-- Ảnh -->
                   <div class="relative h-44 overflow-hidden bg-gray-50 dark:bg-dark-2">
                     <?php if ($p['image']): ?>
-                      <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($p['image'], ENT_QUOTES) ?>"
+                      <img src="<?= $appUrl ?>/products/image?id=<?= (int)$p['id'] ?>"
                            alt="<?= htmlspecialchars($p['title'], ENT_QUOTES) ?>"
                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     <?php else: ?>

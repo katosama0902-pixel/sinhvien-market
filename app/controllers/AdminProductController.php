@@ -276,29 +276,24 @@ class AdminProductController extends Controller
             $displayOrder = $this->inputInt('display_order', 0); // BUG-A06 fix: dùng inputInt()
             $isActive = $this->inputInt('is_active', 1);          // BUG-A06 fix: dùng inputInt()
 
-            $imageUrl = '';
-            if (!empty($_FILES['image']['name'])) {
-                $uploadPath = __DIR__ . '/../../public/uploads/banners/';
-                if (!is_dir($uploadPath)) {
-                    mkdir($uploadPath, 0755, true); // BUG-A07 fix: 0777 → 0755 (không world-writable)
-                }
-
-                $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-                $filename = uniqid('banner_') . '.' . $ext;
-
-                if (move_uploaded_file($_FILES['image']['tmp_name'], $uploadPath . $filename)) {
-                    $imageUrl = '/public/uploads/banners/' . $filename;
-                }
+            // Đọc ảnh để lưu vào DB (bền qua redeploy Railway)
+            $imageBytes = null;
+            $imageMime  = null;
+            if (!empty($_FILES['image']['name']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+                $imageBytes = file_get_contents($_FILES['image']['tmp_name']);
+                $imageMime  = mime_content_type($_FILES['image']['tmp_name']);
             }
 
-            if (!$imageUrl) {
+            if ($imageBytes === null) {
                 \Core\Flash::set('danger', 'Vui lòng chọn ảnh Banner hợp lệ.');
                 $this->redirect('admin/banners'); return; // BUG-006 fix: bỏ dấu /
             }
 
             $model = new \App\Models\Banner();
-            $model->create($imageUrl, $linkUrl, $title, $displayOrder, $isActive);
-            
+            // 'db' = marker đánh dấu banner CÓ ảnh (ảnh thật nằm ở banner_images)
+            $bannerId = $model->create('db', $linkUrl, $title, $displayOrder, $isActive);
+            $model->saveImage($bannerId, $imageBytes, $imageMime);
+
             \Core\Flash::set('success', 'Đã thêm Banner mới.');
         }
         $this->redirect('admin/banners'); // BUG-006 fix: bỏ dấu /
@@ -323,6 +318,26 @@ class AdminProductController extends Controller
             \Core\Flash::set('success', 'Đã cập nhật Banner.');
         }
         $this->redirect('admin/banners'); // BUG-006 fix: bỏ dấu /
+    }
+
+    /**
+     * Phục vụ ảnh banner từ DB (PUBLIC — banner hiển thị ở trang chủ cho mọi người).
+     */
+    public function bannerImage(): void
+    {
+        $id  = (int)($_GET['id'] ?? 0);
+        $img = $id > 0 ? (new \App\Models\Banner())->getImageBlob($id) : null;
+        if ($img && !empty($img['data'])) {
+            header('Content-Type: ' . $img['mime']);
+            header('Cache-Control: public, max-age=86400');
+            header('Content-Length: ' . strlen($img['data']));
+            echo $img['data'];
+            exit;
+        }
+        header('Content-Type: image/svg+xml');
+        header('Cache-Control: public, max-age=3600');
+        echo '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400"><rect width="1200" height="400" fill="#e5e7eb"/></svg>';
+        exit;
     }
 
     public function toggleBanner(): void

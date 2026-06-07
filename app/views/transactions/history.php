@@ -95,7 +95,7 @@ $paymentIcons = [
                 <div class="flex items-center gap-2">
                   <div class="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-dark-2">
                     <?php if ($t['product_image']): ?>
-                      <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($t['product_image'], ENT_QUOTES) ?>"
+                      <img src="<?= $appUrl ?>/products/image?id=<?= (int)$t['product_id'] ?>"
                            class="w-full h-full object-cover">
                     <?php else: ?>
                       <div class="w-full h-full flex items-center justify-center">

@@ -63,7 +63,7 @@ $csrf = $_SESSION['csrf_token'] ?? '';
                 </td>
                 <td class="py-4 px-5">
                   <div class="w-[180px] h-[68px] rounded-xl overflow-hidden bg-gray-100 dark:bg-dark-2 relative shadow-sm">
-                    <img src="<?= htmlspecialchars($appUrl . $b['image'], ENT_QUOTES) ?>"
+                    <img src="<?= $appUrl ?>/banners/image?id=<?= (int)$b['id'] ?>"
                          alt="Banner"
                          class="w-full h-full object-cover">
                   </div>

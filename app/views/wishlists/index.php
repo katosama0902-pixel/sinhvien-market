@@ -29,7 +29,7 @@ $appUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
 
           <!-- Product image -->
           <?php if ($p['image']): ?>
-            <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($p['image'], ENT_QUOTES) ?>"
+            <img src="<?= $appUrl ?>/products/image?id=<?= (int)$p['product_id'] ?>"
                  class="w-full object-cover" style="height:180px"
                  alt="<?= htmlspecialchars($p['title'], ENT_QUOTES) ?>">
           <?php else: ?>

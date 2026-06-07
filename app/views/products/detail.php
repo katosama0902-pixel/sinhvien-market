@@ -26,7 +26,7 @@ $conditionMap = [
     <div class="lg:w-1/2 animate-[fadeInUp_0.5s_ease-out_0.1s_both]">
       <div class="bg-white dark:bg-dark-card rounded-3xl border border-light-border dark:border-dark-border overflow-hidden shadow-sm h-[420px]">
         <?php if ($p['image']): ?>
-          <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($p['image'], ENT_QUOTES) ?>"
+          <img src="<?= $appUrl ?>/products/image?id=<?= (int)$p['id'] ?>"
                alt="<?= htmlspecialchars($p['title'], ENT_QUOTES) ?>"
                class="w-full h-full object-cover">
         <?php else: ?>
@@ -457,7 +457,7 @@ $conditionMap = [
     </div>
       <div class="p-6">
           <div class="flex items-center gap-4 mb-6 bg-gray-50 dark:bg-dark-2 p-3 rounded-2xl border border-light-border dark:border-dark-border">
-              <img src="<?= $p['image'] ? ($appUrl . '/public/uploads/' . $p['image']) : ($appUrl . '/public/assets/img/og-fallback.png') ?>" class="w-16 h-16 object-cover rounded-xl shadow-sm flex-shrink-0" alt="Product">
+              <img src="<?= $appUrl ?>/products/image?id=<?= (int)$p['id'] ?>" class="w-16 h-16 object-cover rounded-xl shadow-sm flex-shrink-0" alt="Product">
               <div class="min-w-0">
                   <div class="font-bold text-sm text-gray-800 dark:text-dark-text truncate leading-tight"><?= htmlspecialchars($p['title'], ENT_QUOTES) ?></div>
                   <div class="text-primary font-black text-lg mt-1 font-mono"><?= number_format((int)$p['price']) ?> đ</div>

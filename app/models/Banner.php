@@ -64,6 +64,29 @@ class Banner extends Model
     }
 
     /**
+     * Lưu ảnh banner vào DB (bảng banner_images) — bền qua redeploy Railway
+     */
+    public function saveImage(int $bannerId, string $data, string $mime): void
+    {
+        $this->execute(
+            'INSERT INTO banner_images (banner_id, data, mime) VALUES (?, ?, ?)
+             ON DUPLICATE KEY UPDATE data = VALUES(data), mime = VALUES(mime)',
+            [$bannerId, $data, $mime]
+        );
+    }
+
+    /**
+     * Lấy bytes ảnh + mime của banner (dùng cho route phục vụ ảnh)
+     */
+    public function getImageBlob(int $bannerId): ?array
+    {
+        return $this->queryOne(
+            'SELECT data, mime FROM banner_images WHERE banner_id = ?',
+            [$bannerId]
+        );
+    }
+
+    /**
      * Đổi trạng thái hiển thị của banner
      */
     public function toggleStatus(int $id): void

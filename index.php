@@ -187,6 +187,7 @@ $router->get('products/create', 'Product', 'createForm');
 $router->post('products/create', 'Product', 'create');
 $router->post('products/suggest-price', 'Product', 'suggestPrice');
 $router->get('products/show', 'Product', 'show'); // ?id=
+$router->get('products/image', 'Product', 'image'); // ?id= — phục vụ ảnh từ DB
 $router->get('products/my', 'Product', 'myProducts');
 $router->post('products/delete', 'Product', 'delete');
 
@@ -227,6 +228,7 @@ $router->post('admin/categories/update', 'AdminProduct', 'updateCategory');
 $router->post('admin/categories/delete', 'AdminProduct', 'deleteCategory');
 
 // Admin Banners
+$router->get('banners/image', 'AdminProduct', 'bannerImage'); // ?id= — phục vụ ảnh banner từ DB (public)
 $router->get('admin/banners', 'AdminProduct', 'banners');
 $router->post('admin/banners/store', 'AdminProduct', 'storeBanner');
 $router->post('admin/banners/update', 'AdminProduct', 'updateBanner');

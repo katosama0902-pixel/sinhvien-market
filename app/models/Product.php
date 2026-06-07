@@ -179,6 +179,30 @@ class Product extends Model
     }
 
     /**
+     * Lưu ảnh sản phẩm vào DB (bảng product_images) — bền vững qua các lần
+     * redeploy của Railway (filesystem ephemeral không giữ được file upload).
+     */
+    public function saveImage(int $productId, string $data, string $mime): void
+    {
+        $this->execute(
+            'INSERT INTO product_images (product_id, data, mime) VALUES (?, ?, ?)
+             ON DUPLICATE KEY UPDATE data = VALUES(data), mime = VALUES(mime)',
+            [$productId, $data, $mime]
+        );
+    }
+
+    /**
+     * Lấy bytes ảnh + mime của một sản phẩm (dùng cho route phục vụ ảnh)
+     */
+    public function getImageBlob(int $productId): ?array
+    {
+        return $this->queryOne(
+            'SELECT data, mime FROM product_images WHERE product_id = ?',
+            [$productId]
+        );
+    }
+
+    /**
      * Đẩy tin lên đầu: cập nhật bumped_at = NOW()
      */
     public function bump(int $productId): void

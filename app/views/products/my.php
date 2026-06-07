@@ -82,7 +82,7 @@ $typeMap = [
                   <div class="w-13 h-13 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-dark-2"
                        style="width:52px;height:52px">
                     <?php if ($p['image']): ?>
-                      <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($p['image'], ENT_QUOTES) ?>"
+                      <img src="<?= $appUrl ?>/products/image?id=<?= (int)$p['id'] ?>"
                            class="w-full h-full object-cover">
                     <?php else: ?>
                       <div class="w-full h-full flex items-center justify-center">

@@ -117,7 +117,7 @@ class ProductController extends Controller
         $og = [
             'title'       => $product['title'],
             'description' => mb_substr(strip_tags($product['description']), 0, 150) . '...',
-            'image'       => $product['image'] ? ($appUrl . '/public/uploads/' . $product['image']) : ($appUrl . '/public/assets/img/og-fallback.png'),
+            'image'       => $appUrl . '/products/image?id=' . $product['id'],
             'url'         => $appUrl . '/products/show?id=' . $product['id'],
             'type'        => 'product'
         ];
@@ -214,8 +214,10 @@ class ProductController extends Controller
             if ($stepMin < 1)       $errors['step_minutes']    = 'Chu kỳ phải ít nhất 1 phút.';
         }
 
-        // ── Upload ảnh ────────────────────────────────────────────────
-        $imageName = null;
+        // ── Upload ảnh (lưu vào DB để bền vững trên Railway) ────────────
+        $imageName  = null;   // marker đánh dấu sản phẩm CÓ ảnh (lưu ở product_images)
+        $imageBytes = null;
+        $imageMime  = null;
         if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
             $file = $_FILES['image'];
             if ($file['size'] > self::UPLOAD_MAX) {
@@ -223,12 +225,9 @@ class ProductController extends Controller
             } elseif (!in_array(mime_content_type($file['tmp_name']), self::ALLOWED_MIME, true)) {
                 $errors['image'] = 'Chỉ hỗ trợ ảnh JPG, PNG, WEBP, GIF.';
             } else {
-                $ext       = pathinfo($file['name'], PATHINFO_EXTENSION);
-                $imageName = uniqid('img_', true) . '.' . strtolower($ext);
-                if (!move_uploaded_file($file['tmp_name'], self::UPLOAD_DIR . $imageName)) {
-                    $errors['image'] = 'Không thể lưu ảnh, thử lại.';
-                    $imageName = null;
-                }
+                $imageBytes = file_get_contents($file['tmp_name']);
+                $imageMime  = mime_content_type($file['tmp_name']);
+                $imageName  = 'db'; // ảnh nằm trong DB, không phải file
             }
         }
 
@@ -253,6 +252,11 @@ class ProductController extends Controller
             'price'       => ($old['type'] === 'sale') ? $price : null,
             'condition'   => $old['condition'] ?? 'used',
         ]);
+
+        // ── Lưu ảnh vào DB (bền vững qua redeploy Railway) ───────────
+        if ($productId && $imageBytes !== null) {
+            $this->productModel->saveImage($productId, $imageBytes, $imageMime);
+        }
 
         // ── Tạo auction nếu là đấu giá ngược ─────────────────────────
         if ($old['type'] === 'auction' && $productId) {
@@ -374,6 +378,35 @@ class ProductController extends Controller
         $this->redirect('products/my');
     }
 
+    // ─── Phục vụ ảnh sản phẩm từ DB ──────────────────────────────────────
+
+    /**
+     * Xuất bytes ảnh của sản phẩm (lưu trong product_images).
+     * Nếu không có ảnh → trả về placeholder SVG (không vỡ icon).
+     */
+    public function image(): void
+    {
+        $id  = (int)($_GET['id'] ?? 0);
+        $img = $id > 0 ? $this->productModel->getImageBlob($id) : null;
+
+        if ($img && !empty($img['data'])) {
+            header('Content-Type: ' . $img['mime']);
+            header('Cache-Control: public, max-age=86400');
+            header('Content-Length: ' . strlen($img['data']));
+            echo $img['data'];
+            exit;
+        }
+
+        // Fallback: placeholder SVG gọn nhẹ, không phụ thuộc file ngoài
+        header('Content-Type: image/svg+xml');
+        header('Cache-Control: public, max-age=3600');
+        echo '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">'
+           . '<rect width="400" height="400" fill="#e5e7eb"/>'
+           . '<text x="50%" y="50%" font-family="sans-serif" font-size="22" fill="#9ca3af" '
+           . 'text-anchor="middle" dominant-baseline="middle">Chưa có ảnh</text></svg>';
+        exit;
+    }
+
     // ─── API Live Search ─────────────────────────────────────────────────
 
     public function apiSearch(): void
@@ -388,7 +421,7 @@ class ProductController extends Controller
         
         $appUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
         foreach ($results as &$r) {
-            $r['image_url'] = $r['image'] ? ($appUrl . '/public/uploads/' . $r['image']) : '';
+            $r['image_url'] = $r['image'] ? ($appUrl . '/products/image?id=' . $r['id']) : '';
             $r['url'] = $appUrl . '/products/show?id=' . $r['id'];
         }
         unset($r);

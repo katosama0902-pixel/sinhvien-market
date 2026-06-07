@@ -110,7 +110,7 @@ $me     = $_SESSION['user'] ?? [];
           <input type="hidden" id="convId"    value="<?= $activeConv['id'] ?>">
           <input type="hidden" id="lastMsgId" value="<?= !empty($messages) ? end($messages)['id'] : 0 ?>">
           <textarea id="msgInput" placeholder="Nhập tin nhắn..." rows="1"
-                    style="flex:1;border:1.5px solid #e8ecf0;border-radius:12px;padding:10px 14px;font-size:.875rem;resize:none;outline:none;transition:.2s;max-height:100px;min-height:44px;font-family:inherit"
+                    style="flex:1;border:1.5px solid #e8ecf0;border-radius:12px;padding:10px 14px;font-size:.875rem;resize:none;outline:none;transition:.2s;max-height:100px;min-height:44px;font-family:inherit;color:#1f2937;background:#fff"
                     onfocus="this.style.borderColor='#4f46e5';this.style.boxShadow='0 0 0 3px rgba(79,70,229,.12)'"
                     onblur="this.style.borderColor='#e8ecf0';this.style.boxShadow='none'"
                     onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}"></textarea>

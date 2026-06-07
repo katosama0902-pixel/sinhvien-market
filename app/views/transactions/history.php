@@ -165,7 +165,7 @@ $paymentIcons = [
                 <!-- Thanh toán ngân hàng (VietQR) -->
                 <?php if ($t['payment_method'] === 'banking' && !empty($t['payment_proof'])): ?>
                   <div class="mt-1 mb-2">
-                    <a href="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($t['payment_proof']) ?>" target="_blank" class="text-xs text-primary hover:underline font-semibold flex items-center gap-1">
+                    <a href="<?= $appUrl ?>/transactions/proof?id=<?= (int)$t['id'] ?>" target="_blank" class="text-xs text-primary hover:underline font-semibold flex items-center gap-1">
                       <i class="bi bi-image"></i> Xem UNC chuyển khoản
                     </a>
                   </div>

@@ -146,28 +146,32 @@ class AdminReportController extends Controller
             $adminNote = $this->input('admin_note');
             
             if ($id > 0 && in_array($status, ['resolved', 'ignored'])) {
-                $evidenceUrl = null;
-                
-                // Upload ảnh bằng chứng (nếu có)
-                if (!empty($_FILES['evidence']['name'])) {
-                    $uploadPath = __DIR__ . '/../../public/uploads/evidence/';
-                    if (!is_dir($uploadPath)) {
-                        @mkdir($uploadPath, 0777, true);
-                    }
-                    
-                    $ext = pathinfo($_FILES['evidence']['name'], PATHINFO_EXTENSION);
-                    $filename = uniqid('evidence_') . '.' . $ext;
-                    
-                    if (move_uploaded_file($_FILES['evidence']['tmp_name'], $uploadPath . $filename)) {
-                        $evidenceUrl = '/public/uploads/evidence/' . $filename;
-                    }
+                // Đọc ảnh bằng chứng để lưu vào DB (bền qua redeploy Railway)
+                $evidenceBytes  = null;
+                $evidenceMime   = null;
+                $evidenceMarker = null;
+                if (!empty($_FILES['evidence']['name']) && $_FILES['evidence']['error'] === UPLOAD_ERR_OK) {
+                    $evidenceBytes  = file_get_contents($_FILES['evidence']['tmp_name']);
+                    $evidenceMime   = mime_content_type($_FILES['evidence']['tmp_name']);
+                    $evidenceMarker = 'db'; // marker: ảnh nằm trong report_evidence
                 }
 
                 $reportModel = new \App\Models\Report();
-                $reportModel->updateStatus($id, $status, $adminNote, $evidenceUrl);
+                $reportModel->updateStatus($id, $status, $adminNote, $evidenceMarker);
+                if ($evidenceBytes !== null) {
+                    $reportModel->saveEvidenceImage($id, $evidenceBytes, $evidenceMime);
+                }
                 Flash::set('success', 'Đã lưu kết quả xử lý báo cáo vi phạm.');
             }
         }
         $this->redirect('admin/system-reports');
+    }
+
+    /** Phục vụ ảnh bằng chứng tố cáo từ DB — chỉ admin. */
+    public function evidence(): void
+    {
+        Middleware::requireAdmin();
+        $id = (int)($_GET['id'] ?? 0);
+        $this->serveImageBlob($id > 0 ? (new \App\Models\Report())->getEvidenceBlob($id) : null);
     }
 }

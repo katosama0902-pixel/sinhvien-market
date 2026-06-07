@@ -109,7 +109,7 @@ foreach ($reports as $r) {
                     </div>
                   <?php endif; ?>
                   <?php if (!empty($r['evidence_url'])): ?>
-                    <a href="<?= $appUrl . $r['evidence_url'] ?>" target="_blank"
+                    <a href="<?= $appUrl ?>/admin/reports/evidence?id=<?= (int)$r['id'] ?>" target="_blank"
                        class="inline-flex items-center gap-1 mt-1.5 px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-dark-2 text-gray-600 dark:text-gray-300 text-[10px] font-bold no-underline hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
                       <i class="bi bi-paperclip"></i> Xem bằng chứng đính kèm
                     </a>

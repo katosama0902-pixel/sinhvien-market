@@ -135,24 +135,23 @@ class TransactionController extends Controller
             $this->redirect('transactions/history'); return;
         }
 
-        $proofName = null;
+        $proofBytes = null;
+        $proofMime  = null;
         if (isset($_FILES['proof']) && $_FILES['proof']['error'] === UPLOAD_ERR_OK) {
             $file = $_FILES['proof'];
             // NEW-004 fix: validate MIME type thực tế (không tin extension từ tên file)
             $allowedMime = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
             $actualMime  = mime_content_type($file['tmp_name']);
             if ($file['size'] <= 3 * 1024 * 1024 && in_array($actualMime, $allowedMime, true)) {
-                $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-                // NEW-004 fix: whitelist extension thay vì dùng bất kỳ ext nào từ client
-                $safeExts = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-                $ext = in_array(strtolower($ext), $safeExts, true) ? strtolower($ext) : 'jpg';
-                $proofName = uniqid('proof_', true) . '.' . $ext;
-                move_uploaded_file($file['tmp_name'], ROOT . '/public/uploads/' . $proofName);
+                $proofBytes = file_get_contents($file['tmp_name']);
+                $proofMime  = $actualMime;
             }
         }
 
-        if ($proofName) {
-            $txModel->updatePaymentProof($txId, $proofName);
+        if ($proofBytes !== null) {
+            // Lưu biên lai vào DB (bền qua redeploy Railway)
+            $txModel->saveProofImage($txId, $proofBytes, $proofMime);
+            $txModel->updatePaymentProof($txId, 'db'); // marker
             Flash::set('success', 'Đã tải lên ảnh xác nhận. Đang chờ người bán kiểm tra.');
         } else {
             Flash::set('warning', 'Bạn chưa tải lên ảnh minh chứng hoặc ảnh quá lớn.');
@@ -432,5 +431,21 @@ class TransactionController extends Controller
         }
 
         $this->redirect('transactions/history');
+    }
+
+    /** Phục vụ ảnh biên lai từ DB — chỉ người mua/bán của giao dịch hoặc admin. */
+    public function proof(): void
+    {
+        Middleware::requireAuth();
+        $user = $this->currentUser();
+        $id   = (int)($_GET['id'] ?? 0);
+        $tx   = $id > 0 ? (new Transaction())->findById($id) : null;
+        if (!$tx || !(($user['role'] ?? '') === 'admin'
+                      || (int)$tx['buyer_id'] === (int)$user['id']
+                      || (int)$tx['seller_id'] === (int)$user['id'])) {
+            http_response_code(403);
+            exit;
+        }
+        $this->serveImageBlob((new Transaction())->getProofBlob($id));
     }
 }

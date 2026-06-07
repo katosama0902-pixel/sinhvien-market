@@ -64,17 +64,20 @@ class AdminGiveawayController extends Controller
             'end_time'    => $this->input('end_time'),
         ];
 
+        // Đọc ảnh để lưu vào DB (bền qua redeploy Railway)
+        $imageBytes = null;
+        $imageMime  = null;
         if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-            // Upload logic
-            $tmp  = $_FILES['image']['tmp_name'];
-            $name = time() . '_' . preg_replace('/[^a-zA-Z0-9.\-_]/', '', $_FILES['image']['name']);
-            $dest = APP_PATH . '/../public/uploads/' . $name;
-            if (move_uploaded_file($tmp, $dest)) {
-                $data['image'] = $name;
-            }
+            $imageBytes   = file_get_contents($_FILES['image']['tmp_name']);
+            $imageMime    = mime_content_type($_FILES['image']['tmp_name']);
+            $data['image'] = 'db'; // marker: ảnh nằm trong giveaway_images
         }
 
-        (new \App\Models\Giveaway())->create($data);
+        $model = new \App\Models\Giveaway();
+        $giveawayId = $model->create($data);
+        if ($imageBytes !== null) {
+            $model->saveImage($giveawayId, $imageBytes, $imageMime);
+        }
         \Core\Flash::set('success', 'Tạo Giveaway thành công!');
         $this->redirect('admin/giveaways');
     }

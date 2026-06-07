@@ -12,7 +12,7 @@ $appUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
     <!-- Avatar -->
     <div class="w-20 h-20 rounded-full border-[3px] border-white/40 bg-white/20 flex items-center justify-center text-[2.2rem] font-extrabold flex-shrink-0 overflow-hidden shadow-lg">
       <?php if (!empty($profile['avatar'])): ?>
-        <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($profile['avatar'], ENT_QUOTES) ?>" alt="Avatar" class="w-full h-full object-cover">
+        <img src="<?= $appUrl ?>/users/avatar?id=<?= (int)($profile['id'] ?? 0) ?>" alt="Avatar" class="w-full h-full object-cover">
       <?php else: ?>
         <?= mb_strtoupper(mb_substr($profile['name'], 0, 1)) ?>
       <?php endif; ?>

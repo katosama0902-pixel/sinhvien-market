@@ -77,6 +77,31 @@ abstract class Controller
         exit;
     }
 
+    /**
+     * Xuất một ảnh (bytes + mime) lấy từ DB ra response.
+     * Nếu không có ảnh → trả placeholder SVG. Dùng cho các route phục vụ ảnh.
+     */
+    protected function serveImageBlob(?array $img): void
+    {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        if ($img && !empty($img['data'])) {
+            header('Content-Type: ' . $img['mime']);
+            header('Cache-Control: private, max-age=86400');
+            header('Content-Length: ' . strlen($img['data']));
+            echo $img['data'];
+            exit;
+        }
+        header('Content-Type: image/svg+xml');
+        header('Cache-Control: public, max-age=3600');
+        echo '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">'
+           . '<rect width="400" height="400" fill="#e5e7eb"/>'
+           . '<text x="50%" y="50%" font-family="sans-serif" font-size="20" fill="#9ca3af" '
+           . 'text-anchor="middle" dominant-baseline="middle">Chưa có ảnh</text></svg>';
+        exit;
+    }
+
     // ─── Session helpers ─────────────────────────────────────────────────────
 
     /**

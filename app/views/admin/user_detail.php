@@ -322,7 +322,7 @@ $p = $profile;
                         <?= htmlspecialchars($rpt['description'] ?? '—', ENT_QUOTES) ?>
                       </div>
                       <?php if (!empty($rpt['evidence_url'])): ?>
-                        <a href="<?= $appUrl . $rpt['evidence_url'] ?>" target="_blank" class="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-[10px] font-bold no-underline hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                        <a href="<?= $appUrl ?>/admin/reports/evidence?id=<?= (int)$rpt['id'] ?>" target="_blank" class="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-[10px] font-bold no-underline hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
                           <i class="bi bi-paperclip"></i> Bằng chứng
                         </a>
                       <?php endif; ?>

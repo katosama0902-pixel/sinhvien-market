@@ -75,6 +75,22 @@ class Transaction extends Model
         $this->execute('UPDATE transactions SET payment_proof = ? WHERE id = ?', [$proofName, $id]);
     }
 
+    /** Lưu ảnh biên lai vào DB (transaction_proofs) — bền qua redeploy Railway */
+    public function saveProofImage(int $txId, string $data, string $mime): void
+    {
+        $this->execute(
+            'INSERT INTO transaction_proofs (transaction_id, data, mime) VALUES (?, ?, ?)
+             ON DUPLICATE KEY UPDATE data = VALUES(data), mime = VALUES(mime)',
+            [$txId, $data, $mime]
+        );
+    }
+
+    /** Lấy bytes ảnh biên lai + mime của giao dịch */
+    public function getProofBlob(int $txId): ?array
+    {
+        return $this->queryOne('SELECT data, mime FROM transaction_proofs WHERE transaction_id = ?', [$txId]);
+    }
+
     /**
      * Người bán xác nhận đã nhận tiền qua ngân hàng
      */

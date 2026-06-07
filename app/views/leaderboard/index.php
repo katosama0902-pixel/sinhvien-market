@@ -58,7 +58,7 @@ $user = $_SESSION['user'] ?? null;
       <?php foreach ($podiumOrder as $pod):
         $u = $pod['user']; $r = $pod['rank'];
         $avatarSrc = !empty($u['avatar'])
-          ? $appUrl.'/public/uploads/'.htmlspecialchars($u['avatar'])
+          ? $appUrl.'/users/avatar?id='.(int)$u['id']
           : (!empty($u['avatar_url']) ? htmlspecialchars($u['avatar_url'])
             : 'https://ui-avatars.com/api/?name='.urlencode($u['name']).'&background=6366f1&color=fff&size=96');
       ?>
@@ -104,7 +104,7 @@ $user = $_SESSION['user'] ?? null;
 
             <!-- Avatar -->
             <img class="w-11 h-11 rounded-full object-cover border-2 border-light-border flex-shrink-0"
-                 src="<?= !empty($s['avatar']) ? $appUrl.'/public/uploads/'.htmlspecialchars($s['avatar']) : (!empty($s['avatar_url']) ? htmlspecialchars($s['avatar_url']) : 'https://ui-avatars.com/api/?name='.urlencode($s['name']).'&background=6366f1&color=fff') ?>"
+                 src="<?= !empty($s['avatar']) ? $appUrl.'/users/avatar?id='.(int)$s['id'] : (!empty($s['avatar_url']) ? htmlspecialchars($s['avatar_url']) : 'https://ui-avatars.com/api/?name='.urlencode($s['name']).'&background=6366f1&color=fff') ?>"
                  alt="">
 
             <!-- Name & badge -->

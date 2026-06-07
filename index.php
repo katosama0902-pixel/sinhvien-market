@@ -175,6 +175,7 @@ $router->get('dashboard', 'Home', 'dashboard'); // Student dashboard
 
 // ─── Profile ──────────────────────────────────────────────────────────────────
 $router->get('profile', 'Profile', 'show');
+$router->get('users/avatar', 'Profile', 'avatar'); // ?id= — avatar từ DB (public)
 $router->post('profile/update', 'Profile', 'update');
 $router->post('profile/password', 'Profile', 'changePassword');
 $router->post('profile/avatar', 'Profile', 'uploadAvatar');
@@ -205,6 +206,7 @@ $router->get('transactions/momo-return', 'Transaction', 'momoReturn');
 $router->post('transactions/momo-ipn', 'Transaction', 'momoIpn');
 
 $router->get('transactions/history', 'Transaction', 'history');
+$router->get('transactions/proof', 'Transaction', 'proof'); // ?id= — biên lai từ DB (mua/bán/admin)
 $router->post('transactions/update-status', 'Transaction', 'updateStatus');
 
 // API (JSON responses cho polling realtime)
@@ -237,6 +239,7 @@ $router->post('admin/banners/delete', 'AdminProduct', 'deleteBanner');
 
 $router->get('admin/reports', 'AdminReport', 'reports');
 $router->get('admin/system-reports', 'AdminReport', 'systemReports');
+$router->get('admin/reports/evidence', 'AdminReport', 'evidence'); // ?id= — ảnh tố cáo từ DB (admin)
 $router->post('admin/system-reports/resolve', 'AdminReport', 'resolveReport');
 $router->get('admin/audit-log', 'Admin', 'auditLog');
 
@@ -255,6 +258,7 @@ $router->post('admin/giveaway_spin_api', 'AdminGiveaway', 'spinGiveawayApi');
 
 // User Giveaways API
 $router->post('api/giveaways/join', 'Giveaway', 'join');
+$router->get('giveaways/image', 'Giveaway', 'image'); // ?id= — ảnh giveaway từ DB (public)
 
 // ─── Chat ────────────────────────────────────────────────────────────────────
 $router->get('chat', 'Chat', 'index');

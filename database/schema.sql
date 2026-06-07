@@ -488,6 +488,46 @@ CREATE TABLE `banner_images` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Ảnh banner lưu trong DB';
 
+DROP TABLE IF EXISTS `user_avatars`;
+CREATE TABLE `user_avatars` (
+    `user_id`    INT UNSIGNED NOT NULL,
+    `data`       LONGBLOB     NOT NULL,
+    `mime`       VARCHAR(50)  NOT NULL,
+    `created_at` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`user_id`),
+    CONSTRAINT `fk_user_avatars_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Avatar người dùng lưu trong DB';
+
+DROP TABLE IF EXISTS `giveaway_images`;
+CREATE TABLE `giveaway_images` (
+    `giveaway_id` INT UNSIGNED NOT NULL,
+    `data`        LONGBLOB     NOT NULL,
+    `mime`        VARCHAR(50)  NOT NULL,
+    `created_at`  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`giveaway_id`),
+    CONSTRAINT `fk_giveaway_images_giveaway` FOREIGN KEY (`giveaway_id`) REFERENCES `giveaways`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Ảnh giveaway lưu trong DB';
+
+DROP TABLE IF EXISTS `transaction_proofs`;
+CREATE TABLE `transaction_proofs` (
+    `transaction_id` INT UNSIGNED NOT NULL,
+    `data`           LONGBLOB     NOT NULL,
+    `mime`           VARCHAR(50)  NOT NULL,
+    `created_at`     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`transaction_id`),
+    CONSTRAINT `fk_transaction_proofs_tx` FOREIGN KEY (`transaction_id`) REFERENCES `transactions`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Biên lai thanh toán lưu trong DB';
+
+DROP TABLE IF EXISTS `report_evidence`;
+CREATE TABLE `report_evidence` (
+    `report_id`  INT UNSIGNED NOT NULL,
+    `data`       LONGBLOB     NOT NULL,
+    `mime`       VARCHAR(50)  NOT NULL,
+    `created_at` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`report_id`),
+    CONSTRAINT `fk_report_evidence_report` FOREIGN KEY (`report_id`) REFERENCES `reports`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Ảnh bằng chứng tố cáo lưu trong DB';
+
 -- ============================================================
 --  SEED DATA - Dữ liệu mẫu ban đầu
 -- ============================================================

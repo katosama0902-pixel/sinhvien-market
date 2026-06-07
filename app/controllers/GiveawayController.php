@@ -30,4 +30,11 @@ class GiveawayController extends ApiController
             $this->error('ALREADY_JOINED', 'Bạn đã tham gia sự kiện này rồi!', 409);
         }
     }
+
+    /** Phục vụ ảnh giveaway từ DB (public). */
+    public function image(): void
+    {
+        $id = (int)($_GET['id'] ?? 0);
+        $this->serveImageBlob($id > 0 ? (new Giveaway())->getImageBlob($id) : null);
+    }
 }

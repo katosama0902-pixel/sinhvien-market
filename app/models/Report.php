@@ -115,4 +115,20 @@ class Report extends Model
 
         $this->execute($sql, $params);
     }
+
+    /** Lưu ảnh bằng chứng vào DB (report_evidence) — bền qua redeploy Railway */
+    public function saveEvidenceImage(int $reportId, string $data, string $mime): void
+    {
+        $this->execute(
+            'INSERT INTO report_evidence (report_id, data, mime) VALUES (?, ?, ?)
+             ON DUPLICATE KEY UPDATE data = VALUES(data), mime = VALUES(mime)',
+            [$reportId, $data, $mime]
+        );
+    }
+
+    /** Lấy bytes ảnh bằng chứng + mime của report */
+    public function getEvidenceBlob(int $reportId): ?array
+    {
+        return $this->queryOne('SELECT data, mime FROM report_evidence WHERE report_id = ?', [$reportId]);
+    }
 }

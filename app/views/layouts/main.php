@@ -146,7 +146,7 @@ $user    = $_SESSION['user'] ?? null;
               <button @click="userOpen = !userOpen" class="flex items-center gap-2 px-2 py-1 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-all text-sm font-semibold border-0 bg-transparent cursor-pointer">
                 <div class="nav-avatar">
                   <?php if (!empty($user['avatar'])): ?>
-                    <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($user['avatar'], ENT_QUOTES) ?>" alt="Avatar">
+                    <img src="<?= $appUrl ?>/users/avatar?id=<?= (int)($user['id'] ?? 0) ?>" alt="Avatar">
                   <?php elseif (!empty($user['avatar_url'])): ?>
                     <img src="<?= htmlspecialchars($user['avatar_url'], ENT_QUOTES) ?>" alt="Avatar">
                   <?php else: ?>

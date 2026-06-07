@@ -201,36 +201,22 @@ class ProfileController extends Controller
             return;
         }
 
-        $uploadDir = ROOT . '/public/uploads/avatars/';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
+        // Lưu avatar vào DB (bền qua redeploy Railway) thay vì ghi file
+        $this->userModel->saveAvatarImage($userId, file_get_contents($file['tmp_name']), $actualMime);
+        $this->userModel->changeAvatar($userId, 'db'); // 'db' = marker: avatar nằm trong DB
 
-        $filename = 'avatar_' . $userId . '_' . time() . '.' . $ext;
-        $dest = $uploadDir . $filename;
-
-        if (!move_uploaded_file($file['tmp_name'], $dest)) {
-            Flash::set('danger', 'Tải ảnh lên thất bại. Vui lòng thử lại.');
-            $this->redirect('profile');
-            return;
-        }
-
-        // Xóa ảnh cũ nếu có
-        $oldUser = $this->userModel->findById($userId);
-        if (!empty($oldUser['avatar'])) {
-            $oldPath = ROOT . '/public/uploads/avatars/' . basename($oldUser['avatar']);
-            if (file_exists($oldPath)) {
-                @unlink($oldPath);
-            }
-        }
-
-        $this->userModel->changeAvatar($userId, 'avatars/' . $filename);
-        
         // Sync to session immediately
-        $_SESSION['user']['avatar'] = 'avatars/' . $filename;
+        $_SESSION['user']['avatar'] = 'db';
 
         Flash::set('success', '🖼️ Cập nhật ảnh đại diện thành công!');
         $this->redirect('profile');
+    }
+
+    /** Phục vụ avatar từ DB (public — avatar hiển thị khắp nơi). */
+    public function avatar(): void
+    {
+        $id = (int)($_GET['id'] ?? 0);
+        $this->serveImageBlob($id > 0 ? $this->userModel->getAvatarBlob($id) : null);
     }
 
     // ─── Lưu thông tin ngân hàng ──────────────────────────────────────────────

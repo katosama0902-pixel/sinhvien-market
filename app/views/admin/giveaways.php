@@ -46,7 +46,7 @@ $appUrl = rtrim($_ENV['APP_URL'] ?? 'http://localhost:8080/sinhvien-market', '/'
                 <td class="py-4 px-5">
                   <div class="flex items-center gap-3">
                     <?php if ($ga['image']): ?>
-                      <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($ga['image']) ?>"
+                      <img src="<?= $appUrl ?>/giveaways/image?id=<?= (int)$ga['id'] ?>"
                            class="w-10 h-10 rounded-xl object-cover flex-shrink-0 shadow-sm">
                     <?php else: ?>
                       <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-500 flex-shrink-0">

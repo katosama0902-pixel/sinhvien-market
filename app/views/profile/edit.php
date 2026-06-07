@@ -56,7 +56,7 @@ $tab = $_GET['tab'] ?? 'info'; // 'info' hoặc 'security'
                         <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5">
                             <div class="relative flex-shrink-0">
                                 <?php if (!empty($user['avatar'])): ?>
-                                    <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($user['avatar'], ENT_QUOTES) ?>" alt="Avatar" 
+                                    <img src="<?= $appUrl ?>/users/avatar?id=<?= (int)($user['id'] ?? 0) ?>" alt="Avatar"
                                          class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-md bg-white">
                                 <?php else: ?>
                                     <div class="w-28 h-28 rounded-full bg-gradient-to-br from-primary to-purple-500 text-white flex items-center justify-center shadow-md text-4xl font-black border-4 border-white">

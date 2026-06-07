@@ -115,6 +115,22 @@ class User extends Model
         $this->execute('UPDATE users SET avatar = ? WHERE id = ?', [$path, $userId]);
     }
 
+    /** Lưu avatar vào DB (user_avatars) — bền qua redeploy Railway */
+    public function saveAvatarImage(int $userId, string $data, string $mime): void
+    {
+        $this->execute(
+            'INSERT INTO user_avatars (user_id, data, mime) VALUES (?, ?, ?)
+             ON DUPLICATE KEY UPDATE data = VALUES(data), mime = VALUES(mime)',
+            [$userId, $data, $mime]
+        );
+    }
+
+    /** Lấy bytes avatar + mime của user */
+    public function getAvatarBlob(int $userId): ?array
+    {
+        return $this->queryOne('SELECT data, mime FROM user_avatars WHERE user_id = ?', [$userId]);
+    }
+
     /**
      * Lấy tất cả user (cho Admin)
      * @return array<int, array<string, mixed>>

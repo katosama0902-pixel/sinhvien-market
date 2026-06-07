@@ -214,7 +214,7 @@ function hp(int $price): string {
       <div class="flex-shrink-0">
         <?php if ($giveaway['image']): ?>
           <div class="relative inline-block">
-            <img src="<?= $appUrl ?>/public/uploads/<?= htmlspecialchars($giveaway['image']) ?>" alt="" 
+            <img src="<?= $appUrl ?>/giveaways/image?id=<?= (int)$giveaway['id'] ?>" alt=""
                  class="w-44 h-44 object-cover rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.55),0_0_0_3px_rgba(251,191,36,0.35)]">
             <div class="absolute -top-3 -right-3 w-10 h-10 bg-gradient-to-br from-amber-500 to-red-500 rounded-full flex items-center justify-center text-lg">🎁</div>
           </div>

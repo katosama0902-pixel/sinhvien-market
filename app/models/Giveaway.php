@@ -99,4 +99,20 @@ class Giveaway extends Model
             [$data['title'], $data['description'], $data['image'], $data['end_time']]
         );
     }
+
+    /** Lưu ảnh giveaway vào DB (giveaway_images) — bền qua redeploy Railway */
+    public function saveImage(int $giveawayId, string $data, string $mime): void
+    {
+        $this->execute(
+            'INSERT INTO giveaway_images (giveaway_id, data, mime) VALUES (?, ?, ?)
+             ON DUPLICATE KEY UPDATE data = VALUES(data), mime = VALUES(mime)',
+            [$giveawayId, $data, $mime]
+        );
+    }
+
+    /** Lấy bytes ảnh + mime của giveaway */
+    public function getImageBlob(int $giveawayId): ?array
+    {
+        return $this->queryOne('SELECT data, mime FROM giveaway_images WHERE giveaway_id = ?', [$giveawayId]);
+    }
 }

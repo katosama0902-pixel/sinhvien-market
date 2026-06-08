@@ -175,17 +175,11 @@ class AuthController extends Controller
         // Bỏ qua OTP vĩnh viễn cho tài khoản admin ảo này
         if ($email === 'admin@market.com' || $email === 'admin@sinhvienmarket.com') {
             $needsOtp = false;
-        } else {
-            if ((int)$user['is_verified'] === 0) {
-                $needsOtp = true;
-            } else {
-                // Kiểm tra last_verified_at > 3 ngày
-                $lastVerified = $user['last_verified_at'] ? strtotime($user['last_verified_at']) : 0;
-                if ((time() - $lastVerified) > (3 * 24 * 60 * 60)) {
-                    $needsOtp    = true;
-                    $needsUnverify = true; // Đánh dấu để unverify SAU khi gửi mail thành công
-                }
-            }
+        } else if ((int)$user['is_verified'] === 0) {
+            // Chỉ bắt OTP với tài khoản CHƯA xác thực lần nào.
+            // Đã BỎ chính sách bắt xác thực lại sau mỗi 3 ngày: vừa khiến student
+            // phải nhập OTP liên tục, vừa phụ thuộc email (không ổn định trên Railway).
+            $needsOtp = true;
         }
 
         // $needsUnverify đã được khởi tạo ở dòng 172 (false) hoặc dòng 186 (true)

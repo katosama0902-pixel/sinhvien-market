@@ -191,27 +191,36 @@ class AuthController extends Controller
         // $needsUnverify đã được khởi tạo ở dòng 172 (false) hoặc dòng 186 (true)
 
         if ($needsOtp) {
-        $otp    = sprintf("%06d", random_int(100000, 999999)); // V4-001 fix: mt_rand → random_int (CSPRNG)
-        $otpExp = date('Y-m-d H:i:s', time() + 15 * 60);
+            $otp    = sprintf("%06d", random_int(100000, 999999)); // V4-001 fix: mt_rand → random_int (CSPRNG)
+            $otpExp = date('Y-m-d H:i:s', time() + 15 * 60);
             $this->userModel->updateOtp($user['id'], $otp, $otpExp);
-            // BUG-011 fix: ghi log vào storage/logs/ (blocked by .htaccess), không ghi OTP code thực
             error_log('[OTP] Generated for user ' . $user['id'] . ' at ' . date('Y-m-d H:i:s'));
-            file_put_contents(__DIR__ . '/../../storage/logs/otp_debug.log', date('Y-m-d H:i:s') . " - OTP generated for user {$user['id']}\n", FILE_APPEND);
 
-            try {
-                Mailer::send($email, "Xác minh tài khoản SinhVienMarket", EmailTemplate::otpVerify($user['name'], $otp, 15));
+            $userName = $user['name'];
+            $sendOtp  = fn() => Mailer::send($email, "Xác minh tài khoản SinhVienMarket", EmailTemplate::otpVerify($userName, $otp, 15));
 
-                // BUG-11 FIX: Chỉ unverify SAU KHI gửi mail thành công
-                // Nếu gửi mail lỗi, user không bị khóa khỏi tài khoản của chính mình
+            // PERF: trả trang verify-otp NGAY rồi gửi OTP ở nền (không bắt user chờ SMTP ~4s)
+            if (function_exists('fastcgi_finish_request')) {
                 if ($needsUnverify) {
                     $this->userModel->unverify($user['id']);
                 }
+                $_SESSION['verify_email'] = $email;
+                Flash::set('info', 'Xác minh bảo mật: Mã OTP đang được gửi vào email của bạn.');
+                $this->redirectAndRun('verify-otp', $sendOtp);
+                return;
+            }
 
+            // Fallback (môi trường không hỗ trợ finish_request): gửi đồng bộ, giữ logic fail-open cũ
+            try {
+                $sendOtp();
+                // BUG-11 FIX: Chỉ unverify SAU KHI gửi mail thành công
+                if ($needsUnverify) {
+                    $this->userModel->unverify($user['id']);
+                }
                 $_SESSION['verify_email'] = $email;
                 Flash::set('info', 'Xác minh bảo mật: Chúng tôi đã gửi mã OTP vào email của bạn.');
                 $this->redirect('verify-otp');
                 return;
-
             } catch (\Throwable $e) {
                 // Gửi mail thất bại → KHÔNG unverify, cho đăng nhập bình thường
                 error_log('OTP mail failed for user ' . $user['id'] . ': ' . $e->getMessage());
@@ -351,11 +360,16 @@ class AuthController extends Controller
         }
         $_SESSION[$regKey] = $regCount + 1;
 
-        Mailer::send($email, "Xác minh tài khoản SinhVienMarket",
-            EmailTemplate::otpVerify($name, $otp, 15));
-
         $_SESSION['verify_email'] = $email;
         Flash::set('success', "Đăng ký thành công! Vui lòng nhập mã OTP đã được gửi đến email $email.");
+
+        $sendOtp = fn() => Mailer::send($email, "Xác minh tài khoản SinhVienMarket", EmailTemplate::otpVerify($name, $otp, 15));
+        // PERF: trả trang verify-otp NGAY rồi gửi OTP ở nền (không bắt user chờ SMTP)
+        if (function_exists('fastcgi_finish_request')) {
+            $this->redirectAndRun('verify-otp', $sendOtp);
+            return;
+        }
+        $sendOtp();
         $this->redirect('verify-otp');
     }
 

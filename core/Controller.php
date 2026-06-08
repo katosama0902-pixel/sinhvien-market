@@ -102,6 +102,28 @@ abstract class Controller
         exit;
     }
 
+    /**
+     * Redirect tới $url, đẩy response cho client NGAY, rồi mới chạy $task
+     * (vd gửi email qua SMTP) ở "nền" để người dùng không phải chờ.
+     * Chỉ dùng được khi server hỗ trợ fastcgi_finish_request (PHP-FPM).
+     */
+    protected function redirectAndRun(string $url, callable $task): void
+    {
+        if (!str_starts_with($url, 'http')) {
+            $base = rtrim($_ENV['APP_URL'] ?? '', '/');
+            $url  = $base . '/' . ltrim($url, '/');
+        }
+        header('Location: ' . $url);
+        @session_write_close();        // lưu session trước khi ngắt response
+        @fastcgi_finish_request();     // trả response cho client ngay lập tức
+        try {
+            $task();
+        } catch (\Throwable $e) {
+            error_log('Deferred task error: ' . $e->getMessage());
+        }
+        exit;
+    }
+
     // ─── Session helpers ─────────────────────────────────────────────────────
 
     /**

@@ -63,6 +63,8 @@ class Mailer
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = $port;
             $mail->CharSet    = 'UTF-8';
+            // Giới hạn thời gian chờ SMTP để không treo request (mặc định PHPMailer là 300s)
+            $mail->Timeout    = 15;
 
             //Recipients
             $mail->setFrom($user, 'SinhVienMarket');

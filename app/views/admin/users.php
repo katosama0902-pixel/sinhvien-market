@@ -236,6 +236,7 @@ $durationOptions = [
 
     <form method="GET" action="<?= $appUrl ?>/admin/export" id="exportForm">
       <input type="hidden" name="type" id="exportType" value="users">
+      <input type="hidden" name="_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>">
 
       <div class="grid grid-cols-2 gap-4 mb-6">
         <div>

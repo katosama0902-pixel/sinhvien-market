@@ -164,6 +164,7 @@ $typeMap = ['sale' => '💰 Bán', 'exchange' => '🔄 Trao đổi', 'auction' =
 
     <form method="GET" action="<?= $appUrl ?>/admin/export">
       <input type="hidden" name="type" id="exportType" value="products">
+      <input type="hidden" name="_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>">
       <div class="grid grid-cols-2 gap-4 mb-5">
         <div>
           <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">Từ ngày</label>

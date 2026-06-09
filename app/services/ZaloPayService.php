@@ -48,7 +48,9 @@ class ZaloPayService
             'http' => [
                 'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
                 'method'  => 'POST',
-                'content' => http_build_query($order)
+                'content' => http_build_query($order),
+                'timeout' => 10, // tránh treo (xoay vòng) nếu không kết nối được ZaloPay
+                'ignore_errors' => true,
             ]
         ]);
 

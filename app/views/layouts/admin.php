@@ -28,6 +28,8 @@ function isActive(string $keyword, string $current): string {
   <link href="<?= $appUrl ?>/public/css/app.css" rel="stylesheet">
   <!-- Legacy style.css (animations, CSS vars) -->
   <link href="<?= $appUrl ?>/public/css/style.css" rel="stylesheet">
+  <!-- Ẩn phần tử Alpine (vd sidebar mobile) cho tới khi Alpine khởi tạo xong -->
+  <style>[x-cloak]{display:none!important}</style>
 
   <script>
     // Dark mode: thêm class 'dark' trước khi render để tránh FOUC
@@ -112,11 +114,11 @@ function isActive(string $keyword, string $current): string {
   </aside>
 
   <!-- Mobile Sidebar Overlay -->
-  <div x-show="sidebarOpen" @click="sidebarOpen = false"
+  <div x-show="sidebarOpen" x-cloak @click="sidebarOpen = false"
        class="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" x-transition.opacity></div>
 
   <!-- Mobile Sidebar Panel -->
-  <aside x-show="sidebarOpen" x-transition:enter="transition transform duration-300"
+  <aside x-show="sidebarOpen" x-cloak x-transition:enter="transition transform duration-300"
          x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
          x-transition:leave="transition transform duration-300"
          x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full"

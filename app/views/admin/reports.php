@@ -23,7 +23,7 @@ $avgAmount  = $totalCount ? (int)($totalAmount / $totalCount) : 0;
     <h4 class="text-xl font-extrabold text-gray-800 dark:text-dark-text flex items-center gap-2 m-0">
       <i class="bi bi-bar-chart-fill text-emerald-500"></i>Báo cáo giao dịch
     </h4>
-    <a href="<?= $appUrl ?>/admin/export?type=transactions&from=<?= urlencode($fromDate) ?>&to=<?= urlencode($toDate) ?>"
+    <a href="<?= $appUrl ?>/admin/export?type=transactions&from=<?= urlencode($fromDate) ?>&to=<?= urlencode($toDate) ?>&_token=<?= urlencode($_SESSION['csrf_token'] ?? '') ?>"
        class="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all no-underline">
       <i class="bi bi-file-earmark-excel-fill mr-2"></i> Xuất Excel (CSV)
     </a>

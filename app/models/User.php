@@ -131,6 +131,19 @@ class User extends Model
         return $this->queryOne('SELECT data, mime FROM user_avatars WHERE user_id = ?', [$userId]);
     }
 
+    /** Gán token phiên hiện tại (dùng cho cơ chế 1 tài khoản 1 phiên) */
+    public function setSessionToken(int $userId, string $token): void
+    {
+        $this->execute('UPDATE users SET session_token = ? WHERE id = ?', [$token, $userId]);
+    }
+
+    /** Lấy token phiên đang hợp lệ của user */
+    public function getSessionToken(int $userId): ?string
+    {
+        $row = $this->queryOne('SELECT session_token FROM users WHERE id = ?', [$userId]);
+        return $row['session_token'] ?? null;
+    }
+
     /**
      * Lấy tất cả user (cho Admin)
      * @return array<int, array<string, mixed>>

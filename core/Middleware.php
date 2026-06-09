@@ -25,6 +25,46 @@ class Middleware
             self::redirect('account-locked');
             return;
         }
+
+        // 1 tài khoản chỉ 1 phiên: đăng nhập ở nơi mới sẽ đẩy phiên cũ ra
+        self::enforceSingleSession();
+    }
+
+    /**
+     * Đảm bảo mỗi tài khoản chỉ có 1 phiên hoạt động (đăng nhập mới nhất thắng).
+     * Phiên nào không khớp token trong DB sẽ bị đăng xuất.
+     */
+    private static function enforceSingleSession(): void
+    {
+        $userId = (int)($_SESSION['user']['id'] ?? 0);
+        if ($userId <= 0) {
+            return;
+        }
+
+        $userModel = new \App\Models\User();
+        $dbToken   = (string)($userModel->getSessionToken($userId) ?? '');
+        $myToken   = (string)($_SESSION['session_token'] ?? '');
+
+        // Phiên này chưa gắn token → chiếm quyền làm phiên hiện hành
+        if ($myToken === '') {
+            $myToken = bin2hex(random_bytes(16));
+            $_SESSION['session_token'] = $myToken;
+            $userModel->setSessionToken($userId, $myToken);
+            return;
+        }
+
+        // Token khác với DB → tài khoản đã đăng nhập ở nơi khác → đá phiên này
+        if ($dbToken !== '' && $dbToken !== $myToken) {
+            $_SESSION = [];
+            if (ini_get('session.use_cookies')) {
+                $p = session_get_cookie_params();
+                setcookie(session_name(), '', time() - 42000, $p['path'], $p['domain'], $p['secure'], $p['httponly']);
+            }
+            session_destroy();
+            session_start();
+            Flash::set('warning', 'Tài khoản của bạn vừa đăng nhập ở nơi khác nên phiên này đã kết thúc.');
+            self::redirect('login-role');
+        }
     }
 
     /**

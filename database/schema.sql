@@ -56,6 +56,7 @@ CREATE TABLE `users` (
     `is_student_verified` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = đã xác thực là sinh viên (email edu/ac.vn)',
     -- Feature 3C: Bảo mật 2FA
     `twofa_enabled`     TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = bật xác minh 2 bước khi đăng nhập',
+    `session_token`     VARCHAR(64) NULL COMMENT 'Token phiên hiện hành — 1 tài khoản chỉ 1 phiên',
     -- Feature: Hệ thống Xu & Đẩy Tin
     `coins`         INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Số xu hiện có',
     `checkin_streak` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Chuỗi điểm danh liên tiếp',

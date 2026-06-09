@@ -185,33 +185,31 @@ $paymentIcons = [
                 <?php if (!in_array($os, ['completed', 'received', 'cancelled'])): ?>
                   <form action="<?= $appUrl ?>/transactions/update-status" method="POST" class="flex flex-wrap gap-1.5">
                     <input type="hidden" name="id" value="<?= $t['id'] ?>">
+                    <input type="hidden" name="_csrf" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>">
 
                     <?php if (!$isBuyer): // Seller actions ?>
                       <?php if ($os === 'pending'): ?>
-                        <input type="hidden" name="status" value="shipping">
-                        <button type="submit"
+                        <button type="submit" name="status" value="shipping"
                                 onclick="return confirm('Xác nhận bạn đã đóng gói và bắt đầu giao hàng?')"
                                 class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold text-white cursor-pointer border-0 bg-cyan-500 hover:bg-cyan-600 transition-colors">
                           <i class="bi bi-truck"></i>Gửi hàng
                         </button>
                       <?php elseif ($os === 'shipping'): ?>
-                        <input type="hidden" name="status" value="delivered">
-                        <button type="submit"
+                        <button type="submit" name="status" value="delivered"
                                 class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold text-white cursor-pointer border-0 bg-primary hover:brightness-110 transition-all">
                           <i class="bi bi-geo"></i>Đã đến nơi
                         </button>
                       <?php endif; ?>
 
-                      <button type="button"
-                              onclick="if(confirm('Hủy đơn hàng này? Sản phẩm sẽ quay lại trạng thái đang bán.')) { const f=this.closest('form'); let s=f.querySelector('[name=status]'); if(s) s.value='cancelled'; else f.innerHTML+='<input type=\"hidden\" name=\"status\" value=\"cancelled\">'; f.submit(); }"
+                      <button type="submit" name="status" value="cancelled"
+                              onclick="return confirm('Hủy đơn hàng này? Sản phẩm sẽ quay lại trạng thái đang bán.')"
                               class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold text-red-500 border border-red-300 hover:bg-red-500 hover:text-white bg-transparent cursor-pointer transition-all">
                         <i class="bi bi-x-circle"></i>Hủy đơn
                       </button>
 
                     <?php else: // Buyer actions ?>
                       <?php if (in_array($os, ['shipping', 'delivered'])): ?>
-                        <input type="hidden" name="status" value="completed">
-                        <button type="submit"
+                        <button type="submit" name="status" value="completed"
                                 onclick="return confirm('Xác nhận bạn đã nhận được hàng và hàng đúng mô tả?')"
                                 class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold text-white cursor-pointer border-0 bg-green-500 hover:bg-green-600 transition-colors">
                           <i class="bi bi-check-circle-fill"></i>Đã nhận hàng

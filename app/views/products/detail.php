@@ -279,13 +279,29 @@ $conditionMap = [
             </button>
             <?php endif; ?>
           </div>
-          <form action="<?= $appUrl ?>/wishlist/toggle" method="POST" class="m-0">
+          <form action="<?= $appUrl ?>/wishlist/toggle" method="POST" class="m-0" onsubmit="return svmToggleWishlist(event, this)">
             <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrf, ENT_QUOTES) ?>">
             <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
             <button type="submit" class="w-full py-2.5 rounded-xl border-2 border-red-100 text-red-500 font-bold text-sm bg-transparent hover:bg-red-50 transition-colors border-0 cursor-pointer flex items-center justify-center gap-2">
-              <i class="bi bi-heart"></i> Thêm vào Yêu thích
+              <i class="bi bi-heart"></i> <span>Thêm vào Yêu thích</span>
             </button>
           </form>
+          <script>
+          function svmToggleWishlist(e, form) {
+            e.preventDefault();
+            fetch(form.action, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: new FormData(form) })
+              .then(r => r.json())
+              .then(d => {
+                if (d && d.success) {
+                  const added = d.action === 'added';
+                  form.querySelector('i').className = added ? 'bi bi-heart-fill' : 'bi bi-heart';
+                  form.querySelector('span').textContent = added ? 'Đã yêu thích' : 'Thêm vào Yêu thích';
+                }
+              })
+              .catch(() => {});
+            return false;
+          }
+          </script>
         <?php elseif (!$user): ?>
           <a href="<?= $appUrl ?>/login" class="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border-2 border-primary text-primary font-bold text-sm hover:bg-primary hover:text-white transition-colors no-underline mt-4">
             <i class="bi bi-box-arrow-in-right"></i> Đăng nhập để liên hệ

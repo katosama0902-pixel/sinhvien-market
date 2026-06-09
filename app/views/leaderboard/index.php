@@ -62,7 +62,7 @@ $user = $_SESSION['user'] ?? null;
           : (!empty($u['avatar_url']) ? htmlspecialchars($u['avatar_url'])
             : 'https://ui-avatars.com/api/?name='.urlencode($u['name']).'&background=6366f1&color=fff&size=96');
       ?>
-        <div class="flex flex-col items-center">
+        <a href="<?= $appUrl ?>/users/profile?id=<?= (int)$u['id'] ?>" class="flex flex-col items-center no-underline group">
           <!-- Avatar -->
           <div class="relative mb-2">
             <?php if ($r === 1): ?>
@@ -87,7 +87,7 @@ $user = $_SESSION['user'] ?? null;
                style="height:<?= [1=>100,2=>70,3=>50][$r] ?>px;background:<?= $podiumBgs[$r] ?>">
             <?= $r ?>
           </div>
-        </div>
+        </a>
       <?php endforeach; ?>
     </div>
 

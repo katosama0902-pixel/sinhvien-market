@@ -375,7 +375,7 @@ $conditionMap = [
           </div>
         </div>
         <div class="px-6 py-4 bg-gray-50 dark:bg-dark-2 border-t border-light-border dark:border-dark-border flex justify-end gap-3">
-          <button type="button" class="px-5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-card text-gray-600 dark:text-gray-300 font-bold text-sm hover:bg-gray-50 dark:hover:bg-dark-2 transition-colors border-0 cursor-pointer" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" onclick="closeDetailModal('checkoutModal')" class="px-5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-card text-gray-600 dark:text-gray-300 font-bold text-sm hover:bg-gray-50 dark:hover:bg-dark-2 transition-colors border-0 cursor-pointer">Hủy</button>
           <button type="submit" class="px-6 py-2.5 rounded-xl bg-primary text-white font-bold text-sm hover:brightness-110 shadow-md shadow-primary/20 transition-all border-0 cursor-pointer flex items-center gap-2" id="btnSubmitCheckout">
             Xác Nhận Đặt Hàng <i class="bi bi-arrow-right"></i>
           </button>

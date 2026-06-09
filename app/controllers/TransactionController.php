@@ -412,10 +412,16 @@ class TransactionController extends Controller
         $isBuyer = (int)$tx['buyer_id'] === (int)$user['id'];
         $isSeller = (int)$tx['seller_id'] === (int)$user['id'];
 
-        // Kiểm tra quyền cập nhật
-        if ($isSeller && in_array($status, ['shipping', 'delivered', 'cancelled'])) {
+        // Kiểm tra quyền + chuyển trạng thái HỢP LỆ (không cho nhảy cóc / hủy đơn đã giao)
+        $current = $tx['order_status'] ?? 'pending';
+        $sellerAllowed =
+            ($status === 'shipping'  && $current === 'pending') ||
+            ($status === 'delivered' && $current === 'shipping') ||
+            ($status === 'cancelled' && in_array($current, ['pending', 'shipping'])); // hủy chỉ khi CHƯA giao
+
+        if ($isSeller && $sellerAllowed) {
             $txModel->updateOrderStatus($id, $status);
-            
+
             // Nếu hủy đơn hàng, trả lại trạng thái sản phẩm là 'active'
             if ($status === 'cancelled') {
                 $pModel->updateStatus($tx['product_id'], 'active');
@@ -423,11 +429,11 @@ class TransactionController extends Controller
             } else {
                 Flash::set('success', 'Đã cập nhật trạng thái đơn hàng thành công!');
             }
-        } elseif ($isBuyer && in_array($status, ['completed'])) {
+        } elseif ($isBuyer && $status === 'completed' && in_array($current, ['shipping', 'delivered'])) {
             $txModel->updateOrderStatus($id, $status);
             Flash::set('success', 'Bạn đã xác nhận nhận hàng. Cảm ơn bạn!');
         } else {
-            Flash::set('danger', 'Hành động không hợp lệ hoặc không có quyền.');
+            Flash::set('danger', 'Hành động không hợp lệ với trạng thái hiện tại của đơn.');
         }
 
         $this->redirect('transactions/history');

@@ -201,11 +201,13 @@ $paymentIcons = [
                         </button>
                       <?php endif; ?>
 
-                      <button type="submit" name="status" value="cancelled"
-                              onclick="return confirm('Hủy đơn hàng này? Sản phẩm sẽ quay lại trạng thái đang bán.')"
-                              class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold text-red-500 border border-red-300 hover:bg-red-500 hover:text-white bg-transparent cursor-pointer transition-all">
-                        <i class="bi bi-x-circle"></i>Hủy đơn
-                      </button>
+                      <?php if (in_array($os, ['pending', 'shipping'])): // Chỉ hủy được khi CHƯA giao tới nơi ?>
+                        <button type="submit" name="status" value="cancelled"
+                                onclick="return confirm('Hủy đơn hàng này? Sản phẩm sẽ quay lại trạng thái đang bán.')"
+                                class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold text-red-500 border border-red-300 hover:bg-red-500 hover:text-white bg-transparent cursor-pointer transition-all">
+                          <i class="bi bi-x-circle"></i>Hủy đơn
+                        </button>
+                      <?php endif; ?>
 
                     <?php else: // Buyer actions ?>
                       <?php if (in_array($os, ['shipping', 'delivered'])): ?>

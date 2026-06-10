@@ -45,10 +45,10 @@ function hp(int $price): string {
           <div class="min-w-full relative">
             <?php if (!empty($b['link'])): ?>
               <a href="<?= htmlspecialchars($b['link'], ENT_QUOTES) ?>" class="block w-full">
-                <img src="<?= $appUrl ?>/banners/image?id=<?= (int)$b['id'] ?>" class="block w-full aspect-[21/9] object-cover max-h-[400px]" alt="<?= htmlspecialchars($b['title'] ?? 'Banner', ENT_QUOTES) ?>">
+                <img src="<?= $appUrl ?>/banners/image?id=<?= (int)$b['id'] ?>" class="block w-full h-auto" alt="<?= htmlspecialchars($b['title'] ?? 'Banner', ENT_QUOTES) ?>">
               </a>
             <?php else: ?>
-              <img src="<?= $appUrl ?>/banners/image?id=<?= (int)$b['id'] ?>" class="block w-full aspect-[21/9] object-cover max-h-[400px]" alt="<?= htmlspecialchars($b['title'] ?? 'Banner', ENT_QUOTES) ?>">
+              <img src="<?= $appUrl ?>/banners/image?id=<?= (int)$b['id'] ?>" class="block w-full h-auto" alt="<?= htmlspecialchars($b['title'] ?? 'Banner', ENT_QUOTES) ?>">
             <?php endif; ?>
           </div>
         <?php endforeach; ?>

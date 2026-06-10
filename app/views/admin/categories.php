@@ -109,14 +109,13 @@ $icons = [
                class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-2 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 text-sm font-medium text-gray-800 dark:text-dark-text transition-all">
       </div>
       <div class="mb-6">
-        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Icon Bootstrap</label>
+        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Icon</label>
         <select name="icon"
                 class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-2 outline-none focus:border-indigo-500 text-sm font-medium text-gray-800 dark:text-dark-text transition-all">
           <?php foreach ($icons as $cls => $label): ?>
             <option value="<?= $cls ?>"><?= $label ?> (<?= $cls ?>)</option>
           <?php endforeach; ?>
         </select>
-        <div class="text-xs text-gray-400 mt-2">Xem thêm tại <a href="https://icons.getbootstrap.com" target="_blank" class="text-indigo-500 hover:underline">icons.getbootstrap.com</a></div>
       </div>
       <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-extrabold text-sm hover:shadow-[0_8px_24px_rgba(99,102,241,0.4)] hover:-translate-y-0.5 transition-all border-0 cursor-pointer mb-2">
         <i class="bi bi-plus-lg mr-2"></i>Tạo danh mục
@@ -149,7 +148,7 @@ $icons = [
                    class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-2 outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 text-sm font-medium text-gray-800 dark:text-dark-text transition-all">
           </div>
           <div class="mb-6">
-            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Icon Bootstrap</label>
+            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wider">Icon</label>
             <select name="icon"
                     class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-2 outline-none focus:border-cyan-500 text-sm font-medium text-gray-800 dark:text-dark-text transition-all">
               <?php foreach ($icons as $cls => $label): ?>

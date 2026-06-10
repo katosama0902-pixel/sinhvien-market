@@ -29,7 +29,10 @@ class GoogleAiService
             // Thêm các tham số cẩn thận để AI nói chuyện giống một người thật
             'generationConfig' => [
                 'temperature' => 0.7,
-                'maxOutputTokens' => 150,
+                'maxOutputTokens' => 800,
+                // gemini-2.5-flash là model "thinking" — tắt thinking để AI trả lời
+                // thẳng, không tốn hết token vào phần suy nghĩ (gây cụt câu).
+                'thinkingConfig' => ['thinkingBudget' => 0],
             ]
         ];
 

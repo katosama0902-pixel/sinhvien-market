@@ -85,11 +85,16 @@ class AdminController extends Controller
         $to = $_GET['to'] ?? null;
 
         $filename = "export_{$type}_" . date('Ymd_His') . ".csv";
-        
+
+        // QUAN TRỌNG: tắt hiển thị lỗi để warning/deprecated (vd fputcsv trên PHP 8.5)
+        // KHÔNG bị ghi lẫn vào file CSV làm hỏng file.
+        ini_set('display_errors', '0');
+        while (ob_get_level() > 0) { ob_end_clean(); }
+
         // Cấu hình header để tải file CSV
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename=' . $filename);
-        
+
         // Mở buffer output
         $output = fopen('php://output', 'w');
         
@@ -98,13 +103,13 @@ class AdminController extends Controller
 
         // Ghi dòng thông tin bộ lọc
         if ($from || $to) {
-            fputcsv($output, ['Báo cáo từ ngày:', $from ?: 'Không giới hạn', 'Đến ngày:', $to ?: 'Không giới hạn']);
-            fputcsv($output, []); // Dòng trống
+            $this->csvRow($output, ['Báo cáo từ ngày:', $from ?: 'Không giới hạn', 'Đến ngày:', $to ?: 'Không giới hạn']);
+            $this->csvRow($output, []); // Dòng trống
         }
         
         if ($type === 'users') {
             // Header cột
-            fputcsv($output, ['ID', 'Họ tên', 'Email', 'Vai trò', 'Trạng thái khóa', 'Xác thực', 'Số gậy (Strikes)', 'Ngày đăng ký']);
+            $this->csvRow($output, ['ID', 'Họ tên', 'Email', 'Vai trò', 'Trạng thái khóa', 'Xác thực', 'Số gậy (Strikes)', 'Ngày đăng ký']);
             
             $users = $this->userModel->getAllForExport($from, $to);
             $totalUsers = 0;
@@ -114,7 +119,7 @@ class AdminController extends Controller
                 $totalUsers++;
                 if ($u['role'] === 'student') $newUsers++;
 
-                fputcsv($output, [
+                $this->csvRow($output, [
                     $u['id'],
                     $u['name'],
                     $u['email'],
@@ -126,14 +131,14 @@ class AdminController extends Controller
                 ]);
             }
 
-            fputcsv($output, []);
-            fputcsv($output, ['--- THỐNG KÊ TỔNG HỢP ---']);
-            fputcsv($output, ['Tổng số tài khoản:', $totalUsers]);
-            fputcsv($output, ['Số lượng sinh viên:', $newUsers]);
+            $this->csvRow($output, []);
+            $this->csvRow($output, ['--- THỐNG KÊ TỔNG HỢP ---']);
+            $this->csvRow($output, ['Tổng số tài khoản:', $totalUsers]);
+            $this->csvRow($output, ['Số lượng sinh viên:', $newUsers]);
 
         } elseif ($type === 'transactions') {
             // Header cột
-            fputcsv($output, ['ID Giao Dịch', 'Tên Sản Phẩm', 'Người Mua', 'Người Bán', 'Giá Trị', 'Phương Thức', 'Trạng Thái', 'Ngày Giao Dịch']);
+            $this->csvRow($output, ['ID Giao Dịch', 'Tên Sản Phẩm', 'Người Mua', 'Người Bán', 'Giá Trị', 'Phương Thức', 'Trạng Thái', 'Ngày Giao Dịch']);
             
             $transactions = $this->txModel->getAll($from ?: '', $to ?: '');
             $totalAmount = 0;
@@ -145,7 +150,7 @@ class AdminController extends Controller
                     $successCount++;
                 }
 
-                fputcsv($output, [
+                $this->csvRow($output, [
                     $tx['id'],
                     $tx['product_title'] ?? 'N/A',
                     $tx['buyer_name'] ?? 'N/A',
@@ -157,15 +162,15 @@ class AdminController extends Controller
                 ]);
             }
 
-            fputcsv($output, []);
-            fputcsv($output, ['--- THỐNG KÊ TỔNG HỢP ---']);
-            fputcsv($output, ['Tổng số giao dịch:', count($transactions)]);
-            fputcsv($output, ['Số giao dịch thành công:', $successCount]);
-            fputcsv($output, ['Tổng doanh thu (VNĐ):', $totalAmount]);
+            $this->csvRow($output, []);
+            $this->csvRow($output, ['--- THỐNG KÊ TỔNG HỢP ---']);
+            $this->csvRow($output, ['Tổng số giao dịch:', count($transactions)]);
+            $this->csvRow($output, ['Số giao dịch thành công:', $successCount]);
+            $this->csvRow($output, ['Tổng doanh thu (VNĐ):', $totalAmount]);
 
         } elseif ($type === 'products') {
             // Header cột
-            fputcsv($output, ['ID', 'Tên Sản Phẩm', 'Danh Mục', 'Người Bán', 'Loại', 'Giá (VNĐ)', 'Tình Trạng', 'Trạng Thái', 'Ngày Đăng']);
+            $this->csvRow($output, ['ID', 'Tên Sản Phẩm', 'Danh Mục', 'Người Bán', 'Loại', 'Giá (VNĐ)', 'Tình Trạng', 'Trạng Thái', 'Ngày Đăng']);
             
             $products = $this->productModel->getAllForExport($from, $to);
             $totalProducts = 0;
@@ -175,7 +180,7 @@ class AdminController extends Controller
                 $totalProducts++;
                 if ($p['status'] === 'sold') $soldProducts++;
                 
-                fputcsv($output, [
+                $this->csvRow($output, [
                     $p['id'],
                     $p['title'],
                     $p['category_name'] ?? 'N/A',
@@ -188,19 +193,28 @@ class AdminController extends Controller
                 ]);
             }
             
-            fputcsv($output, []);
-            fputcsv($output, ['--- THỐNG KÊ TỔNG HỢP ---']);
-            fputcsv($output, ['Tổng số bài đăng:', $totalProducts]);
-            fputcsv($output, ['Số bài đã bán:', $soldProducts]);
+            $this->csvRow($output, []);
+            $this->csvRow($output, ['--- THỐNG KÊ TỔNG HỢP ---']);
+            $this->csvRow($output, ['Tổng số bài đăng:', $totalProducts]);
+            $this->csvRow($output, ['Số bài đã bán:', $soldProducts]);
 
         } else {
-            fputcsv($output, ['Loại dữ liệu không hợp lệ']);
+            $this->csvRow($output, ['Loại dữ liệu không hợp lệ']);
         }
         
         fclose($output);
         exit;
     }
 
+    /**
+     * Ghi 1 dòng CSV — truyền tham số $escape tường minh để tránh deprecation
+     * của fputcsv() trên PHP 8.4+ (nếu không sẽ in cảnh báo lẫn vào file).
+     */
+    private function csvRow($handle, array $fields): void
+    {
+        fputcsv($handle, $fields, ',', '"', '');
+    }
+
     // ─── Quản lý Đánh Giá & Bình Luận (Feature 4) ──────────────────────────
-    
+
 }

@@ -121,4 +121,10 @@ class Giveaway extends Model
     {
         $this->execute('DELETE FROM giveaways WHERE id = ?', [$id]);
     }
+
+    /** Các giveaway mà user này là người trúng (cho popup chúc mừng) */
+    public function getWinsByUser(int $userId): array
+    {
+        return $this->query('SELECT id, title FROM giveaways WHERE winner_id = ? ORDER BY id DESC', [$userId]);
+    }
 }

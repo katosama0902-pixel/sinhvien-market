@@ -625,6 +625,79 @@ if (!empty($_activeGiveaways)):
 })();
 </script>
 <?php endif; ?>
+
+<?php
+// ─── Popup: Chúc mừng TRÚNG GIVEAWAY ──────────────────────────────────────
+if (isset($_SESSION['user'])):
+    $_wins = (new \App\Models\Giveaway())->getWinsByUser((int)$_SESSION['user']['id']);
+    if (!empty($_wins)):
+        $_win = $_wins[0]; // sự kiện trúng gần nhất
+?>
+<div id="winOverlay" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(10,10,30,.78); backdrop-filter:blur(8px); align-items:center; justify-content:center;">
+  <div style="position:relative; width:100%; max-width:460px; margin:1rem; background:#fff; border-radius:28px; overflow:hidden; box-shadow:0 40px 100px rgba(0,0,0,.5); animation:gwSlideUp .4s cubic-bezier(.16,1,.3,1) forwards;">
+    <div style="background:linear-gradient(135deg,#f59e0b 0%,#f97316 45%,#ec4899 100%); padding:2rem 1.75rem 1.5rem; text-align:center; position:relative;">
+      <div style="font-size:3.5rem; line-height:1; margin-bottom:.5rem; filter:drop-shadow(0 4px 12px rgba(0,0,0,.3))">🏆</div>
+      <div style="display:inline-block; background:rgba(255,255,255,.2); color:#fff; font-size:.72rem; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; padding:.3rem .9rem; border-radius:50px; margin-bottom:.6rem; border:1px solid rgba(255,255,255,.3)">🎉 Chúc mừng</div>
+      <h2 style="color:#fff; font-size:1.4rem; font-weight:900; margin:0; text-shadow:0 2px 8px rgba(0,0,0,.25)">Bạn đã trúng giải!</h2>
+      <button onclick="closeWinPopup()" style="position:absolute; top:12px; right:14px; background:rgba(255,255,255,.2); border:none; color:#fff; width:32px; height:32px; border-radius:50%; font-size:1rem; cursor:pointer; line-height:1">✕</button>
+    </div>
+    <div style="padding:1.75rem; text-align:center">
+      <p style="color:#374151; font-size:.95rem; line-height:1.65; margin-bottom:1.25rem">
+        Bạn là người may mắn trúng thưởng sự kiện<br>
+        <strong style="color:#f59e0b; font-size:1.05rem"><?= htmlspecialchars($_win['title'], ENT_QUOTES) ?></strong><br>
+        Vui lòng liên hệ Ban Quản Trị để nhận quà nhé! 🎁
+      </p>
+      <button onclick="closeWinPopup()" style="width:100%; padding:.85rem; border:none; border-radius:14px; background:linear-gradient(135deg,#f59e0b,#f97316); color:#fff; font-weight:800; font-size:.95rem; cursor:pointer">Tuyệt vời! 🎉</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var key = 'svm_win_<?= (int)$_win['id'] ?>';
+  if (!localStorage.getItem(key)) {
+    setTimeout(function(){ var o=document.getElementById('winOverlay'); if(o) o.style.display='flex'; }, 600);
+  }
+  window.closeWinPopup = function(){ var o=document.getElementById('winOverlay'); if(o) o.style.display='none'; localStorage.setItem(key,'1'); };
+})();
+</script>
+<?php endif; endif; ?>
+
+<?php
+// ─── Popup: CẢNH BÁO VI PHẠM ──────────────────────────────────────────────
+if (isset($_SESSION['user'])):
+    $_violation = (new \App\Models\User())->getLatestViolation((int)$_SESSION['user']['id']);
+    if ($_violation):
+?>
+<div id="violOverlay" style="display:none; position:fixed; inset:0; z-index:99998; background:rgba(20,5,5,.82); backdrop-filter:blur(8px); align-items:center; justify-content:center;">
+  <div style="position:relative; width:100%; max-width:460px; margin:1rem; background:#fff; border-radius:28px; overflow:hidden; box-shadow:0 40px 100px rgba(0,0,0,.5); animation:gwSlideUp .4s cubic-bezier(.16,1,.3,1) forwards;">
+    <div style="background:linear-gradient(135deg,#dc2626 0%,#b91c1c 50%,#7f1d1d 100%); padding:2rem 1.75rem 1.5rem; text-align:center; position:relative;">
+      <div style="font-size:3.5rem; line-height:1; margin-bottom:.5rem; filter:drop-shadow(0 4px 12px rgba(0,0,0,.3))">⚠️</div>
+      <div style="display:inline-block; background:rgba(255,255,255,.2); color:#fff; font-size:.72rem; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; padding:.3rem .9rem; border-radius:50px; margin-bottom:.6rem; border:1px solid rgba(255,255,255,.3)">🚨 Cảnh báo vi phạm</div>
+      <h2 style="color:#fff; font-size:1.3rem; font-weight:900; margin:0; text-shadow:0 2px 8px rgba(0,0,0,.25)">Tài khoản của bạn bị nhắc nhở</h2>
+      <button onclick="closeViolPopup()" style="position:absolute; top:12px; right:14px; background:rgba(255,255,255,.2); border:none; color:#fff; width:32px; height:32px; border-radius:50%; font-size:1rem; cursor:pointer; line-height:1">✕</button>
+    </div>
+    <div style="padding:1.75rem; text-align:center">
+      <div style="background:#fef2f2; border:1.5px solid #fecaca; border-radius:14px; padding:1rem 1.25rem; margin-bottom:1rem; text-align:left">
+        <div style="font-size:.72rem; font-weight:800; color:#b91c1c; text-transform:uppercase; letter-spacing:.6px; margin-bottom:.4rem">Lý do vi phạm</div>
+        <div style="color:#7f1d1d; font-size:.95rem; font-weight:600"><?= htmlspecialchars($_violation['reason'], ENT_QUOTES) ?></div>
+        <div style="font-size:.78rem; color:#9ca3af; margin-top:.5rem">Lần cảnh cáo thứ <?= (int)$_violation['strike_number'] ?> · <?= date('d/m/Y H:i', strtotime($_violation['created_at'])) ?></div>
+      </div>
+      <p style="color:#6b7280; font-size:.85rem; line-height:1.55; margin-bottom:1.25rem">Vui lòng tuân thủ quy định cộng đồng. Vi phạm nhiều lần có thể dẫn đến <strong style="color:#b91c1c">khóa tài khoản vĩnh viễn</strong>.</p>
+      <button onclick="closeViolPopup()" style="width:100%; padding:.85rem; border:none; border-radius:14px; background:linear-gradient(135deg,#dc2626,#b91c1c); color:#fff; font-weight:800; font-size:.95rem; cursor:pointer">Tôi đã hiểu</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var key = 'svm_viol_<?= (int)$_violation['id'] ?>';
+  if (!localStorage.getItem(key)) {
+    setTimeout(function(){ var o=document.getElementById('violOverlay'); if(o) o.style.display='flex'; }, 900);
+  }
+  window.closeViolPopup = function(){ var o=document.getElementById('violOverlay'); if(o) o.style.display='none'; localStorage.setItem(key,'1'); };
+})();
+</script>
+<?php endif; endif; ?>
+
 <script>
   // Dark Mode Toggle Logic
   document.addEventListener('DOMContentLoaded', function() {

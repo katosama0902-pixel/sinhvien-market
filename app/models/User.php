@@ -144,6 +144,15 @@ class User extends Model
         return $row['session_token'] ?? null;
     }
 
+    /** Lần vi phạm gần nhất của user (cho popup cảnh báo vi phạm) */
+    public function getLatestViolation(int $userId): ?array
+    {
+        return $this->queryOne(
+            'SELECT id, reason, strike_number, created_at FROM violation_logs WHERE user_id = ? ORDER BY id DESC LIMIT 1',
+            [$userId]
+        );
+    }
+
     /**
      * Lấy tất cả user (cho Admin)
      * @return array<int, array<string, mixed>>

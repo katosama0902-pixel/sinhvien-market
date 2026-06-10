@@ -249,5 +249,23 @@ class ProfileController extends Controller
 
         $this->redirect('profile?tab=bank');
     }
+
+    public function saveSecurityQuestion(): void
+    {
+        Middleware::requireAuth();
+        if (!$this->verifyCsrf()) {
+            Flash::set('danger', 'Lỗi bảo mật (CSRF).');
+            $this->redirect('profile'); return;
+        }
+        $question = $this->input('security_question');
+        $answer   = trim($_POST['security_answer'] ?? '');
+        if (!in_array($question, ['q1', 'q2', 'q3'], true) || $answer === '') {
+            Flash::set('danger', 'Vui lòng chọn câu hỏi và nhập câu trả lời.');
+            $this->redirect('profile'); return;
+        }
+        $this->userModel->setSecurityQuestion((int)$this->currentUser()['id'], $question, $answer);
+        Flash::set('success', 'Đã cập nhật câu hỏi bảo mật. Giờ bạn có thể dùng nó để khôi phục mật khẩu.');
+        $this->redirect('profile');
+    }
 }
 

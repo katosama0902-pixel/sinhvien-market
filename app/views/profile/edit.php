@@ -212,13 +212,29 @@ $tab = $_GET['tab'] ?? 'info'; // 'info' hoặc 'security'
                             <div>
                                 <h6 class="font-bold text-gray-800 dark:text-dark-text mb-1">Câu hỏi bảo mật</h6>
                                 <div class="text-xs text-gray-500 leading-relaxed">
-                                    <?php if (!empty($user['security_question'])): ?>
-                                        Câu hỏi bảo mật đã được thiết lập. 
-                                        <div class="mt-1.5 font-mono text-[11px] bg-white dark:bg-dark-card border border-light-border dark:border-dark-border px-2 py-1 rounded inline-block">"<?= htmlspecialchars($user['security_question']) ?>"</div>
+                                    <?php
+                                        $_sqMap = ['q1' => 'Tên trường cấp 1 của bạn là gì?', 'q2' => 'Tên thú cưng đầu tiên của bạn?', 'q3' => 'Bạn thân thời thơ ấu của bạn tên gì?'];
+                                        if (!empty($user['security_question'])): ?>
+                                        Câu hỏi bảo mật đã được thiết lập.
+                                        <div class="mt-1.5 text-[11px] bg-white dark:bg-dark-card border border-light-border dark:border-dark-border px-2 py-1 rounded inline-block">"<?= htmlspecialchars($_sqMap[$user['security_question']] ?? $user['security_question']) ?>"</div>
                                     <?php else: ?>
-                                        Bạn chưa cài đặt câu hỏi bảo mật.
+                                        Bạn chưa cài đặt câu hỏi bảo mật <span class="text-amber-600 dark:text-amber-500 font-semibold">(cần thiết để khôi phục mật khẩu khi quên)</span>.
                                     <?php endif; ?>
                                 </div>
+                                <form method="POST" action="<?= $appUrl ?>/profile/security-question" class="mt-3 flex flex-col gap-2 max-w-md">
+                                    <input type="hidden" name="_csrf" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>">
+                                    <select name="security_question" required class="w-full px-3 py-2 rounded-lg border border-light-border dark:border-dark-border bg-white dark:bg-dark-card text-sm text-gray-800 dark:text-dark-text outline-none focus:border-cyan-500">
+                                        <option value="">— Chọn câu hỏi bảo mật —</option>
+                                        <?php foreach ($_sqMap as $_q => $_label): ?>
+                                            <option value="<?= $_q ?>" <?= ($user['security_question'] ?? '') === $_q ? 'selected' : '' ?>><?= $_label ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <input type="text" name="security_answer" required placeholder="Câu trả lời (nhớ kỹ để khôi phục mật khẩu)"
+                                           class="w-full px-3 py-2 rounded-lg border border-light-border dark:border-dark-border bg-white dark:bg-dark-card text-sm text-gray-800 dark:text-dark-text outline-none focus:border-cyan-500">
+                                    <button type="submit" class="self-start inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-600 text-white text-xs font-bold border-0 cursor-pointer transition-colors">
+                                        <i class="bi bi-shield-check"></i><?= !empty($user['security_question']) ? 'Cập nhật câu hỏi' : 'Thiết lập câu hỏi' ?>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>

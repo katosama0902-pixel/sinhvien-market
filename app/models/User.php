@@ -153,6 +153,16 @@ class User extends Model
         );
     }
 
+    /** Đặt/đổi câu hỏi bảo mật (hash câu trả lời như lúc đăng ký) — cho user Google chưa có */
+    public function setSecurityQuestion(int $userId, string $question, string $answer): void
+    {
+        $ansHash = password_hash(trim(mb_strtolower($answer)), PASSWORD_BCRYPT, ['cost' => 12]);
+        $this->execute(
+            'UPDATE users SET security_question = ?, security_answer = ? WHERE id = ?',
+            [$question, $ansHash, $userId]
+        );
+    }
+
     /**
      * Lấy tất cả user (cho Admin)
      * @return array<int, array<string, mixed>>

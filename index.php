@@ -180,6 +180,7 @@ $router->post('profile/update', 'Profile', 'update');
 $router->post('profile/password', 'Profile', 'changePassword');
 $router->post('profile/avatar', 'Profile', 'uploadAvatar');
 $router->post('profile/bank', 'Profile', 'saveBankAccount');
+$router->post('profile/security-question', 'Profile', 'saveSecurityQuestion');
 
 
 // Products

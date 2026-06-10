@@ -66,6 +66,7 @@ use Core\Flash;
           </span>
           <input type="email" id="email" name="email"
                  class="form-control pl-10 <?= isset($errors['email']) ? 'border-danger ring-4 ring-danger/10' : '' ?>"
+                 style="padding-left:2.5rem"
                  placeholder="you@student.edu.vn hoặc Số điện thoại"
                  value="<?= htmlspecialchars($old['email'] ?? '', ENT_QUOTES) ?>"
                  autocomplete="email" required>

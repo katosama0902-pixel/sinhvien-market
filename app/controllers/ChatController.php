@@ -157,85 +157,9 @@ class ChatController extends Controller
 
         $msgId = $this->msgModel->send($convId, $user['id'], $body);
 
-        // Xác định người nhận để gửi thông báo
-        $receiverId = ((int)$conv['buyer_id'] === (int)$user['id'])
-            ? (int)$conv['seller_id']
-            : (int)$conv['buyer_id'];
-
-        NotificationService::notifyNewMessage(
-            $receiverId,
-            $user['name'],
-            $convId,
-            $conv['product_title']
-        );
-
-        // Bắn Pusher cho người nhận
-        $pusher = new \App\Services\PusherService();
-        $pusher->trigger('chat.' . $receiverId, 'new_message', [
-            'id'          => $msgId,
-            'body'        => htmlspecialchars($body, ENT_QUOTES, 'UTF-8'),
-            'msg_type'    => 'text',
-            'sender_name' => $user['name'],
-            'sender_id'   => $user['id'],
-            'time'        => date('H:i'),
-            'conv_id'     => $convId
-        ]);
-
-        // ─── Tích hợp AI Auto-Responder (Lazada/Shopee Style) ──────────────────────
-        // Nếu người mua nhắn tin, Bot AI sẽ tự động phản hồi 1 lần duy nhất 
-        // dựa trên các mốc thời gian (Cooldown)
-        if ((int)$conv['buyer_id'] === (int)$user['id']) {
-            $lastSellerTime = $this->msgModel->getLastMessageTimeBySender($convId, $conv['seller_id']);
-            $lastBuyerTime  = $this->msgModel->getLastMessageTimeBySender($convId, $conv['buyer_id'], $msgId);
-            
-            // Điều kiện 1: Người bán (hoặc Bot) KHÔNG nhắn tin gì trong vòng 12 tiếng qua.
-            // Nếu người bán vừa phản hồi, Bot sẽ im lặng nhường sân cho người bán.
-            $sellerCooledDown = true;
-            if ($lastSellerTime && (time() - strtotime($lastSellerTime)) < 12 * 3600) {
-                $sellerCooledDown = false;
-            }
-
-            // Điều kiện 2: Chống spam gọi Bot nhiều lần.
-            // Nếu người mua nhắn liên tục (các tin nhắn cách nhau dưới 5 phút), 
-            // thì chỉ tin nhắn ĐẦU TIÊN mới kích hoạt Bot.
-            $isNewSession = true;
-            if ($lastBuyerTime && (time() - strtotime($lastBuyerTime)) < 5 * 60) {
-                $isNewSession = false;
-            }
-
-            if ($sellerCooledDown && $isNewSession) {
-                $productModel = new Product();
-                $p = $productModel->findById($conv['product_id']);
-                if ($p) {
-                    $prompt = "Bạn là AI trợ lý bán hàng tự động của SinhVienMarket. Người dùng đang hỏi hoặc chào hỏi về món đồ cũ:\n";
-                    $prompt .= "- Tên sản phẩm: {$p['title']}\n";
-                    $prompt .= "- Giá: {$p['price']} VNĐ\n";
-                    $prompt .= "- Tình trạng bề ngoài: {$p['condition']}\n";
-                    $prompt .= "- Nơi giao dịch: " . ($p['seller_address'] ?? 'Khu vực ĐHQG TP.HCM') . "\n";
-                    $prompt .= "\nKhách hàng vừa nhắn tin nhắn đầu tiên: \"$body\"\n";
-                    $prompt .= "\nNhiệm vụ của bạn: Đóng vai người bán hàng, hãy trả lời thật ngắn gọn (dưới 40 chữ), thân thiện năng động chuẩn sinh viên, xưng hô 'mình' và 'cậu' hoặc 'bạn'. Có thể dựa vào nội dung khách nhắn để nương theo, nếu khách chỉ chào thì bạn cũng chào lại và giới thiệu tắt về sản phẩm.";
-                    
-                    $aiResponse = \App\Services\GoogleAiService::askGemini($prompt);
-                    
-                    if ($aiResponse) {
-                        $aiText = "🤖 *[Hệ thống tự động]* " . $aiResponse . "\n_(Chủ shop đang vắng mặt, bạn cứ để lại lời nhắn nha)_";
-                        $aiMsgId = $this->msgModel->send($convId, $conv['seller_id'], $aiText);
-                        
-                        $pusher->trigger('chat.' . $user['id'], 'new_message', [
-                            'id'          => $aiMsgId,
-                            'body'        => htmlspecialchars($aiText, ENT_QUOTES, 'UTF-8'),
-                            'msg_type'    => 'text',
-                            'sender_name' => 'AI Assistant',
-                            'sender_id'   => $conv['seller_id'],
-                            'time'        => date('H:i'),
-                            'conv_id'     => $convId
-                        ]);
-                    }
-                }
-            }
-        }
-
-        $this->json([
+        // Trả response cho người gửi NGAY (không bắt chờ Pusher/AI vốn chậm trên
+        // Railway); phần thông báo + Pusher + AI auto-responder chạy ở nền.
+        $this->jsonThenRun([
             'success' => true,
             'data'    => [
                 'message_id' => $msgId,
@@ -244,7 +168,64 @@ class ChatController extends Controller
                 'time'       => date('H:i'),
             ],
             'message' => '',
-        ]);
+        ], function () use ($conv, $user, $convId, $body, $msgId) {
+            // Xác định người nhận để gửi thông báo
+            $receiverId = ((int)$conv['buyer_id'] === (int)$user['id'])
+                ? (int)$conv['seller_id']
+                : (int)$conv['buyer_id'];
+
+            NotificationService::notifyNewMessage($receiverId, $user['name'], $convId, $conv['product_title']);
+
+            // Bắn Pusher cho người nhận
+            $pusher = new \App\Services\PusherService();
+            $pusher->trigger('chat.' . $receiverId, 'new_message', [
+                'id'          => $msgId,
+                'body'        => htmlspecialchars($body, ENT_QUOTES, 'UTF-8'),
+                'msg_type'    => 'text',
+                'sender_name' => $user['name'],
+                'sender_id'   => $user['id'],
+                'time'        => date('H:i'),
+                'conv_id'     => $convId
+            ]);
+
+            // ─── AI Auto-Responder ─────────────────────────────────────────────
+            // Người mua nhắn tin → Bot AI tự phản hồi 1 lần (theo cooldown).
+            if ((int)$conv['buyer_id'] === (int)$user['id']) {
+                $lastSellerTime = $this->msgModel->getLastMessageTimeBySender($convId, $conv['seller_id']);
+                $lastBuyerTime  = $this->msgModel->getLastMessageTimeBySender($convId, $conv['buyer_id'], $msgId);
+
+                $sellerCooledDown = !($lastSellerTime && (time() - strtotime($lastSellerTime)) < 12 * 3600);
+                $isNewSession     = !($lastBuyerTime  && (time() - strtotime($lastBuyerTime))  < 5 * 60);
+
+                if ($sellerCooledDown && $isNewSession) {
+                    $p = (new Product())->findById($conv['product_id']);
+                    if ($p) {
+                        $prompt = "Bạn là AI trợ lý bán hàng tự động của SinhVienMarket. Người dùng đang hỏi hoặc chào hỏi về món đồ cũ:\n";
+                        $prompt .= "- Tên sản phẩm: {$p['title']}\n";
+                        $prompt .= "- Giá: {$p['price']} VNĐ\n";
+                        $prompt .= "- Tình trạng bề ngoài: {$p['condition']}\n";
+                        $prompt .= "- Nơi giao dịch: " . ($p['seller_address'] ?? 'Khu vực ĐHQG TP.HCM') . "\n";
+                        $prompt .= "\nKhách hàng vừa nhắn tin nhắn đầu tiên: \"$body\"\n";
+                        $prompt .= "\nNhiệm vụ của bạn: Đóng vai người bán hàng, hãy trả lời thật ngắn gọn (dưới 40 chữ), thân thiện năng động chuẩn sinh viên, xưng hô 'mình' và 'cậu' hoặc 'bạn'. Có thể dựa vào nội dung khách nhắn để nương theo, nếu khách chỉ chào thì bạn cũng chào lại và giới thiệu tắt về sản phẩm.";
+
+                        $aiResponse = \App\Services\GoogleAiService::askGemini($prompt);
+                        if ($aiResponse) {
+                            $aiText  = "🤖 *[Hệ thống tự động]* " . $aiResponse . "\n_(Chủ shop đang vắng mặt, bạn cứ để lại lời nhắn nha)_";
+                            $aiMsgId = $this->msgModel->send($convId, $conv['seller_id'], $aiText);
+                            $pusher->trigger('chat.' . $user['id'], 'new_message', [
+                                'id'          => $aiMsgId,
+                                'body'        => htmlspecialchars($aiText, ENT_QUOTES, 'UTF-8'),
+                                'msg_type'    => 'text',
+                                'sender_name' => 'AI Assistant',
+                                'sender_id'   => $conv['seller_id'],
+                                'time'        => date('H:i'),
+                                'conv_id'     => $convId
+                            ]);
+                        }
+                    }
+                }
+            }
+        });
     }
 
     public function sendOffer(): void

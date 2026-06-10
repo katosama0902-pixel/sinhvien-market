@@ -365,26 +365,35 @@ $user    = $_SESSION['user'] ?? null;
     return icons[type] || '🔔';
   }
 
+  function setBadge(badge, count) {
+    if (!badge) return;
+    if (count > 0) {
+      badge.textContent = count > 9 ? '9+' : count;
+      badge.classList.remove('hidden'); // dùng class, KHÔNG dùng style.display (bị 'hidden' đè)
+    } else {
+      badge.classList.add('hidden');
+    }
+  }
+
   async function pollNotifications() {
     try {
       const res = await fetch(BASE + '/api/notifications/unread');
-      const data = await res.json();
-      const badge = document.getElementById('notifBadge');
-      if (badge) {
-        if (data.count > 0) { badge.textContent = data.count > 9 ? '9+' : data.count; badge.style.display = ''; }
-        else { badge.style.display = 'none'; }
-      }
+      const json = await res.json();
+      const d = json.data || json; // response là {data:{count,items}}
+      const count = d.count || 0;
+      const items = d.items || [];
+      setBadge(document.getElementById('notifBadge'), count);
       const list = document.getElementById('notifList');
-      if (list && data.items && data.items.length > 0) {
-        list.innerHTML = data.items.map(n =>
-          `<li><a class="dropdown-item rounded-3 py-2" href="${n.link || BASE + '/notifications'}" style="white-space:normal">
-            <div style="font-weight:600;font-size:.8rem;color:var(--text)">${typeIcon(n.type)} ${n.title}</div>
-            ${n.body ? `<div style="font-size:.73rem;color:var(--muted)">${n.body}</div>` : ''}
-            <div style="font-size:.68rem;color:var(--muted);margin-top:2px;opacity:.8">${n.time}</div>
-          </a></li>`
+      if (list && items.length > 0) {
+        list.innerHTML = items.map(n =>
+          `<a class="block px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-dark-2 no-underline border-b border-gray-50 dark:border-dark-border" href="${n.link || BASE + '/notifications'}" style="white-space:normal">
+            <div style="font-weight:600;font-size:.8rem" class="text-gray-800 dark:text-dark-text">${typeIcon(n.type)} ${n.title}</div>
+            ${n.body ? `<div style="font-size:.73rem" class="text-gray-500 dark:text-gray-400">${n.body}</div>` : ''}
+            <div style="font-size:.68rem;margin-top:2px;opacity:.8" class="text-gray-400">${n.time}</div>
+          </a>`
         ).join('');
       } else if (list) {
-        list.innerHTML = '<li class="px-3 py-2 text-muted" style="font-size:.8rem">Đã đọc hết thông báo.</li>';
+        list.innerHTML = '<div class="px-4 py-3 text-gray-400" style="font-size:.8rem">Đã đọc hết thông báo.</div>';
       }
     } catch(e) {}
   }
@@ -392,20 +401,16 @@ $user    = $_SESSION['user'] ?? null;
   async function pollChat() {
     try {
       const res = await fetch(BASE + '/api/chat/unread');
-      const data = await res.json();
-      const badge = document.getElementById('chatBadge');
-      if (badge && data.success && data.data) {
-        let count = data.data.count;
-        if (count > 0) { badge.textContent = count > 9 ? '9+' : count; badge.style.display = ''; }
-        else { badge.style.display = 'none'; }
-      }
+      const json = await res.json();
+      const count = (json.data && json.data.count) || 0;
+      setBadge(document.getElementById('chatBadge'), count);
     } catch(e) {}
   }
 
   pollNotifications();
   pollChat();
-  setInterval(pollNotifications, 10000);
-  setInterval(pollChat, 10000);
+  setInterval(pollNotifications, 8000);
+  setInterval(pollChat, 8000);
 })();
 </script>
 <?php endif; ?>

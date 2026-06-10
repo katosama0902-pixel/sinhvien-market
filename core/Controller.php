@@ -60,6 +60,34 @@ abstract class Controller
         exit;
     }
 
+    /**
+     * Trả JSON cho client NGAY (kèm Content-Length để client kết thúc sớm), rồi
+     * chạy $task ở nền — dùng cho các tác vụ chậm (Pusher, gọi AI...) để người
+     * dùng không phải chờ. Trên PHP-FPM dùng fastcgi_finish_request.
+     */
+    protected function jsonThenRun(mixed $data, callable $task, int $status = 200): void
+    {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if (!headers_sent()) {
+            http_response_code($status);
+            header('Content-Type: application/json; charset=utf-8');
+            header('Content-Length: ' . strlen($json));
+            header('Connection: close');
+        }
+        echo $json;
+        if (function_exists('fastcgi_finish_request')) {
+            @session_write_close();
+            @fastcgi_finish_request();
+        } else {
+            @ob_flush(); @flush();
+        }
+        try { $task(); } catch (\Throwable $e) { error_log('jsonThenRun: ' . $e->getMessage()); }
+        exit;
+    }
+
     // ─── Redirect ────────────────────────────────────────────────────────────
 
     /**

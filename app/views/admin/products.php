@@ -24,11 +24,6 @@ $typeMap = ['sale' => '💰 Bán', 'exchange' => '🔄 Trao đổi', 'auction' =
     <h4 class="text-xl font-extrabold text-gray-800 dark:text-dark-text flex items-center gap-2 m-0">
       <i class="bi bi-bag-check text-amber-500"></i>Kiểm duyệt bài đăng
     </h4>
-    <button type="button"
-            class="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border text-green-600 font-bold text-sm shadow-sm hover:bg-gray-50 dark:hover:bg-dark-2 hover:-translate-y-0.5 hover:shadow-md transition-all border-0 cursor-pointer"
-            onclick="openExportModal('products')">
-      <i class="bi bi-file-earmark-excel-fill mr-2"></i> Xuất Excel (CSV)
-    </button>
   </div>
 
   <?= Flash::render() ?>

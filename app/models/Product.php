@@ -203,6 +203,15 @@ class Product extends Model
     }
 
     /**
+     * Xóa HẲN sản phẩm. CASCADE tự dọn auction/conversation/wishlist/rating/ảnh.
+     * Ném PDOException nếu còn ràng buộc (vd đã có giao dịch — FK RESTRICT).
+     */
+    public function delete(int $productId): void
+    {
+        $this->execute('DELETE FROM products WHERE id = ?', [$productId]);
+    }
+
+    /**
      * Đẩy tin lên đầu: cập nhật bumped_at = NOW()
      */
     public function bump(int $productId): void

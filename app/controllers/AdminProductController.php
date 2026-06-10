@@ -139,14 +139,15 @@ class AdminProductController extends Controller
             return;
         }
 
-        $this->productModel->updateStatus($productId, 'cancelled');
-
-        // BUG-014 fix: xóa file ảnh vật lý để tránh storage leak
-        if (!empty($product['image'])) {
-            $imgPath = ROOT . '/public/uploads/' . $product['image'];
-            if (file_exists($imgPath)) {
-                unlink($imgPath);
-            }
+        // Xóa HẲN sản phẩm (ảnh trong DB + auction/chat/wishlist/rating tự CASCADE).
+        // Sản phẩm đã có giao dịch (FK RESTRICT) → không xóa được, báo rõ thay vì
+        // giả vờ "đã xóa" (giữ lịch sử đơn hàng).
+        try {
+            $this->productModel->delete($productId);
+        } catch (\PDOException $e) {
+            Flash::set('danger', 'Không thể xóa "' . $product['title'] . '": sản phẩm đã phát sinh giao dịch nên phải giữ lại lịch sử đơn hàng.');
+            $this->redirect('admin/products');
+            return;
         }
 
         $this->auditModel->log($admin['id'], 'delete_product', 'product', $productId, "Xóa: {$product['title']} — đăng bởi {$product['seller_name']}");

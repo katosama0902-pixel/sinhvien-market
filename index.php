@@ -253,6 +253,7 @@ $router->post('admin/ratings/toggle', 'AdminReport', 'toggleRating');
 // Admin Giveaways Phase 11.4
 $router->get('admin/giveaways', 'AdminGiveaway', 'giveaways');
 $router->post('admin/giveaways/store', 'AdminGiveaway', 'storeGiveaway');
+$router->post('admin/giveaways/delete', 'AdminGiveaway', 'deleteGiveaway');
 $router->get('admin/giveaway_spin', 'AdminGiveaway', 'spinGiveaway');
 $router->post('admin/giveaway_spin_api', 'AdminGiveaway', 'spinGiveawayApi');
 

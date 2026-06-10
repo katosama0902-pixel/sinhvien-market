@@ -105,6 +105,20 @@ class AdminGiveawayController extends Controller
         ], 'admin');
     }
 
+    public function deleteGiveaway(): void
+    {
+        Middleware::requireAdmin();
+        if (!$this->verifyCsrf()) {
+            \Core\Flash::set('danger', 'Phiên làm việc hết hạn. Vui lòng thử lại.');
+            $this->redirect('admin/giveaways');
+            return;
+        }
+        $id = (int)$this->input('id');
+        (new \App\Models\Giveaway())->delete($id);
+        \Core\Flash::set('success', 'Đã xóa sự kiện giveaway.');
+        $this->redirect('admin/giveaways');
+    }
+
     public function spinGiveawayApi(): void
     {
         Middleware::requireAdmin();

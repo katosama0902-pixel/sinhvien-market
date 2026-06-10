@@ -115,4 +115,10 @@ class Giveaway extends Model
     {
         return $this->queryOne('SELECT data, mime FROM giveaway_images WHERE giveaway_id = ?', [$giveawayId]);
     }
+
+    /** Xóa hẳn giveaway (người tham gia + ảnh tự CASCADE theo) */
+    public function delete(int $id): void
+    {
+        $this->execute('DELETE FROM giveaways WHERE id = ?', [$id]);
+    }
 }

@@ -76,12 +76,23 @@ $appUrl = rtrim($_ENV['APP_URL'] ?? 'http://localhost:8080/sinhvien-market', '/'
                   <?php endif; ?>
                 </td>
                 <td class="py-4 px-5 text-right whitespace-nowrap">
-                  <?php if ($ga['status'] === 'active'): ?>
-                    <a href="<?= $appUrl ?>/admin/giveaway_spin?id=<?= $ga['id'] ?>"
-                       class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-indigo-600 border-2 border-indigo-200 dark:border-indigo-700 hover:bg-indigo-500 hover:text-white hover:border-indigo-500 hover:-translate-y-0.5 transition-all no-underline">
-                      <i class="bi bi-play-circle-fill"></i>Quay Số
-                    </a>
-                  <?php endif; ?>
+                  <div class="inline-flex items-center gap-2 justify-end">
+                    <?php if ($ga['status'] === 'active'): ?>
+                      <a href="<?= $appUrl ?>/admin/giveaway_spin?id=<?= $ga['id'] ?>"
+                         class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-indigo-600 border-2 border-indigo-200 dark:border-indigo-700 hover:bg-indigo-500 hover:text-white hover:border-indigo-500 hover:-translate-y-0.5 transition-all no-underline">
+                        <i class="bi bi-play-circle-fill"></i>Quay Số
+                      </a>
+                    <?php endif; ?>
+                    <form method="POST" action="<?= $appUrl ?>/admin/giveaways/delete" class="m-0 inline"
+                          onsubmit="return confirm('Xóa sự kiện giveaway này? Không thể hoàn tác.')">
+                      <input type="hidden" name="_csrf" value="<?= htmlspecialchars($this->csrfToken(), ENT_QUOTES) ?>">
+                      <input type="hidden" name="id" value="<?= $ga['id'] ?>">
+                      <button type="submit"
+                              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-red-500 border-2 border-red-200 dark:border-red-700 hover:bg-red-500 hover:text-white hover:border-red-500 hover:-translate-y-0.5 transition-all bg-transparent cursor-pointer">
+                        <i class="bi bi-trash"></i>Xóa
+                      </button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             <?php endforeach; ?>

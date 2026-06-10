@@ -533,6 +533,9 @@ if (!empty($_activeGiveaways)):
           onmouseover="this.style.background='#f3f4f6'"
           onmouseout="this.style.background='#f9fafb'"
         >Nhắc lại lần sau</button>
+        <button onclick="hideGwForever()"
+          style="background:none; border:none; color:#9ca3af; font-size:.78rem; text-decoration:underline; cursor:pointer; padding:.25rem; margin-top:-.2rem"
+          title="Ẩn sự kiện này, không hiện lại nữa">Không hiện lại sự kiện này</button>
       </div>
     </div>
   </div>
@@ -610,15 +613,22 @@ if (!empty($_activeGiveaways)):
     }
   };
 
+  // Ẩn VĨNH VIỄN sự kiện này (không hiện lại kể cả ngày sau)
+  window.hideGwForever = function () {
+    document.getElementById('gwOverlay').style.display = 'none';
+    localStorage.setItem('gw_hidden_<?= $_gw['id'] ?>', '1');
+  };
+
   // Click nền để đóng
   document.getElementById('gwOverlay').addEventListener('click', function(e) {
     if (e.target === this) closeGwPopup();
   });
 
-  // Kiểm tra xem đã thấy chưa
-  const seenSession = sessionStorage.getItem(GW_KEY);
-  const seenLocal   = localStorage.getItem(GW_KEY);
-  if (!seenSession && !seenLocal) {
+  // Kiểm tra xem đã thấy / đã ẩn vĩnh viễn chưa
+  const seenSession    = sessionStorage.getItem(GW_KEY);
+  const seenLocal      = localStorage.getItem(GW_KEY);
+  const hiddenForever  = localStorage.getItem('gw_hidden_<?= $_gw['id'] ?>');
+  if (!seenSession && !seenLocal && !hiddenForever) {
     // Delay nhỏ cho trang render xong rồi mới popup
     setTimeout(openGwPopup, 800);
   }

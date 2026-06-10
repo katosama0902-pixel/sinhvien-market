@@ -213,6 +213,23 @@ channel.bind('new_message', function(data) {
   }
 });
 
+// Polling dự phòng (4s) — đảm bảo người nhận thấy tin mới kể cả khi
+// Pusher không tới được (Railway hay chặn kết nối ra ngoài). appendMsg tự
+// chống trùng theo id nên không bị lặp với tin do Pusher đẩy.
+setInterval(async function () {
+  const last = parseInt(document.getElementById('lastMsgId').value) || 0;
+  try {
+    const r = await fetch(BASE + '/chat/poll?conv_id=' + convId + '&after_id=' + last, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    const d = await r.json();
+    const msgs = (d && d.data && d.data.messages) ? d.data.messages : [];
+    if (msgs.length) {
+      msgs.forEach(m => appendMsg(m));
+      document.getElementById('lastMsgId').value = Math.max(last, ...msgs.map(m => parseInt(m.id) || 0));
+      scrollBottom();
+    }
+  } catch (e) {}
+}, 4000);
+
 document.getElementById('msgInput').addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px';});
 </script>
 <?php endif; ?>

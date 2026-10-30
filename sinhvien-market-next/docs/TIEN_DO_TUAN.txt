@@ -89,10 +89,12 @@ Phase 1 — Nền tảng Admin & Màn hình Dashboard (xong 28/10/2026)
   [x] Hoàn thiện màn hình #1 Dashboard (/admin) thay thế trang stub cũ
   [x] Lint + tsc + unit test + build đều qua
 
-Phase 2 — Quản lý Sản phẩm, Danh mục & Banner (3 màn hình)
-  [ ] #2 Kiểm duyệt bài đăng (/admin/products): 2 tab, Duyệt, Từ chối (có nhập lý do), Xóa (ràng buộc giao dịch), Xuất CSV
-  [ ] #3 Quản lý danh mục (/admin/categories): CRUD danh mục, 10 icon chuẩn, tạo slug tiếng Việt chuẩn, chặn xóa khi có sản phẩm
-  [ ] #4 Quản lý Banner (/admin/banners): Thêm/Sửa/Xóa/Ẩn-Hiện banner trang chủ
+Phase 2 — Quản lý Sản phẩm, Danh mục & Banner (xong 30/10/2026)
+  [x] Component dùng chung Modal / ModalActions (components/admin/Modal.tsx)
+  [x] #2 Kiểm duyệt bài đăng (/admin/products): 2 tab, tìm kiếm nhanh, Duyệt, Từ chối (modal nhập lý do + lý do mẫu), Xóa (chặn khi đã có giao dịch), Xuất CSV
+  [x] #3 Quản lý danh mục (/admin/categories): thêm/sửa/xóa, 10 icon chuẩn, xem trước slug tiếng Việt không dấu, chặn xóa khi còn sản phẩm
+  [x] #4 Quản lý Banner (/admin/banners): thêm (chọn ảnh, xem trước, tối đa 1MB), sửa, bật/tắt hiển thị, xóa, kiểm tra link đích và thứ tự
+  [x] Lint + tsc + build đều qua
 
 Phase 3 — Quản lý Người dùng, Hồ sơ chi tiết & Hệ thống Gậy (3 màn hình)
   [ ] #5 Danh sách người dùng (/admin/users): Phạt Gậy 1/2/3+, Khóa có thời hạn / Mở khóa, Xuất CSV

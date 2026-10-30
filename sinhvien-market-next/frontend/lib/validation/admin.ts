@@ -27,6 +27,13 @@ export function validateCategoryName(name: string): string | null {
   return null;
 }
 
+export function validateBannerLink(link: string): string | null {
+  const value = link.trim();
+  if (!value) return null;
+  if (value.startsWith("/") || /^https?:\/\/\S+$/i.test(value)) return null;
+  return "Link đích phải bắt đầu bằng / hoặc http(s)://";
+}
+
 export function validateDateRange(fromDate: string, toDate: string): string | null {
   if (fromDate && toDate && fromDate > toDate) {
     return 'Lỗi: "Từ ngày" không được lớn hơn "Đến ngày"!';

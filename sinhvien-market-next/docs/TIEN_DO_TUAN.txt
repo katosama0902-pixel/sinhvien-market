@@ -102,12 +102,13 @@ Phase 3 — Quản lý Người dùng, Hồ sơ chi tiết & Hệ thống Gậy 
   [x] #7 Lịch sử vi phạm (/admin/users/violations): Thẻ tổng số gậy X/3, trạng thái tài khoản và bảng lịch sử nhận gậy kèm liên kết bằng chứng
   [x] Lint + tsc + build đều qua
 
-Phase 4 — Báo cáo Giao dịch, Tố cáo, Đánh giá, Giveaway & Nhật ký Admin (6 màn hình)
-  [ ] #8 Báo cáo giao dịch (/admin/reports): Bộ lọc ngày, 3 thẻ thống kê, biểu đồ cột doanh số theo ngày, bảng giao dịch, Xuất CSV
-  [ ] #9 Tố cáo vi phạm (/admin/system-reports): 4 tab lọc, Bỏ qua / Modal Xử lý đính kèm bằng chứng & ghi chú
-  [ ] #10 Kiểm duyệt Đánh giá (/admin/ratings): Bảng đánh giá 1-5 sao, Ẩn/Hiện bình luận
-  [ ] #11 Quản lý Giveaways (/admin/giveaways) & #12 Vòng quay may mắn (/admin/giveaway-spin): Tạo/xóa sự kiện, băng chuyền quay số 6 giây + pháo giấy + lưu người trúng giải
-  [ ] #13 Nhật ký hành động Admin (/admin/audit-log): Bảng lịch sử thao tác quản trị (chỉ đọc)
+Phase 4 — Báo cáo Giao dịch, Tố cáo, Đánh giá, Giveaway & Nhật ký Admin (xong 30/10/2026)
+  [x] #8 Báo cáo giao dịch (/admin/reports): Bộ lọc ngày, 3 thẻ thống kê, biểu đồ cột doanh số theo ngày, bảng giao dịch, Xuất CSV
+  [x] #9 Tố cáo vi phạm (/admin/system-reports): 4 tab lọc, Bỏ qua / Modal Xử lý đính kèm bằng chứng & ghi chú mẫu
+  [x] #10 Kiểm duyệt Đánh giá (/admin/ratings): Thống kê điểm sàn, lọc theo sao & trạng thái, Ẩn/Hiện bình luận
+  [x] #11 Quản lý Giveaways (/admin/giveaways) & #12 Vòng quay may mắn (/admin/giveaway-spin + /admin/giveaway_spin): Tạo/xóa sự kiện, băng chuyền quay số 6 giây + pháo giấy + lưu người trúng giải
+  [x] #13 Nhật ký hành động Admin (/admin/audit-log): Bảng lịch sử thao tác quản trị tự động (chỉ đọc)
+  [x] Lint + tsc + build đều qua
 
 Phase 5 — Kiểm thử tự động, Đo tốc độ & Hoàn thiện tài liệu
   [ ] Unit test (Vitest) cho các hàm nghiệp vụ & validate của Admin

@@ -74,6 +74,17 @@ const users: MockUser[] = [
     securityAnswer: DEMO_SECURITY_ANSWER,
   },
   {
+    id: 5,
+    name: "Quản trị viên Hệ thống",
+    email: "admin@sinhvienmarket.edu.vn",
+    password: "Admin123",
+    role: "admin",
+    verified: true,
+    lock: null,
+    securityQuestion: "q1",
+    securityAnswer: DEMO_SECURITY_ANSWER,
+  },
+  {
     id: 3,
     name: "Trần Quốc Bảo",
     email: "unverified@demo.vn",
@@ -140,7 +151,7 @@ function removeStore(key: string) {
 }
 
 const KEY = {
-  loginAttempts: "svm_mock_login_attempts",
+  loginAttempts: "svm_mock_login_attempts_v2",
   registerAttempts: "svm_mock_register_attempts",
   session: "svm_mock_session",
   lock: "svm_mock_lock",

@@ -1,0 +1,118 @@
+@import "tailwindcss";
+
+/* Dark mode dùng class="dark" trên <html> (giống tailwind.config.js bản PHP) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens chuyển từ sinhvien-market-php/tailwind.config.js
+ * - Màu chính #6366f1, font Plus Jakarta Sans, bo góc 14px
+ * - Màu theo chế độ sáng/tối dùng biến ngữ nghĩa (bg-bg, bg-surface, text-fg...)
+ */
+@theme {
+  --color-primary: #6366f1;
+  --color-primary-dark: #4f46e5;
+  --color-primary-light: #e0e7ff;
+  --color-secondary: #8b5cf6;
+  --color-accent: #ec4899;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #06b6d4;
+
+  /* Màu ngữ nghĩa: giá trị thật nằm ở :root / .dark bên dưới */
+  --color-bg: var(--sv-bg);
+  --color-surface: var(--sv-surface);
+  --color-surface-2: var(--sv-surface-2);
+  --color-fg: var(--sv-fg);
+  --color-muted: var(--sv-muted);
+  --color-border: var(--sv-border);
+
+  --font-sans: var(--font-plus-jakarta), system-ui, -apple-system, sans-serif;
+
+  --radius-sm: 8px;
+  --radius-field: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+
+  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm-p: 0 4px 16px rgba(99, 102, 241, 0.08);
+  --shadow-md-p: 0 8px 32px rgba(99, 102, 241, 0.14);
+  --shadow-lg-p: 0 20px 60px rgba(99, 102, 241, 0.18);
+  --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.35);
+
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --animate-slide-up: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-float-orb: float-orb 8s ease-in-out infinite alternate;
+  --animate-shimmer: shimmer 1.4s infinite;
+
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(40px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  @keyframes float-orb {
+    from {
+      transform: translate(0, 0) scale(1);
+    }
+    to {
+      transform: translate(30px, 20px) scale(1.08);
+    }
+  }
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+}
+
+:root {
+  --sv-bg: #f8fafc;
+  --sv-surface: #ffffff;
+  --sv-surface-2: #f1f5f9;
+  --sv-fg: #0f172a;
+  --sv-muted: #64748b;
+  --sv-border: #e2e8f0;
+  color-scheme: light;
+}
+
+.dark {
+  --sv-bg: #0f172a;
+  --sv-surface: #1e293b;
+  --sv-surface-2: #334155;
+  --sv-fg: #f8fafc;
+  --sv-muted: #94a3b8;
+  --sv-border: #334155;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--sv-bg);
+  color: var(--sv-fg);
+  font-family: var(--font-sans);
+}
+
+/* Focus rõ ràng cho điều hướng bằng bàn phím */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

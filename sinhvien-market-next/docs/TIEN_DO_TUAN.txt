@@ -96,10 +96,11 @@ Phase 2 — Quản lý Sản phẩm, Danh mục & Banner (xong 30/10/2026)
   [x] #4 Quản lý Banner (/admin/banners): thêm (chọn ảnh, xem trước, tối đa 1MB), sửa, bật/tắt hiển thị, xóa, kiểm tra link đích và thứ tự
   [x] Lint + tsc + build đều qua
 
-Phase 3 — Quản lý Người dùng, Hồ sơ chi tiết & Hệ thống Gậy (3 màn hình)
-  [ ] #5 Danh sách người dùng (/admin/users): Phạt Gậy 1/2/3+, Khóa có thời hạn / Mở khóa, Xuất CSV
-  [ ] #6 Chi tiết người dùng (/admin/users/detail): Hồ sơ, xếp hạng sao, 3 bảng Sản phẩm / Giao dịch / Tố cáo
-  [ ] #7 Lịch sử vi phạm (/admin/users/violations): Thẻ tổng số gậy X/3 và bảng lịch sử nhận gậy
+Phase 3 — Quản lý Người dùng, Hồ sơ chi tiết & Hệ thống Gậy (xong 30/10/2026)
+  [x] #5 Danh sách người dùng (/admin/users): 3 tab lọc trạng thái, tìm kiếm, Phạt Gậy 1/2/3+ kèm bằng chứng, Khóa thủ công có thời hạn / Mở khóa, Xuất CSV
+  [x] #6 Chi tiết người dùng (/admin/users/detail): Hồ sơ, xếp hạng sao, thông tin khóa, 3 bảng Sản phẩm / Giao dịch / Tố cáo
+  [x] #7 Lịch sử vi phạm (/admin/users/violations): Thẻ tổng số gậy X/3, trạng thái tài khoản và bảng lịch sử nhận gậy kèm liên kết bằng chứng
+  [x] Lint + tsc + build đều qua
 
 Phase 4 — Báo cáo Giao dịch, Tố cáo, Đánh giá, Giveaway & Nhật ký Admin (6 màn hình)
   [ ] #8 Báo cáo giao dịch (/admin/reports): Bộ lọc ngày, 3 thẻ thống kê, biểu đồ cột doanh số theo ngày, bảng giao dịch, Xuất CSV

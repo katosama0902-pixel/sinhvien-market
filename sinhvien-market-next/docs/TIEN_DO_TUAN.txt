@@ -110,10 +110,10 @@ Phase 4 — Báo cáo Giao dịch, Tố cáo, Đánh giá, Giveaway & Nhật ký
   [x] #13 Nhật ký hành động Admin (/admin/audit-log): Bảng lịch sử thao tác quản trị tự động (chỉ đọc)
   [x] Lint + tsc + build đều qua
 
-Phase 5 — Kiểm thử tự động, Đo tốc độ & Hoàn thiện tài liệu
-  [ ] Unit test (Vitest) cho các hàm nghiệp vụ & validate của Admin
-  [ ] E2E test & đo tốc độ phản hồi (Playwright) cho các luồng Admin
-  [ ] Hoàn thiện docs/ADMIN_API_CONTRACT.md và báo cáo tuần 3 (docs/BAO_CAO_TUAN_3.md)
+Phase 5 — Kiểm thử tự động, Đo tốc độ & Hoàn thiện tài liệu (xong 30/10/2026)
+  [x] Unit test (Vitest): `tests/unit/admin-validation.test.ts` — 18/18 bài test đạt (tổng 48/48 bài test đạt) cho toàn bộ hàm nghiệp vụ & validate của Admin
+  [x] E2E test & đo tốc độ phản hồi (Playwright): `tests/e2e/admin-flows.spec.ts` — 6/6 luồng đạt (tổng 20/20 bài E2E đạt, tốc độ mở các màn hình Admin đều <= 2000ms)
+  [x] Hoàn thiện docs/ADMIN_API_CONTRACT.md và báo cáo tuần 3 (docs/BAO_CAO_TUAN_3.md)
 
 =====================================================================
 TUẦN 4 — 10 (dự kiến các phân hệ tiếp theo)

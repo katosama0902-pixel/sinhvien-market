@@ -118,9 +118,9 @@ class Auction extends Model
 
     /**
      * Chốt đơn mua (với SELECT FOR UPDATE để tránh race condition)
-     * Trả về true nếu thành công, false nếu đã có người mua trước
+     * Trả về transaction ID nếu thành công, false nếu đã có người mua trước.
      */
-    public function lockAndBuy(int $auctionId, int $buyerId, int $currentPrice): bool
+    public function lockAndBuy(int $auctionId, int $buyerId): int|false
     {
         $pdo = $this->pdo();
         try {
@@ -139,6 +139,22 @@ class Auction extends Model
                 return false;
             }
 
+            $productStmt = $pdo->prepare(
+                'SELECT * FROM products WHERE id = ? FOR UPDATE'
+            );
+            $productStmt->execute([(int)$auction['product_id']]);
+            $product = $productStmt->fetch();
+            if (!$product || $product['status'] !== 'active'
+                || $product['type'] !== 'auction'
+                || (int)$product['user_id'] === $buyerId) {
+                $pdo->rollBack();
+                return false;
+            }
+
+            // Recompute using the locked server-side row, never a client price
+            // or a price snapshot taken before acquiring the lock.
+            $currentPrice = self::calculateCurrentPrice($auction)['current_price'];
+
             // Cập nhật auction: đánh dấu sold
             $pdo->prepare(
                 'UPDATE auctions SET status = "sold", winner_id = ?, final_price = ?, ended_at = NOW()
@@ -146,19 +162,26 @@ class Auction extends Model
             )->execute([$buyerId, $currentPrice, $auctionId]);
 
             // Cập nhật product: đánh dấu sold
-            $pdo->prepare(
-                'UPDATE products SET status = "sold" WHERE id = ?'
-            )->execute([$auction['product_id']]);
+            $productUpdate = $pdo->prepare(
+                'UPDATE products SET status = "sold" WHERE id = ? AND status = "active"'
+            );
+            $productUpdate->execute([$auction['product_id']]);
+            if ($productUpdate->rowCount() !== 1) {
+                $pdo->rollBack();
+                return false;
+            }
 
             // Ghi lịch sử giao dịch
-            $pdo->prepare(
+            $transactionStmt = $pdo->prepare(
                 'INSERT INTO transactions (product_id, buyer_id, seller_id, amount, type)
                  SELECT p.id, ?, p.user_id, ?, "auction"
                  FROM products p WHERE p.id = ?'
-            )->execute([$buyerId, $currentPrice, $auction['product_id']]);
+            );
+            $transactionStmt->execute([$buyerId, $currentPrice, $auction['product_id']]);
+            $transactionId = (int)$pdo->lastInsertId();
 
             $pdo->commit();
-            return true;
+            return $transactionId;
 
         } catch (\PDOException $e) {
             $pdo->rollBack();

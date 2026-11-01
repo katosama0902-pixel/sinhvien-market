@@ -6,6 +6,53 @@ interface RequestOptions {
   body?: unknown;
 }
 
+let csrfToken: string | null = null;
+
+async function getCsrfToken(): Promise<string> {
+  if (csrfToken) return csrfToken;
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/auth/csrf`, {
+      credentials: "include",
+      headers: { Accept: "application/json" },
+    });
+  } catch {
+    throw new ApiError(
+      "NETWORK_ERROR",
+      "Không lấy được token bảo mật từ máy chủ.",
+      { status: 0 },
+    );
+  }
+  let json: unknown;
+  try {
+    json = await response.json();
+  } catch {
+    throw new ApiError(
+      "SERVER_ERROR",
+      "Máy chủ không trả token bảo mật hợp lệ.",
+      { status: response.status },
+    );
+  }
+  if (!response.ok) {
+    throw new ApiError(
+      "SERVER_ERROR",
+      "Không thể khởi tạo phiên bảo mật.",
+      { status: response.status },
+    );
+  }
+  const token = (json as { data?: { token?: unknown } })?.data?.token;
+  if (typeof token !== "string" || token.length === 0) {
+    throw new ApiError(
+      "SERVER_ERROR",
+      "Máy chủ không trả token bảo mật hợp lệ.",
+      { status: response.status },
+    );
+  }
+  csrfToken = token;
+  return token;
+}
+
 export async function apiRequest<T>(
   path: string,
   { method = "GET", body }: RequestOptions = {},
@@ -15,6 +62,9 @@ export async function apiRequest<T>(
 
   let res: Response;
   try {
+    const formData =
+      typeof FormData !== "undefined" && body instanceof FormData;
+    const token = method === "GET" ? null : await getCsrfToken();
     res = await fetch(`${API_URL}${path}`, {
       method,
       credentials: "include",
@@ -22,9 +72,17 @@ export async function apiRequest<T>(
       headers: {
         Accept: "application/json",
         "X-Requested-With": "XMLHttpRequest",
-        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+        ...(token ? { "X-CSRF-Token": token } : {}),
+        ...(body !== undefined && !formData
+          ? { "Content-Type": "application/json" }
+          : {}),
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body:
+        body === undefined
+          ? undefined
+          : formData
+            ? body
+            : JSON.stringify(body),
     });
   } catch (e) {
     if (e instanceof DOMException && e.name === "AbortError") {

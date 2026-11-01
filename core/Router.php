@@ -23,12 +23,37 @@ class Router
         $this->routes['POST'][$path] = compact('controller', 'action');
     }
 
+    public function put(string $path, string $controller, string $action): void
+    {
+        $this->routes['PUT'][$path] = compact('controller', 'action');
+    }
+
+    public function delete(string $path, string $controller, string $action): void
+    {
+        $this->routes['DELETE'][$path] = compact('controller', 'action');
+    }
+
     // ─── Dispatch ────────────────────────────────────────────────────────────
 
     public function dispatch(): void
     {
         $method = $_SERVER['REQUEST_METHOD'];
         $url    = $this->parseUrl();
+
+        if ($method === 'GET') {
+            $targetPath = LegacyPageRedirects::targetPath($url, $_GET);
+            if ($targetPath !== null) {
+                $nextBaseUrl = $_ENV['NEXT_APP_URL'] ?? null;
+                if (!is_string($nextBaseUrl) || trim($nextBaseUrl) === '') {
+                    $nextBaseUrl = getenv('NEXT_APP_URL');
+                }
+                if (!is_string($nextBaseUrl)) {
+                    $nextBaseUrl = null;
+                }
+                header('Location: ' . LegacyPageRedirects::location($targetPath, $_GET, $nextBaseUrl), true, 302);
+                exit;
+            }
+        }
 
         // Tìm route khớp (bao gồm prefix matching)
         $route = $this->findRoute($method, $url);
@@ -100,6 +125,17 @@ class Router
         foreach ($this->routes[$method] ?? [] as $pattern => $route) {
             if ($url === $pattern) {
                 return $route;
+            }
+
+            if (preg_match_all('/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/', $pattern, $parameterNames)) {
+                $quoted = preg_quote($pattern, '#');
+                $regex = preg_replace('/\\\\\{[a-zA-Z_][a-zA-Z0-9_]*\\\\\}/', '([^/]+)', $quoted);
+                if (preg_match('#^' . $regex . '$#', $url, $matches)) {
+                    foreach ($parameterNames[1] as $index => $name) {
+                        $_GET[$name] = rawurldecode($matches[$index + 1]);
+                    }
+                    return $route;
+                }
             }
         }
 

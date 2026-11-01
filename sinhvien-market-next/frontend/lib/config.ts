@@ -3,7 +3,7 @@
 export const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
 export const API_URL = (
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api"
+  process.env.NEXT_PUBLIC_API_URL ?? "/api"
 ).replace(/\/$/, "");
 
 /** Thời gian chờ tối đa cho một lời gọi API thật (ms). */

@@ -990,6 +990,11 @@ export async function mockGetProducts(
   return db.products.filter((p) => p.status === "pending");
 }
 
+export async function mockGetTransactions(): Promise<AdminTransaction[]> {
+  await delay(80);
+  return [...loadDb().transactions];
+}
+
 export async function mockApproveProduct(
   productId: number,
 ): Promise<{ message: string }> {

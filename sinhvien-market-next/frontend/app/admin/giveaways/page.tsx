@@ -130,6 +130,10 @@ function GiveawaysContent() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!["image/jpeg", "image/png", "image/gif", "image/webp"].includes(file.type)) {
+      setFormError("Chỉ hỗ trợ ảnh JPEG, PNG, GIF hoặc WebP.");
+      return;
+    }
     if (file.size > MAX_IMAGE_SIZE) {
       setFormError("Ảnh phần thưởng không được vượt quá 1MB.");
       return;
@@ -500,7 +504,7 @@ function GiveawaysContent() {
                 Chọn file ảnh
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
                   onChange={handleFileChange}
                   className="hidden"
                 />

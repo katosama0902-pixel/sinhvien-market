@@ -87,7 +87,8 @@ class ChatController extends Controller
         }
 
         $user      = $this->currentUser();
-        $productId = (int)($_POST['product_id'] ?? 0);
+        $input     = $this->requestData();
+        $productId = (int)($input['product_id'] ?? 0);
 
         if ($productId <= 0) {
             Flash::set('danger', 'Sản phẩm không hợp lệ.');
@@ -114,7 +115,7 @@ class ChatController extends Controller
         $sellerId = (int)$product['user_id'];
         $convId   = $this->convModel->findOrCreate($productId, $user['id'], $sellerId);
 
-        $offerPrice = (int)($_POST['offer_price'] ?? 0);
+        $offerPrice = (int)($input['offer_price'] ?? 0);
         if ($offerPrice > 0) {
             $this->msgModel->sendOffer($convId, $user['id'], $offerPrice);
         }
@@ -134,8 +135,9 @@ class ChatController extends Controller
         }
 
         $user   = $this->currentUser();
-        $convId = (int)($_POST['conversation_id'] ?? 0);
-        $body   = trim($_POST['body'] ?? '');
+        $input  = $this->requestData();
+        $convId = (int)($input['conversation_id'] ?? 0);
+        $body   = trim((string)($input['body'] ?? ''));
 
         if ($convId <= 0 || $body === '') {
             $this->json(['success' => false, 'message' => 'Dữ liệu không hợp lệ.'], 400);
@@ -236,8 +238,9 @@ class ChatController extends Controller
             return;
         }
         $user   = $this->currentUser();
-        $convId = (int)($_POST['conversation_id'] ?? 0);
-        $price  = (int)($_POST['offer_price'] ?? 0);
+        $input  = $this->requestData();
+        $convId = (int)($input['conversation_id'] ?? 0);
+        $price  = (int)($input['offer_price'] ?? 0);
 
         if ($convId <= 0 || $price <= 0) {
             $this->json(['success' => false, 'message' => 'Giá trả phải lớn hơn 0.'], 400);
@@ -281,9 +284,10 @@ class ChatController extends Controller
             return;
         }
         $user   = $this->currentUser();
-        $msgId  = (int)($_POST['message_id'] ?? 0);
-        $status = $_POST['status'] ?? ''; // 'accepted' or 'rejected'
-        $convId = (int)($_POST['conversation_id'] ?? 0);
+        $input  = $this->requestData();
+        $msgId  = (int)($input['message_id'] ?? 0);
+        $status = $input['status'] ?? ''; // 'accepted' or 'rejected'
+        $convId = (int)($input['conversation_id'] ?? 0);
 
         if (!in_array($status, ['accepted', 'rejected'])) {
             $this->json(['success' => false, 'message' => 'Logic lỗi.'], 400);
@@ -352,9 +356,11 @@ class ChatController extends Controller
             'id'          => $m['id'],
             'body'        => htmlspecialchars($m['body'], ENT_QUOTES, 'UTF-8'),
             'msg_type'    => $m['msg_type'] ?? 'text',
+            'type'        => $m['msg_type'] ?? 'text',
             'offer_price' => $m['offer_price'] ?? null,
             'offer_status'=> $m['offer_status'] ?? null,
             'sender_name' => $m['sender_name'],
+            'sender'      => $m['sender_name'],
             'sender_id'   => $m['sender_id'],
             'time'        => date('H:i', strtotime($m['created_at'])),
             'is_me'       => (int)$m['sender_id'] === (int)$user['id'],

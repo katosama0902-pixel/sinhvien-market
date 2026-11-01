@@ -106,8 +106,11 @@ function BannersContent() {
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!form || !file) return;
-    if (!file.type.startsWith("image/")) {
-      setErrors((prev) => ({ ...prev, image: "Vui lòng chọn file ảnh hợp lệ." }));
+    if (!["image/jpeg", "image/png", "image/gif", "image/webp"].includes(file.type)) {
+      setErrors((prev) => ({
+        ...prev,
+        image: "Chỉ hỗ trợ ảnh JPEG, PNG, GIF hoặc WebP.",
+      }));
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
@@ -355,7 +358,7 @@ function BannersContent() {
                 <input
                   id="banner-image"
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
                   onChange={handleFile}
                   className="w-full cursor-pointer text-sm text-muted file:mr-4 file:cursor-pointer file:rounded-xl file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:text-xs file:font-bold file:text-indigo-700 hover:file:bg-indigo-100"
                 />

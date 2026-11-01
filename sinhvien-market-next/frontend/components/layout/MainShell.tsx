@@ -17,20 +17,24 @@ import {
   Coins,
   Gift,
   Grid,
+  Heart,
   Home,
   LogIn,
   LogOut,
   Menu,
+  MessageCircle,
   PlusCircle,
   Search,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
+  ClipboardList,
   UserCheck,
   UserPlus,
   X,
 } from "lucide-react";
 import { FlashBanner } from "@/components/auth/FlashBanner";
+import { PortalAccessDialog } from "@/components/auth/PortalAccessDialog";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { getCurrentUser, logout } from "@/lib/api/auth";
 import type { AuthUser } from "@/lib/api/types";
@@ -58,6 +62,17 @@ interface MainShellProps {
   initialSearch?: string;
 }
 
+interface QuickAccessTarget {
+  href: string;
+}
+
+interface PortalNotice extends QuickAccessTarget {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  intent: "close" | "switch-account" | "open-admin";
+}
+
 export function MainShell({ children, initialSearch = "" }: MainShellProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -69,6 +84,7 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [portalNotice, setPortalNotice] = useState<PortalNotice | null>(null);
 
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const notifMenuRef = useRef<HTMLDivElement | null>(null);
@@ -130,6 +146,95 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
       setUser(null);
       setFlash({ variant: "success", message: "Đã đăng xuất thành công." });
       router.push("/login-role");
+    } finally {
+      setLoggingOut(false);
+    }
+  };
+
+  const handleQuickAccessClick = async ({ href }: QuickAccessTarget) => {
+    let activeUser = user;
+    if (loadingUser) {
+      try {
+        activeUser = await getCurrentUser();
+        setUser(activeUser);
+      } catch {
+        setFlash({
+          variant: "danger",
+          message: "Chưa thể xác minh phiên đăng nhập. Vui lòng thử lại.",
+        });
+        return;
+      }
+    }
+
+    if (!activeUser) {
+      router.push(href);
+      return;
+    }
+
+    if (href === "/admin-login") {
+      if (activeUser.role === "admin") {
+        setPortalNotice({
+          href: "/admin",
+          title: "Bạn đã đăng nhập với tài khoản Quản trị viên",
+          description:
+            "Phiên quản trị của bạn đang hoạt động. Bạn có thể vào thẳng trang quản trị mà không cần đăng nhập lại.",
+          confirmLabel: "Vào trang quản trị",
+          intent: "open-admin",
+        });
+      } else {
+        setPortalNotice({
+          href,
+          title: "Không thể truy cập cổng quản trị",
+          description:
+            "Cổng này chỉ dành cho tài khoản Quản trị viên được cấp quyền. Tài khoản Sinh viên hiện tại không thể truy cập hoặc thực hiện thao tác quản trị.",
+          confirmLabel: "Đã hiểu",
+          intent: "close",
+        });
+      }
+      return;
+    }
+
+    const accountType =
+      activeUser.role === "admin" ? "Quản trị viên" : "Sinh viên";
+    setPortalNotice({
+      href,
+      title: "Bạn đã đăng nhập rồi",
+      description: `Bạn đang đăng nhập với tài khoản ${accountType}. Nếu muốn chuyển sang cổng đăng nhập này, hãy đăng xuất tài khoản hiện tại trước.`,
+      confirmLabel: "Đăng xuất và tiếp tục",
+      intent: "switch-account",
+    });
+  };
+
+  const handlePortalNoticeConfirm = async () => {
+    if (!portalNotice) return;
+    if (portalNotice.intent === "close") {
+      setPortalNotice(null);
+      return;
+    }
+    if (portalNotice.intent === "open-admin") {
+      const { href } = portalNotice;
+      setPortalNotice(null);
+      router.push(href);
+      return;
+    }
+
+    setLoggingOut(true);
+    try {
+      await logout();
+      const { href } = portalNotice;
+      setUser(null);
+      setPortalNotice(null);
+      setFlash({
+        variant: "success",
+        message: "Đã đăng xuất. Bạn có thể tiếp tục sang cổng đã chọn.",
+      });
+      router.push(href);
+    } catch {
+      setPortalNotice(null);
+      setFlash({
+        variant: "danger",
+        message: "Chưa thể đăng xuất. Vui lòng thử lại sau.",
+      });
     } finally {
       setLoggingOut(false);
     }
@@ -228,20 +333,86 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                     ) : (
                       <>
                         <Link
-                          href="/products"
+                          href="/dashboard"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                        >
+                          <Grid className="h-4 w-4 text-indigo-500" />
+                          Bảng điều khiển
+                        </Link>
+                        <Link
+                          href="/profile"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                        >
+                          <UserCheck className="h-4 w-4 text-indigo-500" />
+                          Hồ sơ cá nhân
+                        </Link>
+                        <Link
+                          href="/my-listings"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                        >
+                          <PlusCircle className="h-4 w-4 text-indigo-500" />
+                          Tin đăng của tôi
+                        </Link>
+                        <Link
+                          href="/transactions"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                        >
+                          <ClipboardList className="h-4 w-4 text-indigo-500" />
+                          Giao dịch
+                        </Link>
+                        <Link
+                          href="/wishlist"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                        >
+                          <Heart className="h-4 w-4 text-rose-500" />
+                          Yêu thích
+                        </Link>
+                        <Link
+                          href="/chat"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                        >
+                          <MessageCircle className="h-4 w-4 text-indigo-500" />
+                          Tin nhắn
+                        </Link>
+                        <Link
+                          href="/notifications"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                        >
+                          <Bell className="h-4 w-4 text-amber-500" />
+                          Thông báo
+                        </Link>
+                        <Link
+                          href="/rewards"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                        >
+                          <Coins className="h-4 w-4 text-amber-500" />
+                          Xu & điểm thưởng
+                        </Link>
+                        <Link
+                          href="/products/create"
                           className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
+                          aria-label="Đăng sản phẩm"
                         >
                           <PlusCircle className="h-4 w-4 text-indigo-300" />
                           Đăng bán
                         </Link>
 
-                        <span
-                          title="Điểm thưởng sinh viên"
+                        <Link
+                          href="/rewards"
+                          title="Xu và điểm thưởng sinh viên"
                           className="inline-flex items-center gap-1 rounded-full border border-amber-400/35 bg-amber-400/15 px-3 py-1 text-xs font-bold text-amber-300"
                         >
                           <Coins className="h-3.5 w-3.5" />
-                          150 xu
-                        </span>
+                          Xu & thưởng
+                        </Link>
                       </>
                     )}
 
@@ -279,6 +450,13 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                               </p>
                             </div>
                           </div>
+                          <Link
+                            href="/notifications"
+                            onClick={() => setNotifOpen(false)}
+                            className="block border-t border-border px-4 py-3 text-center text-xs font-bold text-primary hover:bg-surface-2"
+                          >
+                            Xem tất cả thông báo
+                          </Link>
                         </div>
                       )}
                     </div>
@@ -485,6 +663,74 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                           Vào Admin Panel (/admin)
                         </Link>
                       )}
+                      {!isAdmin && (
+                        <>
+                          <Link
+                            href="/dashboard"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                          >
+                            <Grid className="h-4 w-4" />
+                            Bảng điều khiển
+                          </Link>
+                          <Link
+                            href="/profile"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                          >
+                            <UserCheck className="h-4 w-4" />
+                            Hồ sơ cá nhân
+                          </Link>
+                          <Link
+                            href="/my-listings"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                          >
+                            <PlusCircle className="h-4 w-4" />
+                            Tin đăng của tôi
+                          </Link>
+                          <Link
+                            href="/transactions"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                          >
+                            <ClipboardList className="h-4 w-4" />
+                            Giao dịch
+                          </Link>
+                          <Link
+                            href="/wishlist"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                          >
+                            <Heart className="h-4 w-4" />
+                            Yêu thích
+                          </Link>
+                          <Link
+                            href="/chat"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            Tin nhắn
+                          </Link>
+                          <Link
+                            href="/notifications"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                          >
+                            <Bell className="h-4 w-4" />
+                            Thông báo
+                          </Link>
+                          <Link
+                            href="/rewards"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                          >
+                            <Coins className="h-4 w-4" />
+                            Xu & điểm thưởng
+                          </Link>
+                        </>
+                      )}
                       <button
                         type="button"
                         onClick={handleLogout}
@@ -524,7 +770,11 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
           <FlashBanner />
         </div>
 
-        <main className="flex-1">{children}</main>
+        <main className="flex-1">
+          <div key={pathname} className="page-enter">
+            {children}
+          </div>
+        </main>
 
         <footer className="mt-16 border-t border-white/10 bg-[#0f0c29] py-12 text-white/75">
           <div className="mx-auto max-w-7xl px-4">
@@ -570,6 +820,14 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                       Trao đổi đồ dùng
                     </Link>
                   </li>
+                  <li>
+                    <Link
+                      href="/leaderboard"
+                      className="text-white/65 transition hover:text-white"
+                    >
+                      Bảng xếp hạng người bán
+                    </Link>
+                  </li>
                 </ul>
               </div>
 
@@ -581,6 +839,10 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                   <li>
                     <Link
                       href="/login-role"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        void handleQuickAccessClick({ href: "/login-role" });
+                      }}
                       className="text-white/65 transition hover:text-white"
                     >
                       Chọn cổng đăng nhập (Sinh viên / Quản trị)
@@ -589,6 +851,10 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                   <li>
                     <Link
                       href="/login"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        void handleQuickAccessClick({ href: "/login" });
+                      }}
                       className="text-white/65 transition hover:text-white"
                     >
                       Đăng nhập Sinh viên
@@ -597,6 +863,10 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                   <li>
                     <Link
                       href="/admin-login"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        void handleQuickAccessClick({ href: "/admin-login" });
+                      }}
                       className="text-indigo-300 transition hover:text-indigo-200"
                     >
                       🛡️ Cổng Quản trị viên (Admin Panel)
@@ -612,6 +882,21 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
           </div>
         </footer>
       </div>
+      {portalNotice && (
+        <PortalAccessDialog
+          title={portalNotice.title}
+          description={portalNotice.description}
+          confirmLabel={portalNotice.confirmLabel}
+          busy={loggingOut}
+          onClose={() => setPortalNotice(null)}
+          onConfirm={
+            portalNotice.intent === "switch-account" ||
+            portalNotice.intent === "open-admin"
+              ? handlePortalNoticeConfirm
+              : undefined
+          }
+        />
+      )}
     </MainShellContext.Provider>
   );
 }

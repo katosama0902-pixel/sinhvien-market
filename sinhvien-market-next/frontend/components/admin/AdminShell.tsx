@@ -34,6 +34,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { FlashBanner } from "@/components/auth/FlashBanner";
+import { PortalAccessDialog } from "@/components/auth/PortalAccessDialog";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { getCurrentUser, logout } from "@/lib/api/auth";
 import { resetAdminMockData } from "@/lib/api/mock/admin";
@@ -184,6 +185,7 @@ export function AdminShell({ title, children, onResetMock }: AdminShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -210,11 +212,7 @@ export function AdminShell({ title, children, onResetMock }: AdminShellProps) {
           return;
         }
         if (u.role !== "admin") {
-          setFlash({
-            variant: "danger",
-            message: "Bạn không có quyền truy cập khu vực quản trị.",
-          });
-          router.replace("/products");
+          setAccessDenied(true);
           return;
         }
         setUser(u);
@@ -255,6 +253,25 @@ export function AdminShell({ title, children, onResetMock }: AdminShellProps) {
 
   const activeUser = user ?? DEFAULT_ADMIN;
   const userInitial = activeUser.name.trim().charAt(0).toUpperCase() || "A";
+
+  if (accessDenied) {
+    return (
+      <PortalAccessDialog
+        title="Không thể truy cập cổng quản trị"
+        description="Khu vực này chỉ dành cho tài khoản Quản trị viên được cấp quyền. Tài khoản Sinh viên không thể truy cập hoặc thực hiện thao tác quản trị."
+        confirmLabel="Quay về mua sắm"
+        onClose={() => router.replace("/products")}
+      />
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-bg px-4 text-sm font-semibold text-muted">
+        Đang xác thực phiên quản trị...
+      </div>
+    );
+  }
 
   const renderSidebarNav = (isMobile = false) => (
     <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-3">
@@ -457,7 +474,11 @@ export function AdminShell({ title, children, onResetMock }: AdminShellProps) {
             <FlashBanner />
           </div>
 
-          <main className="flex-1 p-5 md:p-7">{children}</main>
+          <main className="flex-1 p-5 md:p-7">
+            <div key={pathname} className="page-enter">
+              {children}
+            </div>
+          </main>
         </div>
 
         <div

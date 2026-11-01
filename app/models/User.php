@@ -322,12 +322,13 @@ class User extends Model
      */
     public function spendCoins(int $userId, int $amount): bool
     {
-        $current = $this->getCoins($userId);
-        if ($current < $amount) {
+        if ($amount <= 0) {
             return false;
         }
-        $this->execute('UPDATE users SET coins = coins - ? WHERE id = ?', [$amount, $userId]);
-        return true;
+        return $this->execute(
+            'UPDATE users SET coins = coins - ? WHERE id = ? AND coins >= ?',
+            [$amount, $userId, $amount]
+        ) === 1;
     }
 
     /**
@@ -432,6 +433,30 @@ class User extends Model
              ORDER BY score DESC, sold_count DESC, avg_rating DESC
              LIMIT ?",
             [$limit]
+        );
+    }
+
+    /**
+     * Lấy thống kê leaderboard của một người bán mà không tải toàn bộ bảng.
+     */
+    public function getLeaderboardUser(int $userId): ?array
+    {
+        return $this->queryOne(
+            "SELECT
+                u.id, u.name, u.avatar, u.avatar_url, u.is_student_verified,
+                COUNT(DISTINCT p.id) AS product_count,
+                COUNT(DISTINCT CASE WHEN p.status = 'sold' THEN p.id END) AS sold_count,
+                COALESCE(ROUND(AVG(r.stars), 1), 0) AS avg_rating,
+                COUNT(DISTINCT r.id) AS rating_count,
+                (COUNT(DISTINCT CASE WHEN p.status = 'sold' THEN p.id END) * 5
+                    + COALESCE(AVG(r.stars), 0) * 10
+                    + COUNT(DISTINCT p.id)) AS score
+             FROM users u
+             LEFT JOIN products p ON p.user_id = u.id
+             LEFT JOIN ratings r ON r.ratee_id = u.id
+             WHERE u.id = ? AND u.role = 'student' AND u.is_locked = 0
+             GROUP BY u.id",
+            [$userId]
         );
     }
 

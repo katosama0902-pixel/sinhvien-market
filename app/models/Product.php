@@ -26,7 +26,7 @@ class Product extends Model
     /**
      * Lấy danh sách sản phẩm đang active (có phân trang)
      */
-    public function getActive(int $limit = 12, int $offset = 0, int $categoryId = 0, string $condition = '', int $priceMin = 0, int $priceMax = 0): array
+    public function getActive(int $limit = 12, int $offset = 0, int $categoryId = 0, string $condition = '', int $priceMin = 0, int $priceMax = 0, string $type = ''): array
     {
         $sql = 'SELECT p.*, c.name AS category_name, u.name AS seller_name,
                        u.is_student_verified AS seller_verified,
@@ -55,6 +55,10 @@ class Product extends Model
             $sql .= ' AND p.price <= ?';
             $params[] = $priceMax;
         }
+        if (in_array($type, ['sale', 'exchange', 'auction'], true)) {
+            $sql .= ' AND p.type = ?';
+            $params[] = $type;
+        }
 
         // Sắp xếp theo thời điểm mới nhất giữa created_at và bumped_at
         $sql .= ' ORDER BY GREATEST(p.created_at, COALESCE(p.bumped_at, \'2000-01-01\')) DESC LIMIT ? OFFSET ?';
@@ -67,7 +71,7 @@ class Product extends Model
     /**
      * Tìm kiếm FULLTEXT theo từ khóa
      */
-    public function search(string $keyword, int $categoryId = 0, int $limit = 12, int $offset = 0, string $condition = '', int $priceMin = 0, int $priceMax = 0): array
+    public function search(string $keyword, int $categoryId = 0, int $limit = 12, int $offset = 0, string $condition = '', int $priceMin = 0, int $priceMax = 0, string $type = ''): array
     {
         $sql = "SELECT p.*, c.name AS category_name, u.name AS seller_name,
                        u.is_student_verified AS seller_verified,
@@ -98,6 +102,10 @@ class Product extends Model
         if ($priceMax > 0) {
             $sql .= ' AND p.price <= ?';
             $params[] = $priceMax;
+        }
+        if (in_array($type, ['sale', 'exchange', 'auction'], true)) {
+            $sql .= ' AND p.type = ?';
+            $params[] = $type;
         }
 
         $sql .= ' ORDER BY score DESC LIMIT ? OFFSET ?';
@@ -148,7 +156,8 @@ class Product extends Model
     {
         return $this->query(
             'SELECT p.*, c.name AS category_name,
-                    a.start_price, a.floor_price, a.status AS auction_status
+                    a.start_price, a.floor_price, a.decrease_amount, a.step_minutes,
+                    a.started_at, a.status AS auction_status
              FROM products p
              JOIN categories c  ON c.id = p.category_id
              LEFT JOIN auctions a ON a.product_id = p.id
@@ -229,6 +238,11 @@ class Product extends Model
     {
         $row = $this->queryOne('SELECT bumped_at FROM products WHERE id = ?', [$productId]);
         return $row['bumped_at'] ?? null;
+    }
+
+    public function hasTransactions(int $productId): bool
+    {
+        return $this->count('SELECT COUNT(*) FROM transactions WHERE product_id = ?', [$productId]) > 0;
     }
 
     /**

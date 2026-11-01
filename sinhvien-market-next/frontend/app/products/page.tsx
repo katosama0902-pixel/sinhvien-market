@@ -1,6 +1,7 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   Clock,
@@ -14,10 +15,13 @@ import {
   Zap,
 } from "lucide-react";
 import { MainShell } from "@/components/layout/MainShell";
-import { getAdminCategories, getAdminProducts } from "@/lib/api/admin";
+import {
+  getMarketplaceCategories,
+  getMarketplaceProducts,
+} from "@/lib/api/marketplace";
+import type { MarketplaceProduct } from "@/lib/api/marketplace";
 import type {
   AdminCategory,
-  AdminProduct,
   ProductCondition,
   ProductType,
 } from "@/lib/types/admin";
@@ -52,8 +56,9 @@ function ProductsCatalogInner() {
   const initialType = (searchParams.get("type") ?? "") as "" | ProductType;
 
   const [loading, setLoading] = useState(true);
-  const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [products, setProducts] = useState<MarketplaceProduct[]>([]);
   const [categories, setCategories] = useState<AdminCategory[]>([]);
+  const [loadError, setLoadError] = useState("");
 
   const [keyword, setKeyword] = useState(initialQ);
   const [categoryId, setCategoryId] = useState<number>(initialCat);
@@ -66,39 +71,67 @@ function ProductsCatalogInner() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([getAdminProducts("all"), getAdminCategories()])
-      .then(([prodList, catList]) => {
+    getMarketplaceCategories()
+      .then((catList) => {
         if (!active) return;
-        setProducts(prodList.filter((p) => p.status === "active"));
         setCategories(catList);
       })
-      .finally(() => {
-        if (active) setLoading(false);
+      .catch((error: unknown) => {
+        if (!active) return;
+        setLoadError(
+          error instanceof Error
+            ? error.message
+            : "Không thể tải danh mục sản phẩm.",
+        );
       });
     return () => {
       active = false;
     };
   }, []);
 
-  const filteredProducts = useMemo(() => {
-    const q = keyword.trim().toLowerCase();
-    const min = priceMin ? Number(priceMin) : null;
-    const max = priceMax ? Number(priceMax) : null;
+  useEffect(() => {
+    let active = true;
+    const timer = window.setTimeout(() => {
+      setLoading(true);
+      setLoadError("");
+      getMarketplaceProducts({
+        keyword,
+        categoryId: categoryId || undefined,
+        type: typeFilter || undefined,
+        condition: conditionFilter || undefined,
+        priceMin: priceMin ? Number(priceMin) : undefined,
+        priceMax: priceMax ? Number(priceMax) : undefined,
+      })
+        .then((productList) => {
+          if (active) setProducts(productList);
+        })
+        .catch((error: unknown) => {
+          if (!active) return;
+          setLoadError(
+            error instanceof Error
+              ? error.message
+              : "Không thể tải danh sách sản phẩm.",
+          );
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }, 200);
 
-    return products.filter((p) => {
-      if (categoryId > 0 && p.categoryId !== categoryId) return false;
-      if (typeFilter && p.type !== typeFilter) return false;
-      if (conditionFilter && p.condition !== conditionFilter) return false;
-      if (min !== null && (p.price ?? 0) < min) return false;
-      if (max !== null && (p.price ?? 0) > max) return false;
-      if (!q) return true;
-      return (
-        p.title.toLowerCase().includes(q) ||
-        p.categoryName.toLowerCase().includes(q) ||
-        p.sellerName.toLowerCase().includes(q)
-      );
-    });
-  }, [products, keyword, categoryId, typeFilter, conditionFilter, priceMin, priceMax]);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [
+    keyword,
+    categoryId,
+    typeFilter,
+    conditionFilter,
+    priceMin,
+    priceMax,
+  ]);
+
+  const filteredProducts = products;
 
   const hasFilter =
     Boolean(keyword.trim()) ||
@@ -286,6 +319,15 @@ function ProductsCatalogInner() {
             </div>
           </div>
 
+          {loadError && (
+            <div
+              role="alert"
+              className="mb-5 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"
+            >
+              {loadError}
+            </div>
+          )}
+
           {loading ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -357,9 +399,12 @@ function ProductsCatalogInner() {
                         {p.categoryName}
                       </p>
 
-                      <h3 className="mb-3 line-clamp-2 flex-1 text-sm font-bold text-fg transition group-hover:text-primary">
+                      <Link
+                        href={`/products/${p.id}`}
+                        className="mb-3 line-clamp-2 flex-1 text-sm font-bold text-fg transition group-hover:text-primary"
+                      >
                         {p.title}
-                      </h3>
+                      </Link>
 
                       <div className="mb-3 flex items-end justify-between">
                         {p.type === "auction" ? (
@@ -385,9 +430,12 @@ function ProductsCatalogInner() {
                       <div className="mt-auto flex items-center justify-between border-t border-border pt-3 text-xs text-muted">
                         <span className="inline-flex items-center gap-1 truncate pr-2">
                           <User className="h-3.5 w-3.5 shrink-0" />
-                          <span className="truncate font-medium text-fg">
+                          <Link
+                            href={`/users/${p.sellerId}`}
+                            className="truncate font-medium text-fg transition hover:text-primary"
+                          >
                             {p.sellerName}
-                          </span>
+                          </Link>
                           <ShieldCheck
                             className="h-3.5 w-3.5 shrink-0 text-emerald-500"
                             aria-label="Đã xác thực"

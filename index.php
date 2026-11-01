@@ -211,10 +211,88 @@ $router->get('transactions/proof', 'Transaction', 'proof'); // ?id= — biên la
 $router->post('transactions/update-status', 'Transaction', 'updateStatus');
 
 // API (JSON responses cho polling realtime)
+$router->get('api/marketplace/home', 'MarketplaceApi', 'home');
+$router->get('api/marketplace/leaderboard', 'MarketplaceApi', 'leaderboard');
+$router->get('api/marketplace/categories', 'MarketplaceApi', 'categories');
+$router->get('api/marketplace/products', 'MarketplaceApi', 'products');
+$router->get('api/marketplace/product', 'MarketplaceApi', 'product');
 $router->get('api/products/search', 'Product', 'apiSearch');
 $router->get('api/auction/price', 'Auction', 'apiPrice');
 
+// Next.js session-backed JSON API. Mutations require the session CSRF token
+// returned by GET /api/auth/csrf (header X-CSRF-Token or JSON _csrf).
+$router->get('api/auth/me', 'NextApi', 'me');
+$router->get('api/auth/locked-info', 'NextApi', 'lockedInfo');
+$router->get('api/auth/csrf', 'NextApi', 'csrf');
+$router->post('api/auth/login', 'NextApi', 'login');
+$router->post('api/auth/register', 'NextApi', 'register');
+$router->post('api/auth/logout', 'NextApi', 'logout');
+$router->post('api/auth/password/forgot/question', 'NextApi', 'forgotPasswordQuestion');
+$router->post('api/auth/password/forgot/answer', 'NextApi', 'forgotPasswordAnswer');
+$router->post('api/auth/password/reset', 'NextApi', 'resetPassword');
+$router->get('api/auth/otp/session', 'NextApi', 'otpSession');
+$router->post('api/auth/otp/verify', 'NextApi', 'verifyOtp');
+$router->post('api/auth/otp/resend', 'NextApi', 'resendOtp');
+$router->get('api/profile/me', 'NextApi', 'profileMe');
+$router->put('api/profile/me', 'NextApi', 'updateProfile');
+$router->get('api/profile/public', 'NextApi', 'publicProfile');
+$router->get('api/users/profile', 'NextApi', 'publicProfile');
+$router->get('api/users/{id}/profile', 'NextApi', 'publicProfile');
+$router->post('api/profile/password', 'NextApi', 'updatePassword');
+$router->post('api/profile/avatar', 'NextApi', 'uploadAvatar');
+$router->post('api/profile/bank', 'NextApi', 'saveBank');
+$router->post('api/profile/security-question', 'NextApi', 'saveSecurityQuestion');
+$router->get('api/user/products', 'NextApi', 'products');
+$router->post('api/user/products', 'NextApi', 'createProduct');
+$router->delete('api/user/products', 'NextApi', 'deleteProduct');
+$router->get('api/user/conversations', 'NextApi', 'conversations');
+$router->post('api/user/conversations', 'NextApi', 'startConversation');
+$router->get('api/user/transactions', 'NextApi', 'transactions');
+$router->post('api/user/transactions/status', 'NextApi', 'updateTransactionStatus');
+$router->post('api/user/transactions/checkout', 'NextApi', 'checkout');
+$router->get('api/user/notifications', 'NextApi', 'notifications');
+$router->post('api/user/notifications/mark-read', 'NextApi', 'markNotificationRead');
+$router->get('api/user/rewards', 'NextApi', 'rewards');
+$router->post('api/user/rewards/checkin', 'NextApi', 'checkin');
+$router->post('api/user/rewards/bump', 'NextApi', 'bump');
+$router->get('api/user/wishlist', 'NextApi', 'wishlist');
+$router->post('api/user/wishlist/toggle', 'NextApi', 'toggleWishlist');
+
 // Admin
+$router->get('api/admin/dashboard', 'AdminApi', 'dashboard');
+$router->get('api/admin/products', 'AdminApi', 'products');
+$router->post('api/admin/products/approve', 'AdminApi', 'approveProduct');
+$router->post('api/admin/products/reject', 'AdminApi', 'rejectProduct');
+$router->post('api/admin/products/delete', 'AdminApi', 'deleteProduct');
+$router->get('api/admin/transactions', 'AdminApi', 'transactions');
+$router->get('api/admin/categories', 'AdminApi', 'categories');
+$router->post('api/admin/categories', 'AdminApi', 'createCategory');
+$router->put('api/admin/categories/{id}', 'AdminApi', 'updateCategory');
+$router->delete('api/admin/categories/{id}', 'AdminApi', 'deleteCategory');
+$router->get('api/admin/users', 'AdminApi', 'users');
+$router->get('api/admin/users/{id}/violations', 'AdminApi', 'userViolations');
+$router->post('api/admin/users/{id}/toggle-lock', 'AdminApi', 'toggleUserLock');
+$router->post('api/admin/users/{id}/strike', 'AdminApi', 'strikeUser');
+$router->get('api/admin/users/{id}', 'AdminApi', 'userDetail');
+$router->get('api/admin/reports', 'AdminApi', 'transactionReports');
+$router->get('api/admin/system-reports', 'AdminApi', 'systemReports');
+$router->get('api/admin/reports/evidence', 'AdminApi', 'reportEvidence');
+$router->post('api/admin/system-reports/{id}/resolve', 'AdminApi', 'resolveSystemReport');
+$router->get('api/admin/ratings', 'AdminApi', 'ratings');
+$router->post('api/admin/ratings/{id}/toggle', 'AdminApi', 'toggleRating');
+$router->get('api/admin/banners', 'AdminApi', 'banners');
+$router->post('api/admin/banners', 'AdminApi', 'createBanner');
+$router->put('api/admin/banners/{id}', 'AdminApi', 'updateBanner');
+$router->post('api/admin/banners/{id}/toggle', 'AdminApi', 'toggleBanner');
+$router->delete('api/admin/banners/{id}', 'AdminApi', 'deleteBanner');
+$router->get('api/admin/giveaways', 'AdminApi', 'giveaways');
+$router->post('api/admin/giveaways', 'AdminApi', 'createGiveaway');
+$router->get('api/admin/giveaways/{id}', 'AdminApi', 'giveawayDetail');
+$router->delete('api/admin/giveaways/{id}', 'AdminApi', 'deleteGiveaway');
+$router->post('api/admin/giveaways/{id}/spin', 'AdminApi', 'saveGiveawayWinner');
+$router->get('api/admin/audit-log', 'AdminApi', 'auditLog');
+$router->get('api/admin/export', 'AdminApi', 'export');
+
 $router->get('admin', 'Admin', 'dashboard');
 $router->get('admin/users', 'AdminUser', 'users');
 $router->get('admin/users/detail', 'AdminUser', 'userDetail');

@@ -25,6 +25,7 @@ export default function VerifyOtpPage() {
   const router = useRouter();
 
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const [sessionRole, setSessionRole] = useState<"student" | "admin">("student");
   const [resendRemaining, setResendRemaining] =
     useState<number>(OTP_RESEND_MAX);
   const [loadingSession, setLoadingSession] = useState(true);
@@ -49,6 +50,7 @@ export default function VerifyOtpPage() {
       .then((session) => {
         if (cancelled) return;
         setSessionEmail(session.email);
+        setSessionRole(session.role ?? "student");
         setResendRemaining(session.resendRemaining);
         setLoadingSession(false);
       })
@@ -73,7 +75,7 @@ export default function VerifyOtpPage() {
       const res = await verifyOtp(values.otp);
       addRecentAccount(res.user.name, res.user.email);
       setFlash({ variant: "success", message: res.message });
-      router.push("/products");
+      router.push(res.redirectTo);
     } catch (err) {
       if (err instanceof ApiError) {
         if (
@@ -127,7 +129,7 @@ export default function VerifyOtpPage() {
       subtitle="Xác minh địa chỉ email của bạn"
       footer={
         <Link
-          href="/login"
+          href={sessionRole === "admin" ? "/admin-login" : "/login"}
           className="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />

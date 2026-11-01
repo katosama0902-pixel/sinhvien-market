@@ -47,6 +47,7 @@ function DashboardContent() {
   const { user } = useAdminShell();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [todayLabel, setTodayLabel] = useState("");
 
   useEffect(() => {
@@ -56,6 +57,15 @@ function DashboardContent() {
         if (alive) {
           setStats(data);
           setTodayLabel(formatTodayVi());
+        }
+      })
+      .catch((error: unknown) => {
+        if (alive) {
+          setLoadError(
+            error instanceof Error
+              ? error.message
+              : "Không tải được dữ liệu quản trị.",
+          );
         }
       })
       .finally(() => {
@@ -161,6 +171,14 @@ function DashboardContent() {
 
   return (
     <div>
+      {loadError && (
+        <div
+          role="alert"
+          className="mb-6 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300"
+        >
+          {loadError}
+        </div>
+      )}
       <div className="relative mb-8 flex flex-col items-center justify-between gap-6 overflow-hidden rounded-[24px] bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#4f46e5] p-8 shadow-[0_20px_60px_rgba(99,102,241,0.3)] md:flex-row md:p-10">
         <div className="pointer-events-none absolute -top-[100px] right-[50px] h-[350px] w-[350px] rounded-full bg-[radial-gradient(circle,rgba(139,92,246,0.35)_0%,transparent_65%)]" />
         <div className="pointer-events-none absolute -bottom-[80px] left-[20%] h-[250px] w-[250px] rounded-full bg-[radial-gradient(circle,rgba(236,72,153,0.25)_0%,transparent_65%)]" />

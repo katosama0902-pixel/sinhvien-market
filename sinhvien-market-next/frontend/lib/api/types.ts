@@ -49,12 +49,13 @@ export interface RegisterResult {
 
 export interface OtpSession {
   email: string;
+  role?: Role;
   resendRemaining: number;
 }
 
 export interface VerifyOtpResult {
   user: AuthUser;
-  redirectTo: "/products";
+  redirectTo: "/products" | "/admin";
   message: string;
 }
 
@@ -88,16 +89,39 @@ export type ApiErrorCode =
   | "VALIDATION_ERROR"
   | "INVALID_CREDENTIALS"
   | "RATE_LIMITED"
+  | "EMAIL_EXISTS"
+  | "REGISTRATION_FAILED"
+  | "OTP_DELIVERY_FAILED"
   | "WRONG_ROLE"
   | "NO_VERIFY_SESSION"
   | "OTP_INVALID"
   | "OTP_EXPIRED"
   | "OTP_SESSION_CANCELLED"
+  | "ACCOUNT_LOCKED"
   | "EMAIL_NOT_FOUND"
   | "NO_SECURITY_QUESTION"
   | "SECURITY_ANSWER_INCORRECT"
+  | "RESET_EMAIL_FAILED"
   | "RESET_LINK_INVALID"
+  | "INVALID_PASSWORD"
   | "NOT_AUTHENTICATED"
+  | "UNAUTHORIZED"
+  | "ACCOUNT_LOCKED"
+  | "NOT_FOUND"
+  | "FORBIDDEN"
+  | "INVALID_CSRF"
+  | "LISTING_SOLD"
+  | "LISTING_HAS_TRANSACTION"
+  | "INVALID_TRANSITION"
+  | "EXCHANGE_UNSUPPORTED"
+  | "INVALID_PURCHASE"
+  | "AUCTION_ENDED"
+  | "TRANSACTION_NOT_FOUND"
+  | "PRODUCT_UNAVAILABLE"
+  | "ALREADY_CHECKED_IN"
+  | "LISTING_INACTIVE"
+  | "BUMP_COOLDOWN"
+  | "INSUFFICIENT_COINS"
   | "NOT_LOCKED"
   | "NOT_IMPLEMENTED"
   | "NETWORK_ERROR"

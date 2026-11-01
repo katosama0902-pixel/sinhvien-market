@@ -1,72 +1,66 @@
-# SinhVienMarket Frontend (Next.js - Nhóm Màn Hình Xác Thực)
+# SinhVienMarket Next.js Frontend
 
-Giao diện nhóm màn hình xác thực (**Authentication**) của hệ thống **SinhVienMarket**, chuyển đổi từ bản PHP MVC (`sinhvien-market-php`) sang **Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS 4 + Zod + React Hook Form**.
+Ứng dụng giao diện Next.js cho SinhVienMarket. Backend nghiệp vụ và MySQL vẫn
+được giữ trong ứng dụng PHP MVC hiện tại; Next.js gọi backend qua `/api` và
+rewrite cùng origin để chia sẻ cookie phiên.
 
-## 1. Danh sách các màn hình
+## Trạng thái chuyển đổi
 
-| Đường dẫn | Mô tả | Tệp nguồn |
-|---|---|---|
-| `/` | Tự động chuyển hướng về `/login-role` | `app/page.tsx` |
-| `/login-role` | Cổng chọn vai trò đăng nhập (Sinh Viên / Ban Quản Trị) | `app/login-role/page.tsx` |
-| `/login` | Đăng nhập Sinh Viên (lưu tài khoản gần đây, giới hạn 5 lần sai / 15 phút) | `app/login/page.tsx` |
-| `/register` | Đăng ký tài khoản Sinh Viên (đo độ mạnh mật khẩu 4 mức, giới hạn 3 lần / 10 phút) | `app/register/page.tsx` |
-| `/forgot-password` | Quên mật khẩu 2 bước bằng câu hỏi bảo mật | `app/forgot-password/page.tsx` |
-| `/reset-password` | Đặt lại mật khẩu mới từ liên kết (`?token=...&email=...`) | `app/reset-password/page.tsx` |
-| `/verify-otp` | Xác minh mã OTP 6 chữ số (gửi lại tối đa 3 lần / 10 phút, sai tối đa 5 lần) | `app/verify-otp/page.tsx` |
-| `/account-locked` | Thông báo tài khoản bị khóa kèm thời điểm, lý do và thời hạn mở lại | `app/account-locked/page.tsx` |
-| `/admin-login` | Cổng đăng nhập nội bộ dành cho Quản trị viên (kiểm tra `role === "admin"`) | `app/admin-login/page.tsx` |
-| `/products`, `/admin` | Trang đích tạm (stub) để kiểm tra luồng đăng nhập & đăng xuất | `app/products/page.tsx`, `app/admin/page.tsx` |
+- Đã có các màn hình đăng nhập, đăng ký, xác minh OTP và giao diện quản trị.
+- Trang chủ, danh sách và chi tiết sản phẩm hỗ trợ cả mock lẫn API PHP.
+- Các luồng user đã có giao diện Next.js cho hồ sơ cá nhân/công khai, tin đăng,
+  chat và đề nghị giá, lịch sử giao dịch, mua bán/đấu giá, thông báo, xu/điểm
+  thưởng và wishlist.
+- PHP có các JSON adapter cho đăng nhập/đăng ký/OTP/khôi phục mật khẩu, hồ sơ,
+  marketplace và các luồng user. Các thao tác ghi dùng phiên PHP và CSRF.
+- Trao đổi hàng hóa hiện chỉ hỗ trợ thỏa thuận qua chat; chưa tạo đơn trao đổi.
+  Checkout không khởi tạo chuyển hướng qua cổng thanh toán. Google login và
+  chỉnh sửa tin đăng cũng chưa được hỗ trợ.
+- Các luồng mới đã được kiểm tra với dữ liệu mock. Chưa thể xác nhận tích hợp
+  database/email thực tế nếu chưa cấu hình và chạy backend PHP.
 
-## 2. Hướng dẫn chạy trên Windows (Chế độ Mock)
+## Chạy trên Windows
 
-1. Mở terminal tại thư mục `sinhvien-market-next/frontend`:
+1. Mở terminal tại `sinhvien-market-next/frontend`:
+
    ```powershell
-   cd "sinhvien-market-next\frontend"
    npm install
+   Copy-Item .env.example .env.local
    ```
-2. Kiểm tra file `.env.local` (nếu chưa có thì copy từ `.env.example`):
-   ```env
-   NEXT_PUBLIC_USE_MOCK=true
-   NEXT_PUBLIC_API_URL=http://localhost:4000/api
-   ```
-3. Chạy server dev:
+
+2. Chế độ mock mặc định cho phép xem giao diện mà không cần backend. Chạy:
+
    ```powershell
    npm run dev
    ```
-4. Mở trình duyệt tại `http://localhost:3000`.
 
-## 3. Tài khoản Demo có sẵn
+3. Mở `http://localhost:3000`.
 
-| Vai trò / Trạng thái | Email | Mật khẩu | Câu trả lời bảo mật | Mã OTP | Kết quả khi đăng nhập |
-|---|---|---|---|---|---|
-| Sinh viên (Đã xác minh) | `student@demo.vn` | `Demo1234` | `demo` | - | Vào thẳng `/products` |
-| Quản trị viên (Admin) | `admin@demo.vn` | `Admin1234` | `demo` | - | Vào `/admin` (từ `/admin-login`) |
-| Sinh viên (Chưa xác minh OTP) | `unverified@demo.vn` | `Demo1234` | `demo` | `123456` | Chuyển sang `/verify-otp` |
-| Sinh viên (Đang bị khóa) | `locked@demo.vn` | `Demo1234` | `demo` | - | Chuyển sang `/account-locked` |
+Để gọi backend PHP, cấu hình `PHP_BACKEND_URL` trong `.env.local` thành URL gốc
+của ứng dụng PHP (không có dấu `/` cuối), ví dụ URL Apache/Laragon đang dùng.
+Giữ `NEXT_PUBLIC_API_URL=/api`; Next.js sẽ proxy các request `/api/*` đến PHP.
+Đặt `NEXT_PUBLIC_USE_MOCK=false` khi backend PHP, MySQL (`pdo_mysql`) và cấu
+hình email cần thiết đã sẵn sàng. Đăng ký/khôi phục mật khẩu cần gửi email;
+auction checkout và các thao tác dữ liệu cần database hoạt động.
 
-## 4. Các lệnh kiểm tra & chạy test
+## Tài khoản mock
+
+| Vai trò / trạng thái | Email | Mật khẩu | Câu trả lời bảo mật | OTP |
+|---|---|---|---|---|
+| Sinh viên đã xác minh | `student@demo.vn` | `Demo1234` | `demo` | - |
+| Quản trị viên | `admin@demo.vn` | `Admin1234` | `demo` | - |
+| Chưa xác minh OTP | `unverified@demo.vn` | `Demo1234` | `demo` | `123456` |
+| Tài khoản bị khóa | `locked@demo.vn` | `Demo1234` | `demo` | - |
+
+## Kiểm tra
 
 ```powershell
-# Kiểm tra ESLint
 npm run lint
-
-# Kiểm tra kiểu TypeScript
 npx tsc --noEmit
-
-# Chạy Unit Test (Vitest)
 npm test
-
-# Chạy E2E Test & đo tốc độ phản hồi (Playwright)
 npm run test:e2e
 ```
 
-## 5. Kết nối với Backend Node.js thật
-
-Khi ghép nối với Backend (xem đặc tả trong `docs/AUTH_API_CONTRACT.md`), đổi biến môi trường trong `.env.local`:
-
-```env
-NEXT_PUBLIC_USE_MOCK=false
-NEXT_PUBLIC_API_URL=http://localhost:4000/api
-```
-
-Sau đó khởi động lại `npm run dev`.
+Payment callbacks/IPN tiếp tục được xử lý bởi backend PHP; không chuyển xử lý
+thanh toán sang trình duyệt Next.js. Exchange checkout trả lỗi rõ ràng thay vì
+tạo giao dịch giả.

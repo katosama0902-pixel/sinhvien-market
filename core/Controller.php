@@ -8,6 +8,9 @@ namespace Core;
  */
 abstract class Controller
 {
+    private ?array $decodedJsonBody = null;
+    private bool $jsonBodyDecoded = false;
+
     // ─── Render view ─────────────────────────────────────────────────────────
 
     /**
@@ -185,7 +188,7 @@ abstract class Controller
      */
     protected function input(string $key, string $default = ''): string
     {
-        $value = $_POST[$key] ?? $default;
+        $value = $this->requestData()[$key] ?? $default;
         return htmlspecialchars(trim((string)$value), ENT_QUOTES, 'UTF-8');
     }
 
@@ -203,7 +206,25 @@ abstract class Controller
      */
     protected function inputInt(string $key, int $default = 0): int
     {
-        return (int)($_POST[$key] ?? $default);
+        return (int)($this->requestData()[$key] ?? $default);
+    }
+
+    /**
+     * Read ordinary form data or a JSON object body. Multipart uploads remain
+     * available through $_FILES and form fields continue to work unchanged.
+     */
+    protected function requestData(): array
+    {
+        if (str_contains(strtolower($_SERVER['CONTENT_TYPE'] ?? ''), 'application/json')) {
+            if (!$this->jsonBodyDecoded) {
+                $decoded = json_decode((string)file_get_contents('php://input'), true);
+                $this->decodedJsonBody = is_array($decoded) ? $decoded : [];
+                $this->jsonBodyDecoded = true;
+            }
+            return $this->decodedJsonBody ?? [];
+        }
+
+        return $_POST;
     }
 
     /**
@@ -232,7 +253,11 @@ abstract class Controller
      */
     protected function verifyCsrf(): bool
     {
-        $token = $_POST['_csrf'] ?? '';
-        return hash_equals($_SESSION['csrf_token'] ?? '', $token);
+        $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($this->requestData()['_csrf'] ?? '');
+        $expected = $_SESSION['csrf_token'] ?? '';
+        if (!is_string($token) || $token === '' || !is_string($expected) || $expected === '') {
+            return false;
+        }
+        return hash_equals($expected, $token);
     }
 }

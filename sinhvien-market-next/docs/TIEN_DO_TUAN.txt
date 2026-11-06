@@ -116,9 +116,26 @@ Phase 5 — Kiểm thử tự động, Đo tốc độ & Hoàn thiện tài li�
   [x] Hoàn thiện docs/ADMIN_API_CONTRACT.md và báo cáo tuần 3 (docs/BAO_CAO_TUAN_3.md)
 
 =====================================================================
-TUẦN 4 — 10 (dự kiến các phân hệ tiếp theo)
+TUẦN 4 — Ghép nối AI REQUEST – OFFER & Thực nghiệm So sánh Embedding (xong 04/11/2026)
 =====================================================================
-  - Phân hệ Sản phẩm / Đấu giá / Giao dịch / Hồ sơ sinh viên / Chat / Thông báo theo phân công của Leader.
+Mục tiêu (theo chỉ đạo của Leader): xây dựng chức năng ghép nối AI hai chiều REQUEST – OFFER kèm gợi ý thay đổi điều kiện (Counterfactual Recommendation) đúng báo cáo khóa luận, đồng thời chạy thực nghiệm đối đầu giữa Gemini Embedding 2 và Jina-CLIP-v2.
+
+  [x] Xây dựng bộ dữ liệu đánh giá chuẩn 44 OFFER + 31 REQUEST + 6 ảnh sản phẩm ký túc xá thực tế + nhãn ngữ nghĩa chuẩn (`sinhvien-market-next/ai-lab/data/`)
+  [x] Hoàn thiện đặc tả kỹ thuật (`docs/AI_REQUEST_OFFER_SPEC.md`) và hợp đồng API (`docs/AI_MATCHING_API_CONTRACT.md`)
+  [x] Triển khai bộ lõi ghép nối, giải thích kết quả và gợi ý nới điều kiện mềm (Counterfactual Recommendation — tuyệt đối không tự ý vi phạm điều kiện bắt buộc `hard`) trên cả Python (`ai-lab/matching_core.py`) và Next.js TypeScript (`frontend/lib/matching/engine.ts`)
+  [x] Tích hợp xoay vòng nhiều API key, lưu cache vector có gắn nhãn `model_id` + `model_version` và chạy thực nghiệm thật trên 5 phương pháp:
+        - B1 Keyword BM25: P@1 = 72.7%, Multimodal P@1 = 20.0%, MRR = 0.788, Vi phạm Hard = 0
+        - B2 Gemini Text-Only: P@1 = 86.4%, MRR = 0.909, Vi phạm Hard = 0
+        - B2 Jina Text-Only: P@1 = 86.4%, Multimodal P@1 = 60.0%, MRR = 0.886, Vi phạm Hard = 0
+        - M1 Gemini Embedding 2 (Multimodal 768d): P@1 = 86.4%, Multimodal P@1 = 100.0%, MRR = 0.909, CF Recovery = 83.3%, Vi phạm Hard = 0
+        - M2 Jina-CLIP-v2 (Multimodal 1024d): P@1 = 90.9%, Recall@5 = 96.1%, Multimodal P@1 = 100.0%, MRR = 0.933, CF Recovery = 100.0%, Vi phạm Hard = 0
+  [x] Xây dựng giao diện web `/requests` tích hợp vào thanh điều hướng chính (`MainShell`), cho phép đăng REQUEST mới kèm ảnh mẫu, bật/tắt `Bắt buộc` / `Có thể nới` cho từng điều kiện, chuyển đổi trực tiếp giữa 5 mô hình, xem giải thích và bấm áp dụng gợi ý Counterfactual
+  [x] Unit test (`tests/unit/matching.test.ts`) + Báo cáo phân tích lựa chọn mô hình gửi Leader (`docs/BAO_CAO_SO_SANH_EMBEDDING.md`)
+
+=====================================================================
+TUẦN 5 — 10 (dự kiến các phân hệ tiếp theo)
+=====================================================================
+  - Phân hệ Chi tiết Sản phẩm / Đấu giá ngược / Giao dịch / Hồ sơ sinh viên / Chat / Thông báo theo phân công của Leader.
 
 =====================================================================
 NHẬT KÝ THAY ĐỔI YÊU CẦU

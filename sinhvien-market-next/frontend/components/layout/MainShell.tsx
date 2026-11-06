@@ -208,6 +208,19 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                 </Link>
 
                 <Link
+                  href="/requests"
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition",
+                    pathname.startsWith("/requests")
+                      ? "bg-indigo-500/30 text-white ring-1 ring-indigo-300/40"
+                      : "text-indigo-200 hover:bg-white/10 hover:text-white",
+                  )}
+                >
+                  <Sparkles className="h-4 w-4 text-fuchsia-300" />
+                  Ghép nối AI
+                </Link>
+
+                <Link
                   href="/#giveaway"
                   className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-amber-300/90 transition hover:bg-white/10 hover:text-amber-200"
                 >
@@ -463,6 +476,14 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                   >
                     <Grid className="h-4 w-4" />
                     Sản phẩm
+                  </Link>
+                  <Link
+                    href="/requests"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-indigo-200 hover:bg-white/10"
+                  >
+                    <Sparkles className="h-4 w-4 text-fuchsia-300" />
+                    Ghép nối AI (Request–Offer)
                   </Link>
                   <Link
                     href="/#giveaway"

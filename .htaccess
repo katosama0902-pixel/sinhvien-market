@@ -1,6 +1,11 @@
 Options -Indexes
 RewriteEngine On
 
+# Route every POST through the front controller so its response is normalized to JSON.
+RewriteCond %{REQUEST_METHOD} =POST
+RewriteCond %{REQUEST_URI} !/index\.php$
+RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+
 # ─── Block truy cập trực tiếp vào thư mục nhạy cảm ───────────────────
 # Ngăn hacker gọi database/alter_*.php, scratch/*.php qua trình duyệt
 RewriteRule ^(database|scratch|scripts|storage)(/|$) - [F,L]

@@ -1,0 +1,59 @@
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-local_dev_only}
+      MYSQL_DATABASE: sinhvien_market
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--password=${MYSQL_ROOT_PASSWORD:-local_dev_only}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      APP_ENV: development
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8080
+      NEXT_APP_URL: http://localhost:3000
+      MYSQLHOST: db
+      MYSQLPORT: 3306
+      MYSQLDATABASE: sinhvien_market
+      MYSQLUSER: root
+      MYSQLPASSWORD: ${MYSQL_ROOT_PASSWORD:-local_dev_only}
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - php_vendor:/var/www/html/vendor
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev:no-open -- --hostname 0.0.0.0"
+    environment:
+      NEXT_PUBLIC_USE_MOCK: ${NEXT_PUBLIC_USE_MOCK:-false}
+      NEXT_PUBLIC_API_URL: /api
+      PHP_BACKEND_URL: http://php
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./sinhvien-market-next/frontend:/app
+      - frontend_node_modules:/app/node_modules
+    depends_on:
+      - php
+
+volumes:
+  mysql_data:
+  php_vendor:
+  frontend_node_modules:

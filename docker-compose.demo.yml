@@ -1,0 +1,55 @@
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set a strong local demo MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: sinhvien_market_demo
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - demo_mysql_data:/var/lib/mysql
+
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      APP_URL: http://localhost:8080
+      NEXT_APP_URL: http://localhost:3000
+      MYSQLHOST: db
+      MYSQLPORT: 3306
+      MYSQLDATABASE: sinhvien_market_demo
+      MYSQLUSER: root
+      MYSQLPASSWORD: ${MYSQL_ROOT_PASSWORD:?Set a strong local demo MYSQL_ROOT_PASSWORD}
+      APP_ENV: demo
+      APP_DEBUG: "false"
+    ports:
+      - "8080:80"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: sinhvien-market-frontend-demo
+    build:
+      context: ./sinhvien-market-next/frontend
+      dockerfile: Dockerfile.demo
+      args:
+        NEXT_PUBLIC_API_URL: /api
+        PHP_BACKEND_URL: http://php
+    command: ["npm", "run", "start", "--", "--hostname", "0.0.0.0"]
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_USE_MOCK: "false"
+      NEXT_PUBLIC_API_URL: /api
+      PHP_BACKEND_URL: http://php
+    ports:
+      - "3000:3000"
+    depends_on:
+      - php
+
+volumes:
+  demo_mysql_data:

@@ -8,6 +8,8 @@ import {
   CheckCircle2,
   CircleX,
   Clock3,
+  CreditCard,
+  ExternalLink,
   LoaderCircle,
   PackageCheck,
   ShoppingBag,
@@ -21,6 +23,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import {
   getMyTransactions,
+  confirmTransactionBankPayment,
   updateTransactionStatus,
   type UserTransaction,
   type UserTransactionStatus,
@@ -101,6 +104,26 @@ function TransactionsContent() {
         cause instanceof Error
           ? cause.message
           : "Không thể cập nhật giao dịch.",
+      );
+    } finally {
+      setWorkingId(null);
+    }
+  }
+
+  async function confirmBankPayment(transaction: UserTransaction) {
+    if (!user) return;
+    setWorkingId(transaction.id);
+    setError("");
+    setNotice("");
+    try {
+      await confirmTransactionBankPayment(user, transaction.id);
+      setNotice("Đã xác nhận nhận tiền và chuyển đơn hàng sang trạng thái đang giao.");
+      await refresh();
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Không thể xác nhận khoản chuyển.",
       );
     } finally {
       setWorkingId(null);
@@ -196,9 +219,62 @@ function TransactionsContent() {
                     <p className="mt-1 text-xs text-muted">
                       Thanh toán: {paymentLabel(transaction.paymentMethod)}
                     </p>
+                    <p className="mt-1 text-xs text-muted">
+                      Trạng thái thanh toán:{" "}
+                      {transaction.paymentStatus === "paid"
+                        ? "Đã thanh toán"
+                        : transaction.paymentStatus === "refunded"
+                          ? "Đã hoàn tiền"
+                          : transaction.paymentMethod === "cod"
+                            ? "Thanh toán khi nhận hàng"
+                            : "Chờ thanh toán"}
+                    </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {seller && transaction.orderStatus === "pending" && (
+                    {seller &&
+                      transaction.paymentMethod === "banking" &&
+                      transaction.orderStatus === "pending" &&
+                      transaction.paymentStatus !== "paid" &&
+                      transaction.hasPaymentProof && (
+                        <Button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void confirmBankPayment(transaction)}
+                        >
+                          {busy ? (
+                            <LoaderCircle className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <CreditCard className="h-4 w-4" />
+                          )}
+                          Xác nhận đã nhận tiền
+                        </Button>
+                      )}
+                    {seller &&
+                      transaction.paymentMethod === "banking" &&
+                      transaction.hasPaymentProof && (
+                        <a
+                          href={`/transactions/proof?id=${transaction.id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm font-bold text-fg hover:bg-surface-2"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Xem biên lai
+                        </a>
+                      )}
+                    {seller &&
+                      transaction.orderStatus === "pending" &&
+                      transaction.paymentMethod === "banking" &&
+                      !transaction.hasPaymentProof && (
+                        <span className="self-center text-xs text-muted">
+                          Chờ người mua gửi biên lai chuyển khoản
+                        </span>
+                      )}
+                    {seller &&
+                      transaction.orderStatus === "pending" &&
+                      transaction.paymentMethod !== "banking" &&
+                      (transaction.paymentMethod === "cod" ||
+                        transaction.paymentStatus === "paid") && (
                       <Button
                         type="button"
                         disabled={busy}
@@ -214,6 +290,15 @@ function TransactionsContent() {
                         Xác nhận & chuẩn bị giao
                       </Button>
                     )}
+                    {seller &&
+                      transaction.orderStatus === "pending" &&
+                      transaction.paymentMethod !== "cod" &&
+                      transaction.paymentMethod !== "banking" &&
+                      transaction.paymentStatus !== "paid" && (
+                        <span className="self-center text-xs text-muted">
+                          Chờ người mua hoàn tất thanh toán trực tuyến
+                        </span>
+                      )}
                     {seller && transaction.orderStatus === "shipping" && (
                       <Button
                         type="button"
@@ -241,7 +326,24 @@ function TransactionsContent() {
                           Xác nhận đã nhận
                         </Button>
                       )}
+                      {!seller &&
+                        transaction.orderStatus === "pending" &&
+                        transaction.paymentMethod !== "cod" &&
+                        transaction.paymentStatus !== "paid" && (
+                          <Link
+                            href={`/transactions/${transaction.id}/payment`}
+                            className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-sm font-bold text-white hover:bg-primary/90"
+                          >
+                            <CreditCard className="h-4 w-4" />
+                            {transaction.paymentMethod === "banking" &&
+                            transaction.hasPaymentProof
+                              ? "Xem trạng thái chuyển khoản"
+                              : "Tiếp tục thanh toán"}
+                          </Link>
+                        )}
                     {seller &&
+                      transaction.paymentStatus !== "paid" &&
+                      !transaction.hasPaymentProof &&
                       ["pending", "shipping"].includes(
                         transaction.orderStatus,
                       ) && (

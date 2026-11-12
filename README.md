@@ -17,6 +17,25 @@
 
 **SinhVienMarket** là nền tảng thương mại điện tử nội bộ được thiết kế riêng cho cộng đồng sinh viên ký túc xá — nơi việc trao tay đồ trực tiếp là hoàn toàn khả thi, giúp loại bỏ chi phí vận chuyển và các rào cản không cần thiết của các sàn thương mại lớn.
 
+> **Định hướng mở rộng:** dự án đang phát triển theo hướng nền tảng quản lý KTX tích hợp dịch vụ và sàn giao dịch. Backend vẫn là PHP MVC hiện tại, frontend tiếp tục dùng Next.js. Phạm vi MVP và các quyết định kiến trúc được ghi tại [`docs/KTX_PLATFORM_FOUNDATION.md`](./docs/KTX_PLATFORM_FOUNDATION.md).
+
+### Chạy môi trường phát triển bằng Docker
+
+Yêu cầu Docker Desktop đã cài đặt và đang chạy:
+
+```powershell
+docker compose up --build
+```
+
+Sau khi MySQL sẵn sàng, chỉ import `database/schema.sql` vào database mới/rỗng một lần (file này xóa và tạo lại toàn bộ bảng), rồi chạy các migration:
+
+```powershell
+Get-Content .\database\schema.sql -Raw | docker compose exec -T db sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"'
+docker compose exec php php scripts/migrate.php
+```
+
+Frontend: `http://localhost:3000`; PHP API: `http://localhost:8080`; MySQL từ máy host: cổng `3307`. Có thể override mật khẩu MySQL local bằng biến `MYSQL_ROOT_PASSWORD`. Không dùng cấu hình mặc định này trong production.
+
 ### 🎯 Vấn Đề Cần Giải Quyết
 
 | Vấn đề hiện tại | Giải pháp của SinhVienMarket |
@@ -113,7 +132,7 @@ sinhvien-market/
 ├── app/
 │   ├── controllers/   # 15+ Controllers (Auth, Product, Chat, Admin...)
 │   ├── models/        # 10+ Models (User, Product, Transaction...)
-│   ├── views/         # 30+ Views (layouts, pages, errors)
+│   ├── views/         # PHP error pages (404/500); user/admin UI is in Next.js
 │   └── services/      # NotificationService, ...
 ├── core/
 │   ├── Router.php     # URL Dispatcher
@@ -140,11 +159,9 @@ sinhvien-market/
 Browser Request
     └─→ .htaccess (Rewrite → index.php)
            └─→ Router::dispatch() (Phân tích URL + HTTP Method)
-                  └─→ Middleware::requireAuth/requireAdmin() (Kiểm tra quyền)
-                         └─→ Controller::action() (Logic nghiệp vụ)
-                                └─→ Model::query() (PDO → MySQL)
-                                       └─→ Controller::render(View, Data)
-                                              └─→ Layout + View → HTML Response
+                  ├─→ Trang đã chuyển → Redirect sang Next.js
+                  ├─→ API/backend → Controller → Model::query() → JSON
+                  └─→ Lỗi PHP 404/500 → Trang lỗi HTML
 ```
 
 ---

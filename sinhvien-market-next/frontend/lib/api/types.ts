@@ -5,6 +5,7 @@ export interface AuthUser {
   name: string;
   email: string;
   role: Role;
+  roles?: string[];
 }
 
 export interface LockInfo {
@@ -122,6 +123,16 @@ export type ApiErrorCode =
   | "LISTING_INACTIVE"
   | "BUMP_COOLDOWN"
   | "INSUFFICIENT_COINS"
+  | "PAYMENT_NOT_AVAILABLE"
+  | "PAYMENT_NOT_CONFIRMED"
+  | "PAYMENT_PROOF_REQUIRED"
+  | "PAYMENT_PROVIDER_ERROR"
+  | "UPLOAD_FAILED"
+  | "LEGACY_ENDPOINT_MOVED"
+  | "PROFILE_INCOMPLETE"
+  | "APPLICATION_OVERLAP"
+  | "INVALID_STATE_TRANSITION"
+  | "STUDENT_NUMBER_EXISTS"
   | "NOT_LOCKED"
   | "NOT_IMPLEMENTED"
   | "NETWORK_ERROR"
@@ -134,6 +145,7 @@ export interface ApiErrorMeta {
   minutesLeft?: number;
   remaining?: number;
   resendRemaining?: number;
+  nextPage?: string;
 }
 
 export interface ApiErrorBody {

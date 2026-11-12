@@ -47,6 +47,26 @@ final class LegacyPageRedirects
         'wishlist' => '/wishlist',
     ];
 
+    /** @var array<string, string> */
+    private const LEGACY_POST_PAGES = [
+        'login' => '/login',
+        'admin-login' => '/admin-login',
+        'register' => '/register',
+        'verify-otp' => '/verify-otp',
+        'forgot-password' => '/forgot-password',
+        'reset-password' => '/reset-password',
+        'products/create' => '/products/create',
+    ];
+
+    /**
+     * Return the Next.js page for an obsolete PHP form POST, or null when the
+     * POST route remains an active backend action or API.
+     */
+    public static function legacyPostPage(string $legacyRoute): ?string
+    {
+        return self::LEGACY_POST_PAGES[$legacyRoute] ?? null;
+    }
+
     /**
      * Return the Next.js path for a migrated PHP page, or null if the route
      * must remain in PHP.
@@ -74,6 +94,11 @@ final class LegacyPageRedirects
             return '/users/' . ($id ?? '0');
         }
 
+        if ($legacyRoute === 'transactions/bank') {
+            $id = self::positiveInteger($query['id'] ?? null);
+            return $id === null ? '/transactions' : '/transactions/' . $id . '/payment';
+        }
+
         return null;
     }
 
@@ -89,6 +114,9 @@ final class LegacyPageRedirects
 
         // The id is represented by the dynamic Next.js path for these routes.
         if (preg_match('#^/(products|chat|users)/[0-9]+$#', $targetPath)) {
+            unset($query['id']);
+        }
+        if (preg_match('#^/transactions/[0-9]+/payment$#', $targetPath)) {
             unset($query['id']);
         }
 

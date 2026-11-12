@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
         destination: `${phpBackendUrl}/giveaways/image`,
       },
       {
+        source: "/transactions/proof",
+        destination: `${phpBackendUrl}/transactions/proof`,
+      },
+      {
         source: "/api/:path*",
         destination: `${phpBackendUrl}/api/:path*`,
       },

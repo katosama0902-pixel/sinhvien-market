@@ -140,13 +140,17 @@ function ProductDetailContent() {
     setCheckoutBusy(true);
     setActionError("");
     try {
-      await checkoutProduct(user, {
+      const transaction = await checkoutProduct(user, {
         productId: product.id,
         type: product.type === "auction" ? "auction" : "sale",
         paymentMethod,
         shippingAddress: address,
       });
-      router.push("/transactions");
+      router.push(
+        transaction.paymentMethod === "cod"
+          ? "/transactions"
+          : `/transactions/${transaction.id}/payment`,
+      );
     } catch (cause) {
       setActionError(
         cause instanceof Error ? cause.message : "Không thể tạo giao dịch.",

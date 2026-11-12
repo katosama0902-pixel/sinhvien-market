@@ -48,14 +48,7 @@ class Database
         try {
             self::$instance = new \PDO($dsn, $user, $pass, $options);
         } catch (\PDOException $e) {
-            // Hiển thị lỗi kết nối (môi trường dev)
-            $debug = ($_ENV['APP_DEBUG'] ?? 'false') === 'true';
-            if ($debug) {
-                die('<h1>Lỗi kết nối Database</h1><pre>' . $e->getMessage() . '</pre>
-                     <p>Đảm bảo Laragon đang chạy và thông tin trong .env chính xác.</p>');
-            } else {
-                die('<h1>Lỗi hệ thống</h1><p>Không thể kết nối cơ sở dữ liệu.</p>');
-            }
+            throw $e;
         }
 
         return self::$instance;

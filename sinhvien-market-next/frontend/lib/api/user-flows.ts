@@ -37,7 +37,25 @@ export interface UserTransaction
   shippingAddress: string;
   orderStatus: UserTransactionStatus;
   paymentMethod: "cod" | "banking" | "zalopay" | "momo";
+  paymentStatus?: "pending" | "paid" | "refunded";
+  hasPaymentProof?: boolean;
   updatedAt?: string;
+}
+
+export interface TransactionPaymentInfo {
+  id: number;
+  amount: number;
+  paymentMethod: UserTransaction["paymentMethod"];
+  paymentStatus: "pending" | "paid" | "refunded";
+  orderStatus: UserTransactionStatus;
+  hasPaymentProof: boolean;
+  bankAccount: {
+    bankName: string;
+    bankCode: string;
+    accountNo: string;
+    accountName: string;
+    qrUrl: string;
+  } | null;
 }
 
 export type UserTransactionStatus =
@@ -383,6 +401,96 @@ export async function getMyTransactions(
     }));
   return [...store.transactions.filter((item) => item.buyerId === user.id || item.sellerId === user.id), ...seeded]
     .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+}
+
+export async function getTransactionPaymentInfo(
+  user: AuthUser,
+  transactionId: number,
+): Promise<TransactionPaymentInfo> {
+  requireUser(user);
+  if (!USE_MOCK) {
+    return apiRequest<TransactionPaymentInfo>(
+      `/user/transactions/payment?id=${transactionId}`,
+    );
+  }
+  const transaction = (await getMyTransactions(user)).find(
+    (item) => item.id === transactionId && item.role === "buyer",
+  );
+  if (!transaction) {
+    throw new ApiError("NOT_FOUND", "Không tìm thấy giao dịch cần thanh toán.", {
+      status: 404,
+    });
+  }
+  return {
+    id: transaction.id,
+    amount: transaction.amount,
+    paymentMethod: transaction.paymentMethod,
+    paymentStatus: transaction.paymentStatus ?? "pending",
+    orderStatus: transaction.orderStatus,
+    hasPaymentProof: transaction.hasPaymentProof ?? false,
+    bankAccount: null,
+  };
+}
+
+export async function startTransactionPayment(
+  user: AuthUser,
+  transactionId: number,
+): Promise<string> {
+  requireUser(user);
+  if (!USE_MOCK) {
+    const result = await apiRequest<{ redirectUrl: string }>(
+      "/user/transactions/payment/start",
+      { method: "POST", body: { id: transactionId } },
+    );
+    return result.redirectUrl;
+  }
+  throw new ApiError(
+    "NOT_IMPLEMENTED",
+    "Thanh toán trực tuyến chỉ hoạt động khi đã kết nối backend PHP.",
+    { status: 501 },
+  );
+}
+
+export async function uploadTransactionPaymentProof(
+  user: AuthUser,
+  transactionId: number,
+  proof: File,
+): Promise<void> {
+  requireUser(user);
+  if (!USE_MOCK) {
+    const body = new FormData();
+    body.set("id", String(transactionId));
+    body.set("proof", proof);
+    await apiRequest<{ hasPaymentProof: boolean }>(
+      "/user/transactions/payment/proof",
+      { method: "POST", body },
+    );
+    return;
+  }
+  throw new ApiError(
+    "NOT_IMPLEMENTED",
+    "Tải biên lai cần backend PHP đã kết nối.",
+    { status: 501 },
+  );
+}
+
+export async function confirmTransactionBankPayment(
+  user: AuthUser,
+  transactionId: number,
+): Promise<void> {
+  requireUser(user);
+  if (!USE_MOCK) {
+    await apiRequest<{ message: string }>(
+      "/user/transactions/payment/confirm",
+      { method: "POST", body: { id: transactionId } },
+    );
+    return;
+  }
+  throw new ApiError(
+    "NOT_IMPLEMENTED",
+    "Xác nhận chuyển khoản cần backend PHP đã kết nối.",
+    { status: 501 },
+  );
 }
 
 export async function updateTransactionStatus(

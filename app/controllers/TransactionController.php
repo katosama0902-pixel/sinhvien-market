@@ -7,6 +7,9 @@ use Core\Middleware;
 use App\Models\Transaction;
 
 use App\Services\MomoService;
+use App\Services\ZaloPayService;
+use App\Services\PaymentWebhookGuard;
+use App\Services\PaymentWebhookProcessor;
 use Core\Flash;
 
 /**
@@ -114,8 +117,7 @@ class TransactionController extends Controller
             );
         }
 
-        $csrf = $this->csrfToken();
-        include APP_PATH . '/views/transactions/bank.php';
+        $this->redirectToNextPage();
     }
 
     public function bankConfirm(): void
@@ -226,11 +228,17 @@ class TransactionController extends Controller
             $this->redirect('transactions/history'); return;
         }
 
-        // Với môi trường Sandbox, có thể mac không khớp do test tool, nhưng vẫn implement chuẩn.
-        // Chỉ cập nhật trạng thái nếu status = 1 (thành công)
-        if (isset($data['status']) && (int)$data['status'] === 1) {
-            $txModel->updatePaymentStatus($txnRef, 'paid');
-            (new \App\Models\Product())->updateStatus($tx['product_id'], 'sold');
+        if (!ZaloPayService::verifyReturnSignature($data)
+            || !PaymentWebhookGuard::matchesZaloPayTransaction($data, $tx, $txnRef)) {
+            Flash::set('danger', 'Phản hồi thanh toán ZaloPay không hợp lệ.');
+            $this->redirect('transactions/history'); return;
+        }
+
+        if ((int)($data['status'] ?? 0) === 1) {
+            if (PaymentWebhookGuard::shouldMarkPaid($tx, true)) {
+                $txModel->updatePaymentStatus($txnRef, 'paid');
+                (new \App\Models\Product())->updateStatus($tx['product_id'], 'sold');
+            }
             Flash::set('success', '✅ Thanh toán ZaloPay thành công!');
         } else {
             Flash::set('warning', '⚠️ Giao dịch ZaloPay thất bại hoặc bị hủy.');
@@ -241,47 +249,19 @@ class TransactionController extends Controller
 
     public function zalopayIpn(): void
     {
-        $postdata = file_get_contents('php://input');
-        $postdatajson = json_decode($postdata, true);
-        
-        $mac = hash_hmac('sha256', $postdatajson['data'], $_ENV['ZALOPAY_KEY2'] ?? ''); // V5-002 fix: bỏ hardcoded fallback
-        
-        $result = [];
-        // BUG-A03 fix: dùng hash_equals() thay != để chống timing attack
-        if (!hash_equals($mac, $postdatajson['mac'] ?? '')) {
-            $result['return_code'] = -1;
-            $result['return_message'] = 'mac not equal';
-        } else {
-            $data = json_decode($postdatajson['data'], true);
-            $apptransid = $data['app_trans_id'] ?? '';
-            $parts = explode('_', $apptransid);
-            $txnRef = (int)($parts[1] ?? 0);
-
-            if ($txnRef) {
-                $txModel = new Transaction();
-                $tx = $txModel->findById($txnRef);
-                
-                // Idempotency check: Nếu đã xử lý thì trả về success luôn, không làm lại
-                if ($tx && $tx['payment_status'] === 'paid') {
-                    $result['return_code'] = 1;
-                    $result['return_message'] = 'success (already processed)';
-                } elseif ($tx) {
-                    // BUG-A10 fix: kiểm tra $tx không null trước khi truy cập product_id
-                    $txModel->updatePaymentStatus($txnRef, 'paid');
-                    (new \App\Models\Product())->updateStatus($tx['product_id'], 'sold');
-                    $result['return_code'] = 1;
-                    $result['return_message'] = 'success';
-                } else {
-                    $result['return_code'] = 0;
-                    $result['return_message'] = 'transaction not found';
-                }
-            } else {
-                $result['return_code'] = 0;
-                $result['return_message'] = 'fail';
-            }
+        $envelope = json_decode(file_get_contents('php://input'), true);
+        $outcome = (new PaymentWebhookProcessor())->processZaloPay(is_array($envelope) ? $envelope : []);
+        $result = ['return_code' => 0, 'return_message' => 'transaction or payment data invalid'];
+        if ($outcome['status'] === 'invalid_signature') {
+            $result = ['return_code' => -1, 'return_message' => 'mac not equal'];
+        } elseif ($outcome['status'] === 'duplicate') {
+            $result = ['return_code' => 1, 'return_message' => 'success (already processed)'];
+        } elseif ($outcome['status'] === 'paid') {
+            $tx = $outcome['transaction'];
+            (new \App\Models\Product())->updateStatus((int)$tx['product_id'], 'sold');
+            $result = ['return_code' => 1, 'return_message' => 'success'];
         }
-        
-        echo json_encode($result);
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
         exit;
     }
 
@@ -326,15 +306,22 @@ class TransactionController extends Controller
             $this->redirect('transactions/history'); return;
         }
 
-        if (!empty($data['signature']) && !MomoService::verifySignature($data)) {
+        if (!MomoService::verifySignature($data)) {
             Flash::set('danger', 'Chữ ký MoMo không hợp lệ!');
             $this->redirect('transactions/history'); return;
         }
 
+        if (!PaymentWebhookGuard::matchesMomoTransaction($data, $tx, $txnRef)) {
+            Flash::set('danger', 'Thông tin giao dịch MoMo không khớp.');
+            $this->redirect('transactions/history'); return;
+        }
+
         if (MomoService::isSuccess($data)) {
-            $txModel->updatePaymentStatus($txnRef, 'paid');
-            // Mark sản phẩm là sold sau khi thanh toán thành công
-            (new \App\Models\Product())->updateStatus($tx['product_id'], 'sold');
+            if (PaymentWebhookGuard::shouldMarkPaid($tx, true)) {
+                $txModel->updatePaymentStatus($txnRef, 'paid');
+                // Mark sản phẩm là sold sau khi thanh toán thành công
+                (new \App\Models\Product())->updateStatus($tx['product_id'], 'sold');
+            }
             Flash::set('success', '✅ Thanh toán MoMo thành công!');
         } else {
             Flash::set('warning', '⚠️ Giao dịch MoMo bị hủy hoặc thất bại.');
@@ -346,21 +333,16 @@ class TransactionController extends Controller
     public function momoIpn(): void
     {
         // IPN (Instant Payment Notification) — MoMo gọi server-to-server
-        $data = json_decode(file_get_contents('php://input'), true) ?? [];
-
-        if (empty($data)) {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $outcome = (new PaymentWebhookProcessor())->processMomo(is_array($data) ? $data : []);
+        if ($outcome['status'] === 'invalid_signature') {
+            http_response_code(401); exit;
+        }
+        if (in_array($outcome['status'], ['invalid_reference', 'transaction_missing', 'transaction_mismatch'], true)) {
             http_response_code(400); exit;
         }
-
-        $parts  = explode('_', $data['orderId'] ?? '');
-        $txnRef = (int)($parts[1] ?? 0);
-
-        if ($txnRef && MomoService::isSuccess($data)) {
-            $txModel = new Transaction();
-            $tx = $txModel->findById($txnRef);
-            if ($tx && $tx['payment_status'] !== 'paid') {
-                $txModel->updatePaymentStatus($txnRef, 'paid');
-            }
+        if ($outcome['status'] === 'paid') {
+            (new \App\Models\Product())->updateStatus((int)$outcome['transaction']['product_id'], 'sold');
         }
 
         http_response_code(204);
@@ -418,6 +400,20 @@ class TransactionController extends Controller
             ($status === 'shipping'  && $current === 'pending') ||
             ($status === 'delivered' && $current === 'shipping') ||
             ($status === 'cancelled' && in_array($current, ['pending', 'shipping'])); // hủy chỉ khi CHƯA giao
+
+        if ($isSeller && $status === 'shipping'
+            && ($tx['payment_method'] ?? 'cod') !== 'cod'
+            && ($tx['payment_status'] ?? 'pending') !== 'paid') {
+            Flash::set('danger', 'Chỉ có thể giao đơn sau khi đã xác nhận thanh toán.');
+            $this->redirect('transactions/history');
+            return;
+        }
+        if ($isSeller && $status === 'cancelled'
+            && (($tx['payment_status'] ?? 'pending') === 'paid' || !empty($tx['payment_proof']))) {
+            Flash::set('danger', 'Không thể hủy đơn sau khi đã có biên lai hoặc thanh toán được xác nhận.');
+            $this->redirect('transactions/history');
+            return;
+        }
 
         if ($isSeller && $sellerAllowed) {
             $txModel->updateOrderStatus($id, $status);

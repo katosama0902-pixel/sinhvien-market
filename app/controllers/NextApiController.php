@@ -16,7 +16,10 @@ use App\Models\User;
 use App\Models\Wishlist;
 use App\Services\AIModerationService;
 use App\Services\EmailTemplate;
+use App\Services\MomoService;
 use App\Services\NotificationService;
+use App\Services\VietQRService;
+use App\Services\ZaloPayService;
 use Config\Database;
 use Core\ApiController;
 use Core\Mailer;
@@ -533,7 +536,14 @@ class NextApiController extends ApiController
         ] as $key => $camel) {
             $profile[$key] = trim($this->text($data, $camel, $this->text($data, $key)));
         }
-        (new User())->updateProfile((int)$user['id'], array_merge($profile, ['name' => $name, 'phone' => $phone]));
+        try {
+            (new User())->updateProfile((int)$user['id'], array_merge($profile, ['name' => $name, 'phone' => $phone]));
+        } catch (\PDOException $e) {
+            if ($e->getCode() === '23000') {
+                $this->error('STUDENT_NUMBER_EXISTS', 'Mã số sinh viên đã được sử dụng.', 409);
+            }
+            throw $e;
+        }
         $_SESSION['user']['name'] = $name;
         $fresh = (new User())->findById((int)$user['id']);
         $this->success($this->ownProfileDto($fresh ?? array_merge($user, ['name' => $name])), 'Cập nhật hồ sơ thành công.');
@@ -768,6 +778,182 @@ class NextApiController extends ApiController
         $this->success(array_map(fn(array $tx): array => $this->transactionDto($tx, (int)$user['id']), $rows));
     }
 
+    public function transactionPaymentInfo(): void
+    {
+        $user = $this->requireUser();
+        $id = $this->integer($_GET['id'] ?? null, 'id');
+        $transaction = (new Transaction())->findById($id);
+        if (!$transaction || (int)$transaction['buyer_id'] !== (int)$user['id']) {
+            $this->notFound('Không tìm thấy giao dịch cần thanh toán.');
+        }
+
+        $bankAccount = null;
+        $qrUrl = null;
+        if ($transaction['payment_method'] === 'banking') {
+            $bankAccount = (new BankAccount())->findByUserId((int)$transaction['seller_id']);
+            if ($bankAccount) {
+                $qrUrl = VietQRService::generateQRUrl(
+                    (string)$bankAccount['bank_code'],
+                    (string)$bankAccount['account_no'],
+                    (int)$transaction['amount'],
+                    'DH ' . (int)$transaction['id'],
+                    (string)$bankAccount['account_name']
+                );
+            }
+        }
+
+        $this->success([
+            'id' => (int)$transaction['id'],
+            'amount' => (int)$transaction['amount'],
+            'paymentMethod' => $transaction['payment_method'],
+            'paymentStatus' => $transaction['payment_status'],
+            'orderStatus' => $transaction['order_status'],
+            'hasPaymentProof' => !empty($transaction['payment_proof']),
+            'bankAccount' => $bankAccount ? [
+                'bankName' => $bankAccount['bank_name'],
+                'bankCode' => $bankAccount['bank_code'],
+                'accountNo' => $bankAccount['account_no'],
+                'accountName' => $bankAccount['account_name'],
+                'qrUrl' => $qrUrl,
+            ] : null,
+        ]);
+    }
+
+    public function startTransactionPayment(): void
+    {
+        $user = $this->requireUser();
+        $this->requireCsrf();
+        $data = $this->requestData();
+        $id = $this->integer($data['id'] ?? null, 'id');
+        $transaction = (new Transaction())->findById($id);
+        if (!$transaction || (int)$transaction['buyer_id'] !== (int)$user['id']) {
+            $this->notFound('Không tìm thấy giao dịch cần thanh toán.');
+        }
+        if (!in_array($transaction['payment_method'], ['zalopay', 'momo'], true)) {
+            $this->validationError('Giao dịch này không sử dụng cổng thanh toán trực tuyến.');
+        }
+        if ($transaction['payment_status'] === 'paid' || $transaction['order_status'] !== 'pending') {
+            $this->error('PAYMENT_NOT_AVAILABLE', 'Giao dịch không còn chờ thanh toán.', 409);
+        }
+
+        $result = $transaction['payment_method'] === 'zalopay'
+            ? ZaloPayService::createPayment(
+                $id,
+                (int)$transaction['amount'],
+                'Thanh toán SinhVienMarket #' . $id
+            )
+            : MomoService::createPayment(
+                $id,
+                (int)$transaction['amount'],
+                'SinhVienMarket ĐH #' . $id
+            );
+
+        $paymentUrl = $result['payUrl'] ?? '';
+        $parts = is_string($paymentUrl) ? parse_url($paymentUrl) : false;
+        if (empty($result['success']) || $parts === false
+            || strtolower((string)($parts['scheme'] ?? '')) !== 'https'
+            || empty($parts['host'])) {
+            $this->error(
+                'PAYMENT_PROVIDER_ERROR',
+                (string)($result['message'] ?? 'Không thể khởi tạo thanh toán. Vui lòng thử lại.'),
+                502
+            );
+        }
+
+        $this->success(['redirectUrl' => $paymentUrl]);
+    }
+
+    public function uploadTransactionPaymentProof(): void
+    {
+        $user = $this->requireUser();
+        $this->requireCsrf();
+        $id = $this->integer($_POST['id'] ?? null, 'id');
+        $transaction = (new Transaction())->findById($id);
+        if (!$transaction || (int)$transaction['buyer_id'] !== (int)$user['id']) {
+            $this->notFound('Không tìm thấy giao dịch cần thanh toán.');
+        }
+        if ($transaction['payment_method'] !== 'banking'
+            || $transaction['payment_status'] !== 'pending'
+            || $transaction['order_status'] !== 'pending') {
+            $this->error('PAYMENT_NOT_AVAILABLE', 'Giao dịch không còn chờ xác nhận chuyển khoản.', 409);
+        }
+
+        $file = $_FILES['proof'] ?? null;
+        if (!is_array($file) || !isset($file['error'], $file['tmp_name'], $file['size'])
+            || (int)$file['error'] !== UPLOAD_ERR_OK) {
+            $this->validationError('Vui lòng chọn ảnh biên lai chuyển khoản hợp lệ.');
+        }
+        if ((int)$file['size'] < 1 || (int)$file['size'] > 3 * 1024 * 1024
+            || !is_uploaded_file((string)$file['tmp_name'])) {
+            $this->validationError('Ảnh biên lai phải nhỏ hơn 3 MB.');
+        }
+
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->file((string)$file['tmp_name']);
+        $image = @getimagesize((string)$file['tmp_name']);
+        $allowedMime = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (!is_string($mime) || !in_array($mime, $allowedMime, true)
+            || $image === false || $image['mime'] !== $mime) {
+            $this->validationError('Tệp tải lên phải là ảnh JPG, PNG, WEBP hoặc GIF.');
+        }
+
+        $bytes = file_get_contents((string)$file['tmp_name']);
+        if ($bytes === false) {
+            $this->error('UPLOAD_FAILED', 'Không thể đọc ảnh biên lai. Vui lòng thử lại.', 500);
+        }
+        $transactionModel = new Transaction();
+        $transactionModel->saveProofImage($id, $bytes, $mime);
+        $transactionModel->updatePaymentProof($id, 'db');
+        $this->success(['hasPaymentProof' => true], 'Đã gửi biên lai. Đang chờ người bán xác nhận.');
+    }
+
+    public function confirmTransactionBankPayment(): void
+    {
+        $user = $this->requireUser();
+        $this->requireCsrf();
+        $data = $this->requestData();
+        $id = $this->integer($data['id'] ?? null, 'id');
+        $db = Database::getInstance();
+
+        try {
+            $db->beginTransaction();
+            $stmt = $db->prepare('SELECT * FROM transactions WHERE id = ? FOR UPDATE');
+            $stmt->execute([$id]);
+            $transaction = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if (!$transaction || (int)$transaction['seller_id'] !== (int)$user['id']) {
+                $db->rollBack();
+                $this->notFound('Không tìm thấy giao dịch cần xác nhận.');
+            }
+            if ($transaction['payment_method'] !== 'banking'
+                || $transaction['payment_status'] !== 'pending'
+                || $transaction['order_status'] !== 'pending') {
+                $db->rollBack();
+                $this->error('PAYMENT_NOT_AVAILABLE', 'Giao dịch không còn chờ xác nhận chuyển khoản.', 409);
+            }
+            $proofStmt = $db->prepare('SELECT 1 FROM transaction_proofs WHERE transaction_id = ? LIMIT 1');
+            $proofStmt->execute([$id]);
+            if (!$proofStmt->fetchColumn()) {
+                $db->rollBack();
+                $this->error('PAYMENT_PROOF_REQUIRED', 'Người mua chưa tải lên biên lai chuyển khoản.', 409);
+            }
+
+            $db->prepare(
+                'UPDATE transactions
+                 SET payment_status = "paid", payment_confirmed_at = NOW(), order_status = "shipping"
+                 WHERE id = ?'
+            )->execute([$id]);
+            $db->prepare('UPDATE products SET status = "sold" WHERE id = ?')->execute([$transaction['product_id']]);
+            $db->commit();
+        } catch (\Throwable $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            throw $e;
+        }
+
+        $this->success(['message' => 'Đã xác nhận nhận tiền và chuyển đơn hàng sang trạng thái đang giao.']);
+    }
+
     public function updateTransactionStatus(): void
     {
         $user = $this->requireUser();
@@ -798,6 +984,17 @@ class NextApiController extends ApiController
             if (!(($isSeller && $sellerAllowed) || $buyerAllowed)) {
                 $db->rollBack();
                 $this->error('INVALID_TRANSITION', 'Không được phép chuyển giao dịch sang trạng thái này.', 409);
+            }
+            if ($status === 'shipping'
+                && $tx['payment_method'] !== 'cod'
+                && $tx['payment_status'] !== 'paid') {
+                $db->rollBack();
+                $this->error('PAYMENT_NOT_CONFIRMED', 'Chỉ có thể giao đơn sau khi đã xác nhận thanh toán.', 409);
+            }
+            if ($status === 'cancelled'
+                && ($tx['payment_status'] === 'paid' || !empty($tx['payment_proof']))) {
+                $db->rollBack();
+                $this->error('PAYMENT_NOT_AVAILABLE', 'Không thể hủy đơn sau khi đã có biên lai hoặc thanh toán được xác nhận.', 409);
             }
             $db->prepare('UPDATE transactions SET order_status = ? WHERE id = ?')->execute([$status, $id]);
             if ($status === 'cancelled') {
@@ -1088,6 +1285,7 @@ class NextApiController extends ApiController
         return [
             'id' => (int)$user['id'], 'name' => $user['name'],
             'email' => $user['email'], 'role' => $user['role'],
+            'roles' => (new \App\Models\AccessControl())->rolesForUser((int)$user['id']),
         ];
     }
 
@@ -1177,6 +1375,8 @@ class NextApiController extends ApiController
             'type' => ($tx['type'] ?? '') === 'auction' ? 'auction' : 'sale',
             'amount' => (int)$tx['amount'], 'paymentMethod' => $tx['payment_method'],
             'orderStatus' => $tx['order_status'], 'createdAt' => $tx['created_at'],
+            'paymentStatus' => $tx['payment_status'] ?? 'pending',
+            'hasPaymentProof' => !empty($tx['payment_proof']),
             'role' => (int)$tx['buyer_id'] === $userId ? 'buyer' : 'seller',
             'shippingAddress' => $tx['shipping_address'] ?? '',
         ];

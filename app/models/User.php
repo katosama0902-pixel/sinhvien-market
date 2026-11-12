@@ -82,29 +82,46 @@ class User extends Model
      */
     public function updateProfile(int $userId, array $data): void
     {
-        $this->execute(
-            'UPDATE users SET
-                name              = ?,
-                phone             = ?,
-                university        = ?,
-                student_id        = ?,
-                dormitory_address = ?,
-                social_contact    = ?,
-                bio               = ?,
-                available_time    = ?
-             WHERE id = ?',
-            [
-                $data['name'],
-                $data['phone']             ?? null,
-                $data['university']        ?? null,
-                $data['student_id']        ?? null,
-                $data['dormitory_address'] ?? null,
-                $data['social_contact']    ?? null,
-                $data['bio']               ?? null,
-                $data['available_time']    ?? null,
-                $userId,
-            ]
-        );
+        $this->pdo()->beginTransaction();
+        try {
+            $this->execute(
+                'UPDATE users SET
+                    name              = ?,
+                    phone             = ?,
+                    university        = ?,
+                    student_id        = ?,
+                    dormitory_address = ?,
+                    social_contact    = ?,
+                    bio               = ?,
+                    available_time    = ?
+                 WHERE id = ?',
+                [
+                    $data['name'],
+                    $data['phone']             ?? null,
+                    $data['university']        ?? null,
+                    $data['student_id']        ?? null,
+                    $data['dormitory_address'] ?? null,
+                    $data['social_contact']    ?? null,
+                    $data['bio']               ?? null,
+                    $data['available_time']    ?? null,
+                    $userId,
+                ]
+            );
+            $this->execute(
+                "INSERT INTO student_profiles (user_id, student_number)
+                 SELECT id, NULLIF(TRIM(student_id), '')
+                 FROM users
+                 WHERE id = ? AND role = 'student'
+                 ON DUPLICATE KEY UPDATE student_number = VALUES(student_number)",
+                [$userId]
+            );
+            $this->pdo()->commit();
+        } catch (\Throwable $e) {
+            if ($this->pdo()->inTransaction()) {
+                $this->pdo()->rollBack();
+            }
+            throw $e;
+        }
     }
 
     /**

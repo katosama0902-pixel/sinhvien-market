@@ -99,6 +99,7 @@ export interface AdminTransaction {
   type: "sale" | "auction";
   amount: number;
   paymentMethod: PaymentMethod;
+  paymentStatus?: "pending" | "paid" | "refunded";
   orderStatus: OrderStatus;
   createdAt: string;
 }

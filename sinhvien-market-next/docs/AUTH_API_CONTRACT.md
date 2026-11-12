@@ -1,11 +1,11 @@
 # AUTH_API_CONTRACT - Đặc tả API Xác thực
 
-Tài liệu thống nhất giữa Frontend (`sinhvien-market-next/frontend`) và Backend Node.js. Kiểu dữ liệu phía Frontend nằm tại `lib/api/types.ts`. Các thông báo lỗi tiếng Việt giữ theo bản PHP gốc (`sinhvien-market-php`).
+Tài liệu thống nhất giữa Frontend (`sinhvien-market-next/frontend`) và backend PHP MVC hiện tại. Các JSON adapter đặt trong `app/controllers/NextApiController.php`; kiểu dữ liệu phía Frontend nằm tại `frontend/lib/api/types.ts`. Các thông báo lỗi tiếng Việt giữ theo bản PHP gốc.
 
 ## 1. Quy ước chung
-- **Base URL**: `NEXT_PUBLIC_API_URL` (mặc định `http://localhost:4000/api`).
+- **Base URL**: `NEXT_PUBLIC_API_URL` (mặc định `/api`, được Next.js rewrite tới PHP).
 - **Quản lý phiên (Session)**: dùng cookie `httpOnly` (`Secure` khi chạy HTTPS, `SameSite=Lax`, `Path=/`). Phía Frontend gọi `fetch` với `credentials: "include"`.
-- **Chống CSRF**: Frontend gửi kèm header `X-Requested-With: XMLHttpRequest`. Backend cần từ chối (`403`) các request ghi (`POST`/`PUT`/`DELETE`) thiếu header này và kiểm tra `Origin`.
+- **Chống CSRF**: Frontend gửi kèm cookie phiên và header `X-CSRF-Token`; backend PHP kiểm tra token bằng session. `X-Requested-With` cũng được gửi cho các request.
 - **Định dạng dữ liệu**: JSON (`Content-Type: application/json`), tên trường viết theo `camelCase`.
 - **Response thành công**: HTTP `200` (hoặc `201`) với cấu trúc:
   ```json

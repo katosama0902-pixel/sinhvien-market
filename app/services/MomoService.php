@@ -103,9 +103,27 @@ class MomoService
      */
     public static function verifySignature(array $data): bool
     {
-        $received = $data['signature'] ?? '';
+        $required = [
+            'amount', 'extraData', 'message', 'orderId', 'orderInfo', 'orderType',
+            'partnerCode', 'payType', 'requestId', 'responseTime', 'resultCode', 'transId',
+            'signature',
+        ];
+        foreach ($required as $key) {
+            if (!array_key_exists($key, $data) || !is_scalar($data[$key])) {
+                return false;
+            }
+        }
+        $secret = self::secretKey();
+        $accessKey = self::accessKey();
+        if ($secret === '' || $accessKey === '' || (string)$data['partnerCode'] !== self::partnerCode()) {
+            return false;
+        }
+        $received = (string)$data['signature'];
+        if ($received === '') {
+            return false;
+        }
 
-        $rawSignature = "accessKey=" . self::accessKey()
+        $rawSignature = "accessKey=" . $accessKey
             . "&amount={$data['amount']}"
             . "&extraData={$data['extraData']}"
             . "&message={$data['message']}"
@@ -119,7 +137,7 @@ class MomoService
             . "&resultCode={$data['resultCode']}"
             . "&transId={$data['transId']}";
 
-        $expected = hash_hmac('sha256', $rawSignature, self::secretKey());
+        $expected = hash_hmac('sha256', $rawSignature, $secret);
         return hash_equals($expected, $received);
     }
 

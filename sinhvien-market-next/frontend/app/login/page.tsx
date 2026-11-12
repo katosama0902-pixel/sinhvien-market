@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -25,6 +25,10 @@ import { loginSchema, type LoginInput } from "@/lib/validation/auth";
 export default function LoginPage() {
   useGuestRedirect();
   const router = useRouter();
+
+  useEffect(() => {
+    router.prefetch("/products");
+  }, [router]);
 
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const [generalError, setGeneralError] = useState<string | null>(null);

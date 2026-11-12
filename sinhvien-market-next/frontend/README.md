@@ -13,9 +13,17 @@ rewrite cùng origin để chia sẻ cookie phiên.
   thưởng và wishlist.
 - PHP có các JSON adapter cho đăng nhập/đăng ký/OTP/khôi phục mật khẩu, hồ sơ,
   marketplace và các luồng user. Các thao tác ghi dùng phiên PHP và CSRF.
+- Luồng KTX ban đầu có hồ sơ sinh viên, đăng ký lưu trú, xét duyệt của ban quản
+  lý và hợp đồng chờ phân phòng; backend tiếp tục là PHP MVC. Xem
+  [`docs/KTX_PLATFORM_FOUNDATION.md`](../../docs/KTX_PLATFORM_FOUNDATION.md).
+- Các POST biểu mẫu PHP cũ cho đăng nhập/đăng ký/OTP/khôi phục mật khẩu và tạo
+  sản phẩm không render HTML nữa; chúng trả JSON `410 LEGACY_ENDPOINT_MOVED`.
+- Mọi response POST từ PHP được chuẩn hóa thành JSON, kể cả redirect, route
+  không tồn tại và lỗi HTML; API JSON hiện có giữ nguyên payload của chúng.
 - Trao đổi hàng hóa hiện chỉ hỗ trợ thỏa thuận qua chat; chưa tạo đơn trao đổi.
-  Checkout không khởi tạo chuyển hướng qua cổng thanh toán. Google login và
-  chỉnh sửa tin đăng cũng chưa được hỗ trợ.
+  Giao diện giao dịch Next.js hỗ trợ tải biên lai chuyển khoản và tiếp tục
+  thanh toán ZaloPay/MoMo; PHP vẫn xử lý xác nhận, callback và IPN. Google login
+  và chỉnh sửa tin đăng cũng chưa được hỗ trợ.
 - Các luồng mới đã được kiểm tra với dữ liệu mock. Chưa thể xác nhận tích hợp
   database/email thực tế nếu chưa cấu hình và chạy backend PHP.
 
@@ -61,6 +69,7 @@ npm test
 npm run test:e2e
 ```
 
-Payment callbacks/IPN tiếp tục được xử lý bởi backend PHP; không chuyển xử lý
-thanh toán sang trình duyệt Next.js. Exchange checkout trả lỗi rõ ràng thay vì
-tạo giao dịch giả.
+Payment initiation, callbacks/IPN và xác nhận thanh toán được xử lý bởi backend
+PHP; Next.js chỉ hiển thị giao diện và điều hướng người dùng. Thanh toán cần
+backend PHP cùng thông tin cấu hình cổng thanh toán hoạt động. Exchange checkout
+trả lỗi rõ ràng thay vì tạo giao dịch giả.

@@ -113,9 +113,7 @@ abstract class ApiController extends Controller
 
     private function sendJson(array $payload, int $status): never
     {
-        while (ob_get_level() > 0) {
-            ob_end_clean();
-        }
+        PostResponseJson::cleanOutputBuffers();
         if (!headers_sent()) {
             http_response_code($status);
             header('Content-Type: application/json; charset=utf-8');

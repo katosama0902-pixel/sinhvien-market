@@ -1,9 +1,11 @@
-# BÁO CÁO TIẾN ĐỘ ĐỒ ÁN CHUYÊN NGÀNH - TUẦN 1 & TUẦN 2
+# BÁO CÁO TIẾN ĐỘ ĐỒ ÁN CHUYÊN NGÀNH - GIAI ĐOẠN AUTH FRONTEND
 
-- **Đề tài**: Tái cấu trúc hệ thống Chợ Sinh Viên (**SinhVienMarket**) từ PHP MVC sang Next.js Frontend + Node.js Backend
+- **Đề tài tại thời điểm báo cáo**: Tái cấu trúc giao diện xác thực của **SinhVienMarket** bằng Next.js
 - **Phạm vi phụ trách**: Giao diện và luồng xử lý nhóm **Màn hình Xác thực (Authentication - 8 màn hình)**
 - **Thư mục mã nguồn**: `sinhvien-market-next/frontend/` (tách riêng với bản gốc `sinhvien-market-php/`)
 - **Thời gian thực hiện**: Tuần 1 & Tuần 2 (báo cáo gộp do tuần 1 làm bù trong tuần 2)
+
+> **Cập nhật kiến trúc hiện tại:** báo cáo này ghi lại giai đoạn giao diện xác thực trước đây. Backend chính thức vẫn là PHP MVC hiện tại; không triển khai Node.js. Kế hoạch nền tảng KTX mới và phạm vi tuần 1–4 nằm trong [`../../docs/KTX_PLATFORM_FOUNDATION.md`](../../docs/KTX_PLATFORM_FOUNDATION.md).
 
 ## 1. Tổng hợp công việc đã hoàn thành
 
@@ -21,7 +23,7 @@
 1. **Đồng bộ quy tắc mật khẩu**: Áp dụng chung quy tắc tối thiểu 8 ký tự, có ít nhất 1 chữ hoa và 1 chữ số kèm thanh đo độ mạnh 4 mức cho cả trang Đăng ký (`/register`) và Đặt lại mật khẩu (`/reset-password`) (bản PHP cũ chỉ kiểm tra >= 8 ký tự ở trang đặt lại mật khẩu).
 2. **Lưu trữ an toàn trên trình duyệt**: Mục *"Tài khoản gần đây"* tại `/login` chỉ lưu tên và email trong `localStorage`, không lưu mật khẩu hay token.
 3. **Hiển thị đầy đủ lỗi validate cùng lúc**: Kết hợp Zod và React Hook Form để hiển thị đồng thời lỗi của tất cả các trường chưa hợp lệ trong một lần bấm gửi.
-4. **Tách biệt tầng gọi API và Mock**: Các màn hình gọi qua `lib/api/auth.ts`; khi ghép với Backend Node.js chỉ cần đổi `NEXT_PUBLIC_USE_MOCK=false` trong `.env.local` mà không cần sửa lại giao diện.
+4. **Tách biệt tầng gọi API và Mock**: Các màn hình gọi qua `lib/api/auth.ts`; khi gọi Backend PHP MVC chỉ cần đổi `NEXT_PUBLIC_USE_MOCK=false` trong `.env.local` mà không cần sửa lại giao diện.
 
 ## 3. Kết quả kiểm thử & Đo tốc độ xử lý (theo yêu cầu của Leader)
 
@@ -53,5 +55,5 @@
 | Khóa nút bấm ngay khi đang gửi (chống bấm đúp) | **Có (Disabled + Spinner)** | Bắt buộc | **ĐẠT** |
 
 ## 4. Kế hoạch tiếp theo
-- Bàn giao tài liệu [`docs/AUTH_API_CONTRACT.md`](./AUTH_API_CONTRACT.md) cho thành viên phụ trách Backend Node.js để tích hợp API thật.
+- Bàn giao tài liệu [`docs/AUTH_API_CONTRACT.md`](./AUTH_API_CONTRACT.md) cho thành viên phụ trách Backend PHP MVC để tích hợp API thật.
 - Nhận phân công nhóm màn hình tiếp theo từ Leader.

@@ -41,7 +41,7 @@ class PasswordResetController extends Controller
                 unset($_SESSION['forgot_email']);
             }
         }
-        include APP_PATH . '/views/auth/forgot_password.php';
+        $this->redirectToNextPage();
     }
 
     public function forgotPassword(): void
@@ -98,7 +98,7 @@ class PasswordResetController extends Controller
             $this->redirect('login'); return;
         }
         $csrf = $this->csrfToken();
-        include APP_PATH . '/views/auth/reset_password.php';
+        $this->redirectToNextPage();
     }
 
     public function resetPassword(): void
@@ -123,7 +123,7 @@ class PasswordResetController extends Controller
             Flash::set('danger', 'Mật khẩu không hợp lệ hoặc không khớp.');
             // Re-render
             $csrf = $this->csrfToken();
-            include APP_PATH . '/views/auth/reset_password.php';
+            $this->redirectToNextPage();
             return;
         }
 

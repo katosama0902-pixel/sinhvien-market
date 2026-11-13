@@ -49,11 +49,16 @@ class Wishlist extends Model
     {
         return $this->query(
             'SELECT w.*, p.title, p.image, p.type, p.status, p.price AS current_price,
-                    c.name AS category_name, u.name AS seller_name
+                    p.category_id, p.user_id, p.`condition`, p.created_at AS product_created_at,
+                    c.name AS category_name, u.name AS seller_name,
+                    u.is_student_verified AS seller_verified,
+                    a.start_price, a.floor_price, a.decrease_amount, a.step_minutes,
+                    a.started_at, a.status AS auction_status
              FROM wishlists w
              JOIN products p   ON p.id = w.product_id
              JOIN categories c ON c.id = p.category_id
              JOIN users u      ON u.id = p.user_id
+             LEFT JOIN auctions a ON a.product_id = p.id
              WHERE w.user_id = ?
              ORDER BY w.created_at DESC',
             [$userId]

@@ -120,7 +120,25 @@ function delay(): Promise<void> {
 }
 
 const norm = (s: string) => s.trim().toLowerCase();
-const findUser = (email: string) => users.find((u) => norm(u.email) === norm(email));
+const findUser = (email: string) => {
+  const user = users.find((u) => norm(u.email) === norm(email));
+  if (!user) return undefined;
+  const accountOverrides = readStore<
+    Record<number, Partial<Pick<MockUser, "name" | "password">>>
+  >(KEY.accounts);
+  const accountOverride = accountOverrides?.[user.id];
+  if (accountOverride?.name) user.name = accountOverride.name;
+  if (accountOverride?.password) user.password = accountOverride.password;
+  const securityOverrides = readStore<
+    Record<number, { question: MockUser["securityQuestion"]; answer: string }>
+  >(KEY.security);
+  const override = securityOverrides?.[user.id];
+  if (override) {
+    user.securityQuestion = override.question;
+    user.securityAnswer = override.answer;
+  }
+  return user;
+};
 
 function readStore<T>(key: string): T | null {
   if (typeof sessionStorage === "undefined") return null;
@@ -156,6 +174,8 @@ const KEY = {
   session: "svm_mock_session",
   lock: "svm_mock_lock",
   otp: "svm_mock_otp",
+  security: "svm_mock_security_questions",
+  accounts: "svm_mock_account_overrides",
 } as const;
 
 interface Counter {
@@ -549,6 +569,80 @@ export async function mockGetLockInfo(): Promise<LockInfo> {
 
 export async function mockGetCurrentUser(): Promise<AuthUser | null> {
   return readStore<AuthUser>(KEY.session);
+}
+
+export async function mockUpdateCurrentUserName(name: string): Promise<void> {
+  const session = readStore<AuthUser>(KEY.session);
+  if (!session) {
+    throw new ApiError(
+      "NOT_AUTHENTICATED",
+      "Bạn cần đăng nhập để cập nhật hồ sơ.",
+      { status: 401 },
+    );
+  }
+  const user = findUser(session.email);
+  if (!user) {
+    throw new ApiError("NOT_AUTHENTICATED", "Không tìm thấy tài khoản.", {
+      status: 401,
+    });
+  }
+  user.name = name;
+  const overrides =
+    readStore<
+      Record<number, Partial<Pick<MockUser, "name" | "password">>>
+    >(KEY.accounts) ?? {};
+  overrides[user.id] = { ...overrides[user.id], name };
+  writeStore(KEY.accounts, overrides);
+  writeStore(KEY.session, { ...session, name });
+}
+
+export async function mockChangePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  const session = readStore<AuthUser>(KEY.session);
+  if (!session) {
+    throw new ApiError(
+      "NOT_AUTHENTICATED",
+      "Bạn cần đăng nhập để đổi mật khẩu.",
+      { status: 401 },
+    );
+  }
+  const user = findUser(session.email);
+  if (!user || user.password !== currentPassword) {
+    throw new ApiError("INVALID_CREDENTIALS", "Mật khẩu hiện tại không đúng.", {
+      status: 400,
+    });
+  }
+  user.password = newPassword;
+  const overrides =
+    readStore<
+      Record<number, Partial<Pick<MockUser, "name" | "password">>>
+    >(KEY.accounts) ?? {};
+  overrides[user.id] = { ...overrides[user.id], password: newPassword };
+  writeStore(KEY.accounts, overrides);
+}
+
+export async function mockUpdateSecurityQuestion(
+  userId: number,
+  question: MockUser["securityQuestion"],
+  answer: string,
+): Promise<void> {
+  const user = users.find((item) => item.id === userId);
+  if (!user) {
+    throw new ApiError("NOT_AUTHENTICATED", "Không tìm thấy tài khoản.", {
+      status: 401,
+    });
+  }
+  const securityOverrides =
+    readStore<
+      Record<number, { question: MockUser["securityQuestion"]; answer: string }>
+    >(KEY.security) ?? {};
+  const securityAnswer = norm(answer);
+  securityOverrides[user.id] = { question, answer: securityAnswer };
+  writeStore(KEY.security, securityOverrides);
+  user.securityQuestion = question;
+  user.securityAnswer = securityAnswer;
 }
 
 export async function mockLogout(): Promise<void> {

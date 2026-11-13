@@ -82,29 +82,46 @@ class User extends Model
      */
     public function updateProfile(int $userId, array $data): void
     {
-        $this->execute(
-            'UPDATE users SET
-                name              = ?,
-                phone             = ?,
-                university        = ?,
-                student_id        = ?,
-                dormitory_address = ?,
-                social_contact    = ?,
-                bio               = ?,
-                available_time    = ?
-             WHERE id = ?',
-            [
-                $data['name'],
-                $data['phone']             ?? null,
-                $data['university']        ?? null,
-                $data['student_id']        ?? null,
-                $data['dormitory_address'] ?? null,
-                $data['social_contact']    ?? null,
-                $data['bio']               ?? null,
-                $data['available_time']    ?? null,
-                $userId,
-            ]
-        );
+        $this->pdo()->beginTransaction();
+        try {
+            $this->execute(
+                'UPDATE users SET
+                    name              = ?,
+                    phone             = ?,
+                    university        = ?,
+                    student_id        = ?,
+                    dormitory_address = ?,
+                    social_contact    = ?,
+                    bio               = ?,
+                    available_time    = ?
+                 WHERE id = ?',
+                [
+                    $data['name'],
+                    $data['phone']             ?? null,
+                    $data['university']        ?? null,
+                    $data['student_id']        ?? null,
+                    $data['dormitory_address'] ?? null,
+                    $data['social_contact']    ?? null,
+                    $data['bio']               ?? null,
+                    $data['available_time']    ?? null,
+                    $userId,
+                ]
+            );
+            $this->execute(
+                "INSERT INTO student_profiles (user_id, student_number)
+                 SELECT id, NULLIF(TRIM(student_id), '')
+                 FROM users
+                 WHERE id = ? AND role = 'student'
+                 ON DUPLICATE KEY UPDATE student_number = VALUES(student_number)",
+                [$userId]
+            );
+            $this->pdo()->commit();
+        } catch (\Throwable $e) {
+            if ($this->pdo()->inTransaction()) {
+                $this->pdo()->rollBack();
+            }
+            throw $e;
+        }
     }
 
     /**
@@ -322,12 +339,13 @@ class User extends Model
      */
     public function spendCoins(int $userId, int $amount): bool
     {
-        $current = $this->getCoins($userId);
-        if ($current < $amount) {
+        if ($amount <= 0) {
             return false;
         }
-        $this->execute('UPDATE users SET coins = coins - ? WHERE id = ?', [$amount, $userId]);
-        return true;
+        return $this->execute(
+            'UPDATE users SET coins = coins - ? WHERE id = ? AND coins >= ?',
+            [$amount, $userId, $amount]
+        ) === 1;
     }
 
     /**
@@ -432,6 +450,30 @@ class User extends Model
              ORDER BY score DESC, sold_count DESC, avg_rating DESC
              LIMIT ?",
             [$limit]
+        );
+    }
+
+    /**
+     * Lấy thống kê leaderboard của một người bán mà không tải toàn bộ bảng.
+     */
+    public function getLeaderboardUser(int $userId): ?array
+    {
+        return $this->queryOne(
+            "SELECT
+                u.id, u.name, u.avatar, u.avatar_url, u.is_student_verified,
+                COUNT(DISTINCT p.id) AS product_count,
+                COUNT(DISTINCT CASE WHEN p.status = 'sold' THEN p.id END) AS sold_count,
+                COALESCE(ROUND(AVG(r.stars), 1), 0) AS avg_rating,
+                COUNT(DISTINCT r.id) AS rating_count,
+                (COUNT(DISTINCT CASE WHEN p.status = 'sold' THEN p.id END) * 5
+                    + COALESCE(AVG(r.stars), 0) * 10
+                    + COUNT(DISTINCT p.id)) AS score
+             FROM users u
+             LEFT JOIN products p ON p.user_id = u.id
+             LEFT JOIN ratings r ON r.ratee_id = u.id
+             WHERE u.id = ? AND u.role = 'student' AND u.is_locked = 0
+             GROUP BY u.id",
+            [$userId]
         );
     }
 

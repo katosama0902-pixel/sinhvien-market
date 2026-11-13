@@ -24,19 +24,14 @@ import {
 } from "lucide-react";
 import { CategoryIcon } from "@/components/admin/CategoryIcon";
 import { MainShell, useMainShell } from "@/components/layout/MainShell";
-import {
-  getAdminBanners,
-  getAdminCategories,
-  getAdminGiveaways,
-  getAdminProducts,
-  getDashboardStats,
-} from "@/lib/api/admin";
+import { getMarketplaceHome } from "@/lib/api/marketplace";
 import type {
-  AdminBanner,
+  MarketplaceBanner,
+  MarketplaceGiveaway,
+  MarketplaceProduct,
+} from "@/lib/api/marketplace";
+import type {
   AdminCategory,
-  AdminGiveaway,
-  AdminProduct,
-  DashboardStats,
 } from "@/lib/types/admin";
 import { cn } from "@/lib/cn";
 import { formatDateTimeVi, formatVnd } from "@/lib/validation/admin";
@@ -52,35 +47,41 @@ const CATEGORY_GRADIENTS = [
 
 function HomeContent() {
   const { user } = useMainShell();
-  const [banners, setBanners] = useState<AdminBanner[]>([]);
+  const [banners, setBanners] = useState<MarketplaceBanner[]>([]);
   const [categories, setCategories] = useState<AdminCategory[]>([]);
-  const [products, setProducts] = useState<AdminProduct[]>([]);
-  const [giveaway, setGiveaway] = useState<AdminGiveaway | null>(null);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [products, setProducts] = useState<MarketplaceProduct[]>([]);
+  const [auctionProducts, setAuctionProducts] = useState<MarketplaceProduct[]>(
+    [],
+  );
+  const [giveaway, setGiveaway] = useState<MarketplaceGiveaway | null>(null);
+  const [stats, setStats] = useState<{
+    activeProducts: number;
+    totalUsers: number;
+    txToday: number;
+  } | null>(null);
   const [slideIndex, setSlideIndex] = useState(0);
   const [joinedGiveaway, setJoinedGiveaway] = useState(false);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     let active = true;
-    Promise.all([
-      getAdminBanners(),
-      getAdminCategories(),
-      getAdminProducts("all"),
-      getAdminGiveaways(),
-      getDashboardStats(),
-    ])
-      .then(([bannerList, catList, prodList, gwList, dashStats]) => {
+    getMarketplaceHome()
+      .then((home) => {
         if (!active) return;
-        setBanners(bannerList.filter((b) => b.isActive));
-        setCategories(catList);
-        setProducts(prodList.filter((p) => p.status === "active"));
-        const activeGw =
-          gwList.find((g) => g.status === "active") ?? gwList[0] ?? null;
-        setGiveaway(activeGw);
-        setStats(dashStats);
+        setBanners(home.banners);
+        setCategories(home.categories);
+        setProducts(home.featuredProducts);
+        setAuctionProducts(home.auctionProducts);
+        setGiveaway(home.giveaway);
+        setStats(home.stats);
       })
-      .catch(() => {
-        // fallback empty state
+      .catch((error: unknown) => {
+        if (!active) return;
+        setLoadError(
+          error instanceof Error
+            ? error.message
+            : "Không thể tải dữ liệu trang chủ.",
+        );
       });
     return () => {
       active = false;
@@ -95,23 +96,23 @@ function HomeContent() {
     return () => clearInterval(timer);
   }, [banners.length]);
 
-  const auctionProducts = useMemo(
-    () => products.filter((p) => p.type === "auction").slice(0, 3),
-    [products],
-  );
-
   const featuredProducts = useMemo(() => products.slice(0, 6), [products]);
 
   const hasJoined = useMemo(() => {
     if (joinedGiveaway) return true;
-    if (!user || !giveaway) return false;
-    return giveaway.participants.some(
-      (p) => p.email.toLowerCase() === user.email.toLowerCase(),
-    );
-  }, [joinedGiveaway, user, giveaway]);
+    return giveaway?.joinedByCurrentUser ?? false;
+  }, [joinedGiveaway, giveaway]);
 
   return (
     <div>
+      {loadError && (
+        <div
+          role="alert"
+          className="mx-auto mt-4 max-w-7xl rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300"
+        >
+          {loadError}
+        </div>
+      )}
       {banners.length > 0 && (
         <section className="bg-bg pt-5 pb-2">
           <div className="mx-auto max-w-7xl px-4">
@@ -415,7 +416,7 @@ function HomeContent() {
                   <span>
                     Đã có{" "}
                     <strong className="text-amber-300">
-                      {giveaway.participants.length + (joinedGiveaway ? 1 : 0)}
+                      {giveaway.participantCount + (joinedGiveaway ? 1 : 0)}
                     </strong>{" "}
                     sinh viên tham gia
                   </span>
@@ -490,7 +491,7 @@ function HomeContent() {
               {auctionProducts.map((p) => (
                 <Link
                   key={p.id}
-                  href={`/products?q=${encodeURIComponent(p.title)}`}
+                  href={`/products/${p.id}`}
                   className="group flex flex-col overflow-hidden rounded-2xl border-2 border-border bg-surface transition duration-300 hover:-translate-y-1.5 hover:border-rose-400/60 hover:shadow-xl"
                 >
                   <div className="relative flex h-44 items-center justify-center bg-linear-to-br from-rose-500/10 via-orange-500/10 to-indigo-500/10">
@@ -611,7 +612,7 @@ function HomeContent() {
             {featuredProducts.map((p) => (
               <Link
                 key={p.id}
-                href={`/products?q=${encodeURIComponent(p.title)}`}
+                href={`/products/${p.id}`}
                 className="group flex flex-col overflow-hidden rounded-2xl border-2 border-border bg-surface transition duration-300 hover:-translate-y-1.5 hover:border-primary/40 hover:shadow-lg"
               >
                 <div className="relative flex h-36 items-center justify-center bg-surface-2">

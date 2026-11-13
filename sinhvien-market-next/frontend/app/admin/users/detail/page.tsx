@@ -30,6 +30,7 @@ const PAYMENT_LABELS: Record<string, string> = {
   cod: "COD",
   banking: "Chuyển khoản",
   zalopay: "ZaloPay",
+  momo: "MoMo",
 };
 
 const REPORT_STATUS: Record<ReportStatus, { label: string; cls: string }> = {

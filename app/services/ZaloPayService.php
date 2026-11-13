@@ -80,10 +80,18 @@ class ZaloPayService
     public static function verifyReturnSignature(array $data): bool
     {
         $config = self::getConfig();
+        foreach (['appid', 'apptransid', 'pmcid', 'bankcode', 'amount', 'discountamount', 'status', 'mac'] as $key) {
+            if (!array_key_exists($key, $data) || !is_scalar($data[$key])) {
+                return false;
+            }
+        }
+        if ($config['key2'] === '' || $config['app_id'] === '' || (string)$data['appid'] !== $config['app_id']) {
+            return false;
+        }
         $checksumData = $data['appid'] . '|' . $data['apptransid'] . '|' . $data['pmcid'] . '|' . $data['bankcode'] . '|' . $data['amount'] . '|' . $data['discountamount'] . '|' . $data['status'];
         $mac = hash_hmac('sha256', $checksumData, $config['key2']);
         
-        return hash_equals($mac, $data['mac']);
+        return hash_equals($mac, (string)$data['mac']);
     }
 
     /**
@@ -92,6 +100,9 @@ class ZaloPayService
     public static function verifyCallbackSignature(string $dataStr, string $reqMac): bool
     {
         $config = self::getConfig();
+        if ($config['key2'] === '' || $reqMac === '') {
+            return false;
+        }
         $mac = hash_hmac('sha256', $dataStr, $config['key2']);
         return hash_equals($mac, $reqMac);
     }

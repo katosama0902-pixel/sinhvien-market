@@ -8,38 +8,43 @@ namespace Core;
  */
 abstract class Controller
 {
-    // ─── Render view ─────────────────────────────────────────────────────────
+    private ?array $decodedJsonBody = null;
+    private bool $jsonBodyDecoded = false;
+
+    // ─── Legacy page fallback ────────────────────────────────────────────────
 
     /**
-     * Render một view file với dữ liệu
+     * Keep legacy controller actions pointed at their migrated Next.js pages.
      *
-     * @param string $view  Đường dẫn tương đối, VD: 'products/index'
-     * @param array  $data  Dữ liệu truyền vào view (extract thành biến)
-     * @param string $layout Layout wrapper, mặc định 'main'; dùng 'admin' cho admin panel
+     * @param string $view Retained for compatibility with existing controller calls.
+     * @param array $data Retained for compatibility with existing controller calls.
+     * @param string $layout Retained for compatibility with existing controller calls.
      */
     protected function render(string $view, array $data = [], string $layout = 'main'): void
     {
-        // Extract data thành biến cục bộ trong view
-        extract($data, EXTR_SKIP);
+        $this->redirectToNextPage();
+    }
 
-        $viewFile   = APP_PATH . '/views/' . $view . '.php';
-        $layoutFile = APP_PATH . '/views/layouts/' . $layout . '.php';
-
-        if (!file_exists($viewFile)) {
-            throw new \RuntimeException("View không tồn tại: {$view}");
+    protected function redirectToNextPage(): never
+    {
+        $legacyRoute = $_GET['url'] ?? parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '';
+        $scriptName = dirname($_SERVER['SCRIPT_NAME'] ?? '');
+        if ($scriptName !== '/' && $scriptName !== '\\' && str_starts_with($legacyRoute, $scriptName)) {
+            $legacyRoute = substr($legacyRoute, strlen($scriptName));
+        }
+        $legacyRoute = trim(strtok((string)$legacyRoute, '?'), '/');
+        $targetPath = LegacyPageRedirects::targetPath($legacyRoute, $_GET);
+        if ($targetPath === null) {
+            throw new \RuntimeException("Không tìm thấy trang Next.js tương ứng với route: {$legacyRoute}");
         }
 
-        // Buffer nội dung view
-        ob_start();
-        require $viewFile;
-        $content = ob_get_clean();
-
-        // Wrap vào layout
-        if (file_exists($layoutFile)) {
-            require $layoutFile;
-        } else {
-            echo $content;
+        $nextBaseUrl = $_ENV['NEXT_APP_URL'] ?? getenv('NEXT_APP_URL');
+        if (!is_string($nextBaseUrl) || trim($nextBaseUrl) === '') {
+            $nextBaseUrl = null;
         }
+
+        header('Location: ' . LegacyPageRedirects::location($targetPath, $_GET, $nextBaseUrl), true, 302);
+        exit;
     }
 
     /**
@@ -49,9 +54,7 @@ abstract class Controller
     {
         // Vứt bỏ mọi output rác (warning/notice/deprecated) đã lỡ in ra trước đó
         // để JSON luôn sạch — tránh client parse lỗi (vd deprecated trên PHP 8.5)
-        while (ob_get_level() > 0) {
-            ob_end_clean();
-        }
+        PostResponseJson::cleanOutputBuffers();
         if (!headers_sent()) {
             http_response_code($status);
             header('Content-Type: application/json; charset=utf-8');
@@ -67,9 +70,7 @@ abstract class Controller
      */
     protected function jsonThenRun(mixed $data, callable $task, int $status = 200): void
     {
-        while (ob_get_level() > 0) {
-            ob_end_clean();
-        }
+        PostResponseJson::cleanOutputBuffers();
         $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         if (!headers_sent()) {
             http_response_code($status);
@@ -78,6 +79,9 @@ abstract class Controller
             header('Connection: close');
         }
         echo $json;
+        if (PostResponseJson::isActive()) {
+            PostResponseJson::flush();
+        }
         if (function_exists('fastcgi_finish_request')) {
             @session_write_close();
             @fastcgi_finish_request();
@@ -137,6 +141,18 @@ abstract class Controller
      */
     protected function redirectAndRun(string $url, callable $task): void
     {
+        if (PostResponseJson::isActive()) {
+            header('Location: ' . $url);
+            @session_write_close();
+            PostResponseJson::flush();
+            try {
+                $task();
+            } catch (\Throwable $e) {
+                error_log('Deferred task error: ' . $e->getMessage());
+            }
+            exit;
+        }
+
         if (!str_starts_with($url, 'http')) {
             $base = rtrim($_ENV['APP_URL'] ?? '', '/');
             $url  = $base . '/' . ltrim($url, '/');
@@ -185,7 +201,7 @@ abstract class Controller
      */
     protected function input(string $key, string $default = ''): string
     {
-        $value = $_POST[$key] ?? $default;
+        $value = $this->requestData()[$key] ?? $default;
         return htmlspecialchars(trim((string)$value), ENT_QUOTES, 'UTF-8');
     }
 
@@ -203,7 +219,25 @@ abstract class Controller
      */
     protected function inputInt(string $key, int $default = 0): int
     {
-        return (int)($_POST[$key] ?? $default);
+        return (int)($this->requestData()[$key] ?? $default);
+    }
+
+    /**
+     * Read ordinary form data or a JSON object body. Multipart uploads remain
+     * available through $_FILES and form fields continue to work unchanged.
+     */
+    protected function requestData(): array
+    {
+        if (str_contains(strtolower($_SERVER['CONTENT_TYPE'] ?? ''), 'application/json')) {
+            if (!$this->jsonBodyDecoded) {
+                $decoded = json_decode((string)file_get_contents('php://input'), true);
+                $this->decodedJsonBody = is_array($decoded) ? $decoded : [];
+                $this->jsonBodyDecoded = true;
+            }
+            return $this->decodedJsonBody ?? [];
+        }
+
+        return $_POST;
     }
 
     /**
@@ -232,7 +266,11 @@ abstract class Controller
      */
     protected function verifyCsrf(): bool
     {
-        $token = $_POST['_csrf'] ?? '';
-        return hash_equals($_SESSION['csrf_token'] ?? '', $token);
+        $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($this->requestData()['_csrf'] ?? '');
+        $expected = $_SESSION['csrf_token'] ?? '';
+        if (!is_string($token) || $token === '' || !is_string($expected) || $expected === '') {
+            return false;
+        }
+        return hash_equals($expected, $token);
     }
 }

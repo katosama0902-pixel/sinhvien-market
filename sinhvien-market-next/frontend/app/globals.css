@@ -75,6 +75,49 @@
   }
 }
 
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modal-backdrop-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.page-enter {
+  animation: page-enter 280ms var(--ease-smooth) both;
+}
+
+.modal-backdrop-enter {
+  animation: modal-backdrop-enter 160ms ease-out both;
+}
+
+.modal-enter {
+  animation: modal-enter 200ms var(--ease-smooth) both;
+}
+
 :root {
   --sv-bg: #f8fafc;
   --sv-surface: #ffffff;

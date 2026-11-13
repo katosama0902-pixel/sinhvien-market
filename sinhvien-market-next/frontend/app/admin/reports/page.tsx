@@ -49,6 +49,11 @@ const PAYMENT_METHOD_LABELS: Record<
     badgeClass:
       "bg-cyan-100 text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-300",
   },
+  momo: {
+    label: "💳 MoMo",
+    badgeClass:
+      "bg-pink-100 text-pink-700 dark:bg-pink-500/20 dark:text-pink-300",
+  },
 };
 
 const ORDER_STATUS_LABELS: Record<
@@ -64,6 +69,11 @@ const ORDER_STATUS_LABELS: Record<
     label: "Đang giao",
     badgeClass:
       "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300",
+  },
+  shipping: {
+    label: "Đang vận chuyển",
+    badgeClass:
+      "bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300",
   },
   received: {
     label: "Đã nhận hàng",

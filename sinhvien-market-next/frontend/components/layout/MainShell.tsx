@@ -17,20 +17,24 @@ import {
   Coins,
   Gift,
   Grid,
+  Heart,
   Home,
   LogIn,
   LogOut,
   Menu,
+  MessageCircle,
   PlusCircle,
   Search,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
+  ClipboardList,
   UserCheck,
   UserPlus,
   X,
 } from "lucide-react";
 import { FlashBanner } from "@/components/auth/FlashBanner";
+import { PortalAccessDialog } from "@/components/auth/PortalAccessDialog";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { getCurrentUser, logout } from "@/lib/api/auth";
 import type { AuthUser } from "@/lib/api/types";
@@ -58,6 +62,17 @@ interface MainShellProps {
   initialSearch?: string;
 }
 
+interface QuickAccessTarget {
+  href: string;
+}
+
+interface PortalNotice extends QuickAccessTarget {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  intent: "close" | "switch-account" | "open-admin";
+}
+
 export function MainShell({ children, initialSearch = "" }: MainShellProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -69,6 +84,7 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [portalNotice, setPortalNotice] = useState<PortalNotice | null>(null);
 
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const notifMenuRef = useRef<HTMLDivElement | null>(null);
@@ -135,6 +151,95 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
     }
   };
 
+  const handleQuickAccessClick = async ({ href }: QuickAccessTarget) => {
+    let activeUser = user;
+    if (loadingUser) {
+      try {
+        activeUser = await getCurrentUser();
+        setUser(activeUser);
+      } catch {
+        setFlash({
+          variant: "danger",
+          message: "Chưa thể xác minh phiên đăng nhập. Vui lòng thử lại.",
+        });
+        return;
+      }
+    }
+
+    if (!activeUser) {
+      router.push(href);
+      return;
+    }
+
+    if (href === "/admin-login") {
+      if (activeUser.role === "admin") {
+        setPortalNotice({
+          href: "/admin",
+          title: "Bạn đã đăng nhập với tài khoản Quản trị viên",
+          description:
+            "Phiên quản trị của bạn đang hoạt động. Bạn có thể vào thẳng trang quản trị mà không cần đăng nhập lại.",
+          confirmLabel: "Vào trang quản trị",
+          intent: "open-admin",
+        });
+      } else {
+        setPortalNotice({
+          href,
+          title: "Không thể truy cập cổng quản trị",
+          description:
+            "Cổng này chỉ dành cho tài khoản Quản trị viên được cấp quyền. Tài khoản Sinh viên hiện tại không thể truy cập hoặc thực hiện thao tác quản trị.",
+          confirmLabel: "Đã hiểu",
+          intent: "close",
+        });
+      }
+      return;
+    }
+
+    const accountType =
+      activeUser.role === "admin" ? "Quản trị viên" : "Sinh viên";
+    setPortalNotice({
+      href,
+      title: "Bạn đã đăng nhập rồi",
+      description: `Bạn đang đăng nhập với tài khoản ${accountType}. Nếu muốn chuyển sang cổng đăng nhập này, hãy đăng xuất tài khoản hiện tại trước.`,
+      confirmLabel: "Đăng xuất và tiếp tục",
+      intent: "switch-account",
+    });
+  };
+
+  const handlePortalNoticeConfirm = async () => {
+    if (!portalNotice) return;
+    if (portalNotice.intent === "close") {
+      setPortalNotice(null);
+      return;
+    }
+    if (portalNotice.intent === "open-admin") {
+      const { href } = portalNotice;
+      setPortalNotice(null);
+      router.push(href);
+      return;
+    }
+
+    setLoggingOut(true);
+    try {
+      await logout();
+      const { href } = portalNotice;
+      setUser(null);
+      setPortalNotice(null);
+      setFlash({
+        variant: "success",
+        message: "Đã đăng xuất. Bạn có thể tiếp tục sang cổng đã chọn.",
+      });
+      router.push(href);
+    } catch {
+      setPortalNotice(null);
+      setFlash({
+        variant: "danger",
+        message: "Chưa thể đăng xuất. Vui lòng thử lại sau.",
+      });
+    } finally {
+      setLoggingOut(false);
+    }
+  };
+
   const isAdmin = user?.role === "admin";
   const avatarLetter = user?.name ? user.name.trim()[0].toUpperCase() : "U";
 
@@ -160,7 +265,7 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
 
               <form
                 onSubmit={handleSearchSubmit}
-                className="hidden max-w-sm flex-1 lg:flex"
+                className="hidden max-w-sm flex-1 xl:flex"
               >
                 <div className="flex w-full overflow-hidden rounded-full border border-white/15 bg-white/12 backdrop-blur-md transition focus-within:border-indigo-400 focus-within:bg-white/18">
                   <input
@@ -180,7 +285,7 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                 </div>
               </form>
 
-              <div className="hidden items-center gap-1.5 lg:flex">
+              <div className="hidden items-center gap-1.5 xl:flex">
                 <Link
                   href="/"
                   className={cn(
@@ -205,6 +310,18 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                 >
                   <Grid className="h-4 w-4" />
                   Sản phẩm
+                </Link>
+                <Link
+                  href="/marketplace/matching"
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition",
+                    pathname.startsWith("/marketplace/matching")
+                      ? "bg-white/15 text-white"
+                      : "text-white/80 hover:bg-white/10 hover:text-white",
+                  )}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Ghép nối
                 </Link>
 
                 <Link
@@ -239,23 +356,14 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                         Admin Panel
                       </Link>
                     ) : (
-                      <>
-                        <Link
-                          href="/products"
-                          className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
-                        >
-                          <PlusCircle className="h-4 w-4 text-indigo-300" />
-                          Đăng bán
-                        </Link>
-
-                        <span
-                          title="Điểm thưởng sinh viên"
-                          className="inline-flex items-center gap-1 rounded-full border border-amber-400/35 bg-amber-400/15 px-3 py-1 text-xs font-bold text-amber-300"
-                        >
-                          <Coins className="h-3.5 w-3.5" />
-                          150 xu
-                        </span>
-                      </>
+                      <Link
+                        href="/products/create"
+                        aria-label="Đăng sản phẩm"
+                        className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
+                      >
+                        <PlusCircle className="h-4 w-4 text-indigo-300" />
+                        Đăng bán
+                      </Link>
                     )}
 
                     <div ref={notifMenuRef} className="relative">
@@ -292,6 +400,13 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                               </p>
                             </div>
                           </div>
+                          <Link
+                            href="/notifications"
+                            onClick={() => setNotifOpen(false)}
+                            className="block border-t border-border px-4 py-3 text-center text-xs font-bold text-primary hover:bg-surface-2"
+                          >
+                            Xem tất cả thông báo
+                          </Link>
                         </div>
                       )}
                     </div>
@@ -314,7 +429,7 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                       </button>
 
                       {userMenuOpen && (
-                        <div className="absolute right-0 mt-2 w-60 overflow-hidden rounded-2xl border border-border bg-surface py-2 text-fg shadow-2xl">
+                        <div className="absolute right-0 mt-2 max-h-[calc(100vh-5rem)] w-60 overflow-y-auto rounded-2xl border border-border bg-surface py-2 text-fg shadow-2xl">
                           <div className="border-b border-border px-4 py-2.5">
                             <p className="truncate text-sm font-extrabold text-fg">
                               {user.name}
@@ -346,16 +461,126 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
 
                           <div className="py-1">
                             {isAdmin ? (
-                              <Link
-                                href="/admin"
-                                onClick={() => setUserMenuOpen(false)}
-                                className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-indigo-600 transition hover:bg-surface-2 dark:text-indigo-400"
-                              >
-                                <ShieldCheck className="h-4 w-4" />
-                                Vào trang Quản trị (/admin)
-                              </Link>
+                              <>
+                                <Link
+                                  href="/admin"
+                                  onClick={() => setUserMenuOpen(false)}
+                                  className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-indigo-600 transition hover:bg-surface-2 dark:text-indigo-400"
+                                >
+                                  <ShieldCheck className="h-4 w-4" />
+                                  Vào trang Quản trị (/admin)
+                                </Link>
+                                <Link
+                                  href="/admin/residence"
+                                  onClick={() => setUserMenuOpen(false)}
+                                  className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                                >
+                                  <ClipboardList className="h-4 w-4 text-indigo-500" />
+                                  Xét duyệt KTX
+                                </Link>
+                              </>
                             ) : (
                               <>
+                                <Link
+                                  href="/residence"
+                                  onClick={() => setUserMenuOpen(false)}
+                                  className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                                >
+                                  <Home className="h-4 w-4 text-indigo-500" />
+                                  Hồ sơ lưu trú
+                                </Link>
+                                {user.roles?.includes("dorm_manager") && (
+                                  <Link
+                                    href="/admin/residence"
+                                    onClick={() => setUserMenuOpen(false)}
+                                    className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                                  >
+                                    <ClipboardList className="h-4 w-4 text-indigo-500" />
+                                    Xét duyệt KTX
+                                  </Link>
+                                )}
+                                {user.roles?.includes("service_staff") && (
+                                  <Link
+                                    href="/residence/services"
+                                    onClick={() => setUserMenuOpen(false)}
+                                    className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                                  >
+                                    <ClipboardList className="h-4 w-4 text-indigo-500" />
+                                    Xử lý yêu cầu KTX
+                                  </Link>
+                                )}
+                                <Link
+                                  href="/dashboard"
+                                  onClick={() => setUserMenuOpen(false)}
+                                  className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                                >
+                                  <Grid className="h-4 w-4 text-indigo-500" />
+                                  Bảng điều khiển
+                                </Link>
+                                <Link
+                                  href="/profile"
+                                  onClick={() => setUserMenuOpen(false)}
+                                  className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                                >
+                                  <UserCheck className="h-4 w-4 text-indigo-500" />
+                                  Hồ sơ cá nhân
+                                </Link>
+                                <Link
+                                  href="/my-listings"
+                                  onClick={() => setUserMenuOpen(false)}
+                                  className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                                >
+                                  <PlusCircle className="h-4 w-4 text-indigo-500" />
+                                  Tin đăng của tôi
+                                </Link>
+                                <Link
+                                  href="/transactions"
+                                  onClick={() => setUserMenuOpen(false)}
+                                  className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                                >
+                                  <ClipboardList className="h-4 w-4 text-indigo-500" />
+                                  Giao dịch
+                                </Link>
+                                <Link
+                                  href="/wishlist"
+                                  onClick={() => setUserMenuOpen(false)}
+                                  className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                                >
+                                  <Heart className="h-4 w-4 text-rose-500" />
+                                  Yêu thích
+                                </Link>
+                                <Link
+                                  href="/chat"
+                                  onClick={() => setUserMenuOpen(false)}
+                                  className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                                >
+                                  <MessageCircle className="h-4 w-4 text-indigo-500" />
+                                  Tin nhắn
+                                </Link>
+                                <Link
+                                  href="/notifications"
+                                  onClick={() => setUserMenuOpen(false)}
+                                  className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                                >
+                                  <Bell className="h-4 w-4 text-amber-500" />
+                                  Thông báo
+                                </Link>
+                                <Link
+                                  href="/rewards"
+                                  onClick={() => setUserMenuOpen(false)}
+                                  className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                                >
+                                  <Coins className="h-4 w-4 text-amber-500" />
+                                  Xu & điểm thưởng
+                                </Link>
+                                <Link
+                                  href="/products/create"
+                                  onClick={() => setUserMenuOpen(false)}
+                                  className="flex items-center gap-2.5 px-4 py-2 text-sm font-semibold text-fg transition hover:bg-surface-2"
+                                >
+                                  <PlusCircle className="h-4 w-4 text-indigo-500" />
+                                  Đăng bán
+                                </Link>
                                 <Link
                                   href="/products"
                                   onClick={() => setUserMenuOpen(false)}
@@ -423,7 +648,7 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                 )}
               </div>
 
-              <div className="flex items-center gap-2 lg:hidden">
+              <div className="flex items-center gap-2 xl:hidden">
                 <ThemeToggle />
                 <button
                   type="button"
@@ -441,7 +666,7 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
             </div>
 
             {mobileOpen && (
-              <div className="space-y-3 border-t border-white/10 pt-3 pb-4 lg:hidden">
+              <div className="space-y-3 border-t border-white/10 pt-3 pb-4 xl:hidden">
                 <form onSubmit={handleSearchSubmit}>
                   <div className="flex overflow-hidden rounded-full border border-white/15 bg-white/12">
                     <input
@@ -478,6 +703,14 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                     Sản phẩm
                   </Link>
                   <Link
+                    href="/marketplace/matching"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Ghép nối sản phẩm
+                  </Link>
+                  <Link
                     href="/requests"
                     onClick={() => setMobileOpen(false)}
                     className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-indigo-200 hover:bg-white/10"
@@ -497,14 +730,120 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                   {user ? (
                     <>
                       {isAdmin && (
-                        <Link
-                          href="/admin"
-                          onClick={() => setMobileOpen(false)}
-                          className="flex items-center gap-2 rounded-xl bg-rose-500/20 px-3 py-2.5 text-sm font-bold text-rose-200"
-                        >
-                          <ShieldCheck className="h-4 w-4" />
-                          Vào Admin Panel (/admin)
-                        </Link>
+                        <>
+                          <Link
+                            href="/admin"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl bg-rose-500/20 px-3 py-2.5 text-sm font-bold text-rose-200"
+                          >
+                            <ShieldCheck className="h-4 w-4" />
+                            Vào Admin Panel (/admin)
+                          </Link>
+                          <Link
+                            href="/admin/residence"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                          >
+                            <ClipboardList className="h-4 w-4" />
+                            Xét duyệt KTX
+                          </Link>
+                        </>
+                      )}
+                      {!isAdmin && (
+                        <>
+                          <Link
+                            href="/residence"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                          >
+                            <Home className="h-4 w-4" />
+                            Hồ sơ lưu trú
+                          </Link>
+                          {user.roles?.includes("dorm_manager") && (
+                            <Link
+                              href="/admin/residence"
+                              onClick={() => setMobileOpen(false)}
+                              className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                            >
+                              <ClipboardList className="h-4 w-4" />
+                              Xét duyệt KTX
+                            </Link>
+                          )}
+                          {user.roles?.includes("service_staff") && (
+                            <Link
+                              href="/residence/services"
+                              onClick={() => setMobileOpen(false)}
+                              className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                            >
+                              <ClipboardList className="h-4 w-4" />
+                              Xử lý yêu cầu KTX
+                            </Link>
+                          )}
+                          <Link
+                            href="/dashboard"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                          >
+                            <Grid className="h-4 w-4" />
+                            Bảng điều khiển
+                          </Link>
+                          <Link
+                            href="/profile"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                          >
+                            <UserCheck className="h-4 w-4" />
+                            Hồ sơ cá nhân
+                          </Link>
+                          <Link
+                            href="/my-listings"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                          >
+                            <PlusCircle className="h-4 w-4" />
+                            Tin đăng của tôi
+                          </Link>
+                          <Link
+                            href="/transactions"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                          >
+                            <ClipboardList className="h-4 w-4" />
+                            Giao dịch
+                          </Link>
+                          <Link
+                            href="/wishlist"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                          >
+                            <Heart className="h-4 w-4" />
+                            Yêu thích
+                          </Link>
+                          <Link
+                            href="/chat"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                            Tin nhắn
+                          </Link>
+                          <Link
+                            href="/notifications"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                          >
+                            <Bell className="h-4 w-4" />
+                            Thông báo
+                          </Link>
+                          <Link
+                            href="/rewards"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-white/90 hover:bg-white/10"
+                          >
+                            <Coins className="h-4 w-4" />
+                            Xu & điểm thưởng
+                          </Link>
+                        </>
                       )}
                       <button
                         type="button"
@@ -545,7 +884,11 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
           <FlashBanner />
         </div>
 
-        <main className="flex-1">{children}</main>
+        <main className="flex-1">
+          <div key={pathname} className="page-enter">
+            {children}
+          </div>
+        </main>
 
         <footer className="mt-16 border-t border-white/10 bg-[#0f0c29] py-12 text-white/75">
           <div className="mx-auto max-w-7xl px-4">
@@ -591,6 +934,14 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                       Trao đổi đồ dùng
                     </Link>
                   </li>
+                  <li>
+                    <Link
+                      href="/leaderboard"
+                      className="text-white/65 transition hover:text-white"
+                    >
+                      Bảng xếp hạng người bán
+                    </Link>
+                  </li>
                 </ul>
               </div>
 
@@ -602,6 +953,10 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                   <li>
                     <Link
                       href="/login-role"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        void handleQuickAccessClick({ href: "/login-role" });
+                      }}
                       className="text-white/65 transition hover:text-white"
                     >
                       Chọn cổng đăng nhập (Sinh viên / Quản trị)
@@ -610,6 +965,10 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                   <li>
                     <Link
                       href="/login"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        void handleQuickAccessClick({ href: "/login" });
+                      }}
                       className="text-white/65 transition hover:text-white"
                     >
                       Đăng nhập Sinh viên
@@ -618,6 +977,10 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
                   <li>
                     <Link
                       href="/admin-login"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        void handleQuickAccessClick({ href: "/admin-login" });
+                      }}
                       className="text-indigo-300 transition hover:text-indigo-200"
                     >
                       🛡️ Cổng Quản trị viên (Admin Panel)
@@ -633,6 +996,21 @@ export function MainShell({ children, initialSearch = "" }: MainShellProps) {
           </div>
         </footer>
       </div>
+      {portalNotice && (
+        <PortalAccessDialog
+          title={portalNotice.title}
+          description={portalNotice.description}
+          confirmLabel={portalNotice.confirmLabel}
+          busy={loggingOut}
+          onClose={() => setPortalNotice(null)}
+          onConfirm={
+            portalNotice.intent === "switch-account" ||
+            portalNotice.intent === "open-admin"
+              ? handlePortalNoticeConfirm
+              : undefined
+          }
+        />
+      )}
     </MainShellContext.Provider>
   );
 }

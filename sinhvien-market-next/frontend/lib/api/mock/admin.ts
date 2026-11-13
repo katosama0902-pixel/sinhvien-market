@@ -452,6 +452,7 @@ function createInitialDb(): AdminMockDb {
         type: "sale",
         amount: 110000,
         paymentMethod: "banking",
+        paymentStatus: "paid",
         orderStatus: "completed",
         createdAt: "2026-10-28T07:30:00+07:00",
       },
@@ -480,6 +481,7 @@ function createInitialDb(): AdminMockDb {
         type: "sale",
         amount: 720000,
         paymentMethod: "zalopay",
+        paymentStatus: "paid",
         orderStatus: "completed",
         createdAt: "2026-10-26T14:20:00+07:00",
       },
@@ -494,6 +496,7 @@ function createInitialDb(): AdminMockDb {
         type: "auction",
         amount: 950000,
         paymentMethod: "banking",
+        paymentStatus: "paid",
         orderStatus: "received",
         createdAt: "2026-10-24T18:10:00+07:00",
       },
@@ -522,6 +525,7 @@ function createInitialDb(): AdminMockDb {
         type: "sale",
         amount: 195000,
         paymentMethod: "banking",
+        paymentStatus: "paid",
         orderStatus: "completed",
         createdAt: "2026-10-21T09:40:00+07:00",
       },
@@ -988,6 +992,11 @@ export async function mockGetProducts(
     return [...db.products];
   }
   return db.products.filter((p) => p.status === "pending");
+}
+
+export async function mockGetTransactions(): Promise<AdminTransaction[]> {
+  await delay(80);
+  return [...loadDb().transactions];
 }
 
 export async function mockApproveProduct(

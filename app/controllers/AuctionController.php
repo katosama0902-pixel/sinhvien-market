@@ -7,6 +7,7 @@ use Core\Middleware;
 use Core\Flash;
 use App\Models\Auction;
 use App\Models\Product;
+use App\Models\Transaction;
 use App\Models\User;
 use App\Services\NotificationService;
 
@@ -71,8 +72,9 @@ class AuctionController extends Controller
         }
 
         $user      = $this->currentUser();
-        $auctionId = (int)($_POST['auction_id'] ?? 0);
-        $clientPrice = (int)($_POST['current_price'] ?? 0); // Giá client thấy lúc click
+        $input     = $this->requestData();
+        $auctionId = (int)($input['auction_id'] ?? 0);
+        $clientPrice = (int)($input['current_price'] ?? 0); // Giá client thấy lúc click
 
         if ($auctionId <= 0) {
             $this->json(['success' => false, 'message' => 'Dữ liệu không hợp lệ.'], 400);
@@ -90,10 +92,6 @@ class AuctionController extends Controller
             return;
         }
 
-        // Tính giá server-side (không tin giá do client gửi lên)
-        $priceData    = Auction::calculateCurrentPrice($auction);
-        $serverPrice  = $priceData['current_price'];
-
         // Kiểm tra người bán không thể mua đồ mình đăng
         $productModel = new Product();
         $product      = $productModel->findWithAuction((int)$auction['product_id']);
@@ -106,9 +104,16 @@ class AuctionController extends Controller
         }
 
         // Thực hiện chốt đơn với SELECT FOR UPDATE
-        $success = $this->auctionModel->lockAndBuy($auctionId, $user['id'], $serverPrice);
+        $success = $this->auctionModel->lockAndBuy($auctionId, $user['id']);
 
         if ($success) {
+            $transaction = (new Transaction())->findById((int)$success);
+            if (!$transaction) {
+                $this->json(['success' => false, 'message' => 'Không thể tải giao dịch vừa tạo.'], 500);
+                return;
+            }
+            $serverPrice = (int)$transaction['amount'];
+
             // Thông báo cho người bán
             if ($product) {
                 $userModel = new User();

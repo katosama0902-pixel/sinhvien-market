@@ -75,6 +75,11 @@ class ErrorHandler
     {
         Logger::exception($e);
 
+        if (self::isApiRequest()) {
+            self::renderApiError(500, 'SERVER_ERROR', 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.');
+            return;
+        }
+
         if (self::$debug) {
             self::renderDebugPage($e);
         } else {
@@ -93,10 +98,41 @@ class ErrorHandler
                 'file' => $error['file'] . ':' . $error['line'],
             ]);
 
+            if (self::isApiRequest()) {
+                self::renderApiError(500, 'SERVER_ERROR', 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.');
+                return;
+            }
+
             if (!self::$debug) {
                 self::render500();
             }
         }
+    }
+
+    private static function isApiRequest(): bool
+    {
+        $path = $_GET['url'] ?? parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+        if (!is_string($path)) {
+            return false;
+        }
+        $path = trim((string)parse_url($path, PHP_URL_PATH), '/');
+        return $path === 'api' || str_starts_with($path, 'api/');
+    }
+
+    private static function renderApiError(int $status, string $code, string $message): void
+    {
+        if (headers_sent()) {
+            return;
+        }
+        http_response_code($status);
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+        header('X-Content-Type-Options: nosniff');
+        echo json_encode([
+            'success' => false,
+            'error' => ['code' => $code, 'message' => $message],
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
     }
 
     // ─── Render Helpers ───────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 # ADMIN_SCREENS — Rà soát nhóm màn hình Quản trị (Tuần 3 - Phase 0)
 
-Nguồn đã đọc: `app/views/layouts/admin.php`, `app/views/admin/*` (13 view), `AdminController.php`, `AdminProductController.php`, `AdminUserController.php`, `AdminReportController.php`, `AdminGiveawayController.php`, cùng các model `User.php`, `Product.php`, `Category.php`, `Transaction.php`, `Report.php`, `Rating.php`, `Banner.php`, `Giveaway.php`, `AuditLog.php` và `index.php`. Không chỉnh sửa bất kỳ file nào trong `sinhvien-market-php/`.
+Tài liệu rà soát lịch sử: các template PHP Admin được liệt kê bên dưới đã được thay thế bằng Next.js và xóa khỏi `app/views`; các controller/API PHP vẫn xử lý dữ liệu và nghiệp vụ. Bảng này được giữ làm tài liệu đối chiếu chức năng, không mô tả các view PHP hiện còn.
 
 ## 0. Bảng tổng hợp các màn hình Admin
 

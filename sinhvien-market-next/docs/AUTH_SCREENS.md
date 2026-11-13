@@ -1,6 +1,6 @@
 # AUTH_SCREENS — Rà soát màn hình xác thực (Phase 0)
 
-Nguồn đã đọc: `app/views/auth/*` (8 view), `AuthController.php`, `OtpController.php`, `PasswordResetController.php`, `core/Middleware.php`, `app/models/LoginAttempt.php`, `index.php` (route). Không sửa gì trong `sinhvien-market-php/`.
+Tài liệu rà soát lịch sử: các template xác thực PHP được liệt kê bên dưới đã được thay thế bằng Next.js và xóa khỏi `app/views`; các controller/API PHP vẫn xử lý nghiệp vụ xác thực. Bảng này được giữ làm tài liệu đối chiếu luồng, không mô tả các view PHP hiện còn.
 
 ## 0. Bảng tổng hợp
 

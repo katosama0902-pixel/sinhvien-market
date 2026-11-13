@@ -78,10 +78,11 @@ export interface ViolationRecord {
   createdAt: string;
 }
 
-export type PaymentMethod = "cod" | "banking" | "zalopay";
+export type PaymentMethod = "cod" | "banking" | "zalopay" | "momo";
 
 export type OrderStatus =
   | "pending"
+  | "shipping"
   | "delivered"
   | "received"
   | "completed"
@@ -98,6 +99,7 @@ export interface AdminTransaction {
   type: "sale" | "auction";
   amount: number;
   paymentMethod: PaymentMethod;
+  paymentStatus?: "pending" | "paid" | "refunded";
   orderStatus: OrderStatus;
   createdAt: string;
 }

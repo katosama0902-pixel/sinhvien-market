@@ -2,7 +2,7 @@ name: PHPUnit Tests
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "feature/**" ]
   pull_request:
     branches: [ "main" ]
 
@@ -39,6 +39,15 @@ jobs:
     - name: Setup test database
       run: |
         mysql -h 127.0.0.1 -u root -proot test_sinhvien_market < database/schema.sql
+
+    - name: Apply database migrations
+      run: php scripts/migrate.php
+      env:
+        DB_HOST: 127.0.0.1
+        DB_PORT: 3306
+        DB_NAME: test_sinhvien_market
+        DB_USER: root
+        DB_PASS: root
 
     - name: Run PHPUnit
       run: vendor/bin/phpunit

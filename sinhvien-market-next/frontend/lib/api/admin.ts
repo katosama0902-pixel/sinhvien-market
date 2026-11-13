@@ -33,6 +33,11 @@ export async function getAdminProducts(
   return apiRequest<AdminProduct[]>(`/admin/products?tab=${tab}`);
 }
 
+export async function getAdminTransactions(): Promise<AdminTransaction[]> {
+  if (USE_MOCK) return (await loadMock()).mockGetTransactions();
+  return apiRequest<AdminTransaction[]>("/admin/transactions");
+}
+
 export async function approveProduct(
   productId: number,
 ): Promise<{ message: string }> {

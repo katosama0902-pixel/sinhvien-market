@@ -174,7 +174,7 @@ CREATE TABLE `transactions` (
     `payment_status`  ENUM('pending', 'paid', 'refunded') NOT NULL DEFAULT 'pending',
     -- Feature: VietQR banking confirmation
     `payment_proof`        VARCHAR(255) DEFAULT NULL COMMENT 'Ảnh chụp màn hình UNC chuyển khoản',
-    `payment_confirmed_at` TIMESTAMP    DEFAULT NULL COMMENT 'Thời điểm người bán xác nhận đã nhận tiền',
+    `payment_confirmed_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Thời điểm người bán xác nhận đã nhận tiền',
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `idx_product_id` (`product_id`),

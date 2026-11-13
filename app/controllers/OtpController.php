@@ -30,7 +30,7 @@ class OtpController extends Controller
         }
         $email = $_SESSION['verify_email'];
         $csrf = $this->csrfToken();
-        include APP_PATH . '/views/auth/verify_otp.php';
+        $this->redirectToNextPage();
     }
 
     public function verifyOtp(): void

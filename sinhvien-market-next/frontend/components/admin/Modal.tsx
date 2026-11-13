@@ -63,7 +63,7 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4 backdrop-blur-sm"
+      className="modal-backdrop-enter fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4 backdrop-blur-sm"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -73,7 +73,7 @@ export function Modal({
         aria-modal="true"
         aria-label={title}
         className={cn(
-          "my-auto w-full rounded-[22px] border border-border bg-surface p-7 shadow-2xl",
+          "modal-enter my-auto w-full rounded-[22px] border border-border bg-surface p-7 shadow-2xl",
           maxWidth,
         )}
       >

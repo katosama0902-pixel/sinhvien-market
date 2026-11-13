@@ -17,6 +17,27 @@ test("Đăng nhập sai mật khẩu hiện thông báo lỗi", async ({ page })
   await expect(page).toHaveURL(/\/login$/);
 });
 
+test("Checkout chuyển khoản mở trang thanh toán Next.js", async ({ page }) => {
+  await page.goto("/login");
+  await page.fill("#email", "student@demo.vn");
+  await page.fill("#password", "Demo1234");
+  await page.getByRole("button", { name: /Đăng nhập/ }).click();
+  await expect(page).toHaveURL(/\/products$/);
+
+  await page.goto("/products/106");
+  await page.getByPlaceholder("Tòa nhà, phòng, khu vực...").fill("Ký túc xá khu A, phòng 101");
+  await page.getByLabel("Phương thức thanh toán").selectOption("banking");
+  await page.getByRole("button", { name: "Xác nhận mua" }).click();
+
+  await expect(page).toHaveURL(/\/transactions\/\d+\/payment$/);
+  await expect(
+    page.getByRole("heading", { name: "Thanh toán giao dịch" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Người bán chưa thiết lập tài khoản nhận tiền."),
+  ).toBeVisible();
+});
+
 test("Tài khoản bị khóa -> /account-locked", async ({ page }) => {
   await page.goto("/login");
   await page.fill("#email", "locked@demo.vn");

@@ -23,6 +23,16 @@ class Router
         $this->routes['POST'][$path] = compact('controller', 'action');
     }
 
+    public function put(string $path, string $controller, string $action): void
+    {
+        $this->routes['PUT'][$path] = compact('controller', 'action');
+    }
+
+    public function delete(string $path, string $controller, string $action): void
+    {
+        $this->routes['DELETE'][$path] = compact('controller', 'action');
+    }
+
     // ─── Dispatch ────────────────────────────────────────────────────────────
 
     public function dispatch(): void
@@ -30,11 +40,45 @@ class Router
         $method = $_SERVER['REQUEST_METHOD'];
         $url    = $this->parseUrl();
 
+        if ($method === 'GET') {
+            $targetPath = LegacyPageRedirects::targetPath($url, $_GET);
+            if ($targetPath !== null) {
+                $nextBaseUrl = $_ENV['NEXT_APP_URL'] ?? null;
+                if (!is_string($nextBaseUrl) || trim($nextBaseUrl) === '') {
+                    $nextBaseUrl = getenv('NEXT_APP_URL');
+                }
+                if (!is_string($nextBaseUrl)) {
+                    $nextBaseUrl = null;
+                }
+                header('Location: ' . LegacyPageRedirects::location($targetPath, $_GET, $nextBaseUrl), true, 302);
+                exit;
+            }
+        }
+
+        if ($method === 'POST') {
+            $nextPage = LegacyPageRedirects::legacyPostPage($url);
+            if ($nextPage !== null) {
+                http_response_code(410);
+                header('Content-Type: application/json; charset=utf-8');
+                header('Cache-Control: no-store');
+                header('X-Content-Type-Options: nosniff');
+                echo json_encode([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'LEGACY_ENDPOINT_MOVED',
+                        'message' => 'Biểu mẫu này đã được chuyển sang giao diện Next.js.',
+                        'meta' => ['nextPage' => $nextPage],
+                    ],
+                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                return;
+            }
+        }
+
         // Tìm route khớp (bao gồm prefix matching)
         $route = $this->findRoute($method, $url);
 
         if ($route === null) {
-            $this->notFound();
+            $this->notFound($url);
             return;
         }
 
@@ -42,14 +86,14 @@ class Router
         $action          = $route['action'];
 
         if (!class_exists($controllerClass)) {
-            $this->notFound();
+            $this->notFound($url);
             return;
         }
 
         $controller = new $controllerClass();
 
         if (!method_exists($controller, $action)) {
-            $this->notFound();
+            $this->notFound($url);
             return;
         }
 
@@ -101,6 +145,17 @@ class Router
             if ($url === $pattern) {
                 return $route;
             }
+
+            if (preg_match_all('/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/', $pattern, $parameterNames)) {
+                $quoted = preg_quote($pattern, '#');
+                $regex = preg_replace('/\\\\\{[a-zA-Z_][a-zA-Z0-9_]*\\\\\}/', '([^/]+)', $quoted);
+                if (preg_match('#^' . $regex . '$#', $url, $matches)) {
+                    foreach ($parameterNames[1] as $index => $name) {
+                        $_GET[$name] = rawurldecode($matches[$index + 1]);
+                    }
+                    return $route;
+                }
+            }
         }
 
         return null;
@@ -109,9 +164,22 @@ class Router
     /**
      * Trang 404
      */
-    private function notFound(): void
+    private function notFound(string $url = ''): void
     {
         http_response_code(404);
+        if ($url === 'api' || str_starts_with($url, 'api/')) {
+            header('Content-Type: application/json; charset=utf-8');
+            header('X-Content-Type-Options: nosniff');
+            echo json_encode([
+                'success' => false,
+                'error' => [
+                    'code' => 'NOT_FOUND',
+                    'message' => 'Không tìm thấy API endpoint.',
+                ],
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            return;
+        }
+
         $viewFile = ROOT . '/app/views/errors/404.php';
         if (file_exists($viewFile)) {
             require $viewFile;

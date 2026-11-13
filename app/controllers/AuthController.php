@@ -33,31 +33,31 @@ class AuthController extends Controller
     public function loginRole(): void
     {
         Middleware::requireGuest();
-        include APP_PATH . '/views/auth/login_role.php';
+        $this->redirectToNextPage();
     }
 
     public function loginForm(): void
     {
         Middleware::requireGuest();
         $csrf = $this->csrfToken();
-        include APP_PATH . '/views/auth/login.php';
+        $this->redirectToNextPage();
     }
 
     public function login(): void
     {
-        $this->processLogin('student', 'login', '/views/auth/login.php', 'products');
+        $this->processLogin('student', 'login', 'products');
     }
 
     public function adminLoginForm(): void
     {
         Middleware::requireGuest();
         $csrf = $this->csrfToken();
-        include APP_PATH . '/views/auth/admin_login.php';
+        $this->redirectToNextPage();
     }
 
     public function adminLogin(): void
     {
-        $this->processLogin('admin', 'admin-login', '/views/auth/admin_login.php', 'admin');
+        $this->processLogin('admin', 'admin-login', 'admin');
     }
     public function accountLocked(): void
     {
@@ -85,10 +85,10 @@ class AuthController extends Controller
         }
 
         $appUrl = rtrim($_ENV['APP_URL'] ?? '', '/');
-        include APP_PATH . '/views/auth/account_locked.php';
+        $this->redirectToNextPage();
     }
 
-    private function processLogin(string $expectedRole, string $redirectBack, string $viewFile, string $redirectSuccess): void
+    private function processLogin(string $expectedRole, string $redirectBack, string $redirectSuccess): void
     {
         Middleware::requireGuest();
 
@@ -268,7 +268,7 @@ class AuthController extends Controller
     {
         Middleware::requireGuest();
         $csrf = $this->csrfToken();
-        include APP_PATH . '/views/auth/register.php';
+        $this->redirectToNextPage();
     }
 
     public function register(): void
@@ -300,7 +300,7 @@ class AuthController extends Controller
             $minsLeft = max(1, (int)ceil(($regWindow - (time() - $regFirst)) / 60));
             Flash::set('danger', "Bạn đã tạo quá nhiều tài khoản. Vui lòng đợi {$minsLeft} phút rồi thử lại.");
             $csrf = $this->csrfToken();
-            include APP_PATH . '/views/auth/register.php';
+            $this->redirectToNextPage();
             return;
         }
         // ─────────────────────────────────────────────────────────────────────
@@ -332,7 +332,7 @@ class AuthController extends Controller
 
         if (!empty($errors)) {
             $csrf = $this->csrfToken();
-            include APP_PATH . '/views/auth/register.php';
+            $this->redirectToNextPage();
             return;
         }
 
@@ -344,7 +344,7 @@ class AuthController extends Controller
         if (!$userId) {
             Flash::set('danger', 'Không thể tạo tài khoản lúc này.');
             $csrf = $this->csrfToken();
-            include APP_PATH . '/views/auth/register.php';
+            $this->redirectToNextPage();
             return;
         }
 

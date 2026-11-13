@@ -314,7 +314,9 @@ function ProductsCatalogInner() {
                 )}
               </h1>
               <p className="mt-0.5 text-xs text-muted">
-                Hiển thị {filteredProducts.length} sản phẩm đã được Admin kiểm duyệt
+                {loading
+                  ? "Đang tải danh sách sản phẩm..."
+                  : `Hiển thị ${filteredProducts.length} sản phẩm đã được Admin kiểm duyệt`}
               </p>
             </div>
           </div>

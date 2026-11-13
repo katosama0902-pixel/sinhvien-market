@@ -138,6 +138,11 @@
   color-scheme: dark;
 }
 
+html,
+body {
+  overflow-x: clip;
+}
+
 body {
   background: var(--sv-bg);
   color: var(--sv-fg);

@@ -74,6 +74,62 @@ export interface MarketplaceProductDetail extends MarketplaceProduct {
   description: string;
 }
 
+const MOCK_PRODUCT_IMAGES: Record<number, string> = {
+  102: "/demo-matching/images/mech_keyboard_ref.jpg",
+  103: "/demo-matching/images/desk_lamp_white.jpg",
+  104: "/demo-matching/images/calc_casio.jpg",
+  107: "/demo-matching/images/guitar_acoustic_ref.jpg",
+  108: "/demo-matching/images/kettle_stainless.jpg",
+};
+
+const MOCK_PRODUCT_DESCRIPTIONS: Record<number, string> = {
+  101: "Giáo trình Giải tích 1 & Đại số tuyến tính trọn bộ 2 cuốn, bìa cứng giữ kỹ, không rách trang, tặng kèm tập đề cương ôn thi cuối kỳ.",
+  102: "Bàn phím cơ không dây Keychron K6 Red Switch gõ êm, kết nối Bluetooth 3 thiết bị, pin dùng 2 tuần, phù hợp gõ code ban đêm trong phòng KTX.",
+  103: "Đèn bàn học chống cận Xiaomi Mi LED Desk Lamp ánh sáng dịu mắt, chỉnh được nhiệt độ màu, muốn giao lưu đổi lấy giá đỡ laptop hoặc sách chuyên ngành.",
+  104: "Máy tính bỏ túi Casio fx-580VN X chính hãng Bitex còn nguyên tem chống giả, màn hình rõ nét, phím bấm nhạy.",
+  105: "Tai nghe chụp tai Sony WH-CH520 Bluetooth 5.2 pin lên tới 50 giờ, đệm tai êm ái học tiếng Anh online, kèm cáp sạc USB-C.",
+  106: "Xe đạp thể thao Giant Escape 3 khung nhôm siêu nhẹ, bộ đề Shimano 21 tốc độ chạy êm quanh Làng Đại học, tặng kèm khóa số và gọng bình nước.",
+  107: "Đàn Guitar Acoustic Rosen G11 mặt gỗ thông nguyên tấm âm vang ấm, đã hạ action bấm êm tay cho người mới tập, tặng kèm bao da 3 lớp và capo.",
+  108: "Ấm đun siêu tốc Sunhouse 1.8L ruột inox 304 tự ngắt khi sôi, công suất chuẩn quy định an toàn KTX.",
+  109: "Bộ giáo trình Lập trình Hướng đối tượng C++ & Java in màu rõ đẹp, có ghi chú các dạng bài tập thực hành trọng tâm.",
+};
+
+function makeProductThumbSvg(product: AdminProduct): string {
+  const palettes: Record<number, [string, string, string]> = {
+    1: ["#312e81", "#4f46e5", "📚 Sách & Giáo trình"],
+    2: ["#1e1b4b", "#7c3aed", "🎧 Đồ điện tử"],
+    3: ["#134e4a", "#0d9488", "🏠 Đồ gia dụng KTX"],
+    4: ["#0c4a6e", "#0284c7", "🚲 Phương tiện KTX"],
+    5: ["#3b0764", "#9333ea", "📐 Đồ dùng học tập"],
+    6: ["#701a75", "#db2777", "🎸 Nhạc cụ & Giải trí"],
+  };
+  const [fromColor, toColor, badge] = palettes[product.categoryId] ?? [
+    "#1e1b4b",
+    "#6366f1",
+    "🛍️ SinhVienMarket",
+  ];
+  const shortTitle =
+    product.title.length > 36
+      ? `${product.title.slice(0, 36)}…`
+      : product.title;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+    <defs>
+      <linearGradient id="pg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="${fromColor}"/>
+        <stop offset="100%" stop-color="${toColor}"/>
+      </linearGradient>
+    </defs>
+    <rect width="600" height="400" fill="url(#pg)"/>
+    <circle cx="510" cy="80" r="110" fill="rgba(255,255,255,0.1)"/>
+    <circle cx="90" cy="340" r="95" fill="rgba(255,255,255,0.08)"/>
+    <rect x="36" y="36" width="220" height="38" rx="19" fill="rgba(255,255,255,0.16)"/>
+    <text x="54" y="61" fill="#ffffff" font-family="sans-serif" font-size="16" font-weight="700">${badge}</text>
+    <text x="36" y="215" fill="#ffffff" font-family="sans-serif" font-size="25" font-weight="800">${shortTitle}</text>
+    <text x="36" y="255" fill="rgba(255,255,255,0.8)" font-family="sans-serif" font-size="16" font-weight="600">Người bán: ${product.sellerName} • KTX ĐHQG</text>
+  </svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
 function toMarketplaceProduct(product: AdminProduct): MarketplaceProduct {
   return {
     id: product.id,
@@ -89,8 +145,8 @@ function toMarketplaceProduct(product: AdminProduct): MarketplaceProduct {
     hasTransactions: product.hasTransactions,
     rejectionReason: product.rejectionReason,
     createdAt: product.createdAt,
-    imageUrl: null,
-    sellerVerified: false,
+    imageUrl: MOCK_PRODUCT_IMAGES[product.id] ?? makeProductThumbSvg(product),
+    sellerVerified: product.sellerId !== 3,
     currentPrice:
       product.type === "auction" && product.status === "active"
         ? product.price
@@ -291,7 +347,9 @@ export async function getMarketplaceProduct(
     }
     return {
       ...toMarketplaceProduct(product),
-      description: "Thông tin chi tiết sản phẩm demo.",
+      description:
+        MOCK_PRODUCT_DESCRIPTIONS[product.id] ??
+        "Sản phẩm sinh viên KTX còn sử dụng tốt, xem và nhận hàng trực tiếp tại sảnh tòa nhà.",
     };
   }
 

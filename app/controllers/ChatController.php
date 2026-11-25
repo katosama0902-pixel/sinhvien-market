@@ -180,7 +180,7 @@ class ChatController extends Controller
 
             // Bắn Pusher cho người nhận
             $pusher = new \App\Services\PusherService();
-            $pusher->trigger('chat.' . $receiverId, 'new_message', [
+            $pusher->trigger(\App\Services\PusherService::userChannel((int)$receiverId), 'new_message', [
                 'id'          => $msgId,
                 'body'        => htmlspecialchars($body, ENT_QUOTES, 'UTF-8'),
                 'msg_type'    => 'text',
@@ -231,7 +231,7 @@ class ChatController extends Controller
                             $aiResponse = trim(str_replace(['**', '__'], '', $aiResponse));
                             $aiText  = "🤖 [Trả lời tự động] " . $aiResponse . "\n(Người bán đang vắng mặt, bạn cứ để lại lời nhắn nhé.)";
                             $aiMsgId = $this->msgModel->send($convId, $conv['seller_id'], $aiText);
-                            $pusher->trigger('chat.' . $user['id'], 'new_message', [
+                            $pusher->trigger(\App\Services\PusherService::userChannel((int)$user['id']), 'new_message', [
                                 'id'          => $aiMsgId,
                                 'body'        => htmlspecialchars($aiText, ENT_QUOTES, 'UTF-8'),
                                 'msg_type'    => 'text',
@@ -278,7 +278,7 @@ class ChatController extends Controller
         $msgId = $this->msgModel->sendOffer($convId, $user['id'], $price);
         
         $receiverId = (int)$conv['seller_id'];
-        (new \App\Services\PusherService())->trigger('chat.' . $receiverId, 'new_message', [
+        (new \App\Services\PusherService())->trigger(\App\Services\PusherService::userChannel((int)$receiverId), 'new_message', [
             'id'          => $msgId,
             'body'        => '',
             'msg_type'    => 'offer',
@@ -327,7 +327,7 @@ class ChatController extends Controller
         $newMsgId = $this->msgModel->send($convId, $user['id'], $replyText);
 
         $receiverId = (int)$conv['buyer_id'];
-        (new \App\Services\PusherService())->trigger('chat.' . $receiverId, 'new_message', [
+        (new \App\Services\PusherService())->trigger(\App\Services\PusherService::userChannel((int)$receiverId), 'new_message', [
             'id'          => $newMsgId,
             'body'        => htmlspecialchars($replyText, ENT_QUOTES, 'UTF-8'),
             'msg_type'    => 'text',

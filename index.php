@@ -426,6 +426,8 @@ $router->get('api/chat/unread', 'Chat', 'apiUnreadCount');
 // API-prefixed aliases (chuẩn hóa Phase 14)
 $router->post('api/chat/send', 'Chat', 'send');
 $router->get('api/chat/poll', 'Chat', 'apiPoll');
+$router->get('api/realtime/config', 'RealtimeApi', 'config');
+$router->post('api/realtime/auth', 'RealtimeApi', 'auth');
 $router->post('api/chat/offer', 'Chat', 'sendOffer');
 $router->post('api/chat/offer/respond', 'Chat', 'respondOffer');
 

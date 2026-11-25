@@ -3,8 +3,16 @@
 namespace App\Services;
 
 /**
- * PusherService (cURL Wrapper)
- * Dùng để trigger event WebSocket qua HTTP API của Pusher mà không cần thư viện Composer.
+ * PusherService (cURL wrapper, no Composer dependency).
+ *
+ * Realtime chat uses PRIVATE channels `private-chat.{userId}`: the browser can
+ * only subscribe after POST /api/realtime/auth signs the subscription for the
+ * signed-in user (see RealtimeApiController). Public `chat.{id}` channels were
+ * readable by anyone who knew a user id, since the app key is public.
+ *
+ * Credentials come only from the environment (PUSHER_APP_ID / _KEY / _SECRET /
+ * _CLUSTER). When they are missing, trigger() is a no-op and the frontend falls
+ * back to polling.
  */
 class PusherService
 {
@@ -15,22 +23,55 @@ class PusherService
 
     public function __construct()
     {
-        $this->appId   = getenv('PUSHER_APP_ID') ?: '1858547';
-        $this->key     = getenv('PUSHER_APP_KEY') ?: 'f50f24f5a8a8c171e1b1';
-        $this->secret  = getenv('PUSHER_APP_SECRET') ?: '21b764b8893d5a2d6771';
-        $this->cluster = getenv('PUSHER_APP_CLUSTER') ?: 'ap1';
+        $this->appId = self::env('PUSHER_APP_ID');
+        $this->key = self::env('PUSHER_APP_KEY');
+        $this->secret = self::env('PUSHER_APP_SECRET');
+        $this->cluster = self::env('PUSHER_APP_CLUSTER') ?: 'ap1';
+    }
+
+    /** Private channel that carries one user's chat events. */
+    public static function userChannel(int $userId): string
+    {
+        return 'private-chat.' . $userId;
+    }
+
+    public function isConfigured(): bool
+    {
+        return $this->appId !== '' && $this->key !== '' && $this->secret !== '';
+    }
+
+    public function publicKey(): string
+    {
+        return $this->key;
+    }
+
+    public function cluster(): string
+    {
+        return $this->cluster;
     }
 
     /**
-     * Gửi tin nhắn tới một kênh
+     * Signature for a private-channel subscription (Pusher protocol):
+     * "<key>:" . HMAC-SHA256(secret, "<socket_id>:<channel_name>").
+     */
+    public function authorizeChannel(string $socketId, string $channel): string
+    {
+        return $this->key . ':' . hash_hmac('sha256', $socketId . ':' . $channel, $this->secret);
+    }
+
+    /**
+     * Send an event to a channel.
      *
-     * @param string $channel Tên kênh (vd: 'chat.12')
-     * @param string $event   Tên sự kiện (vd: 'new_message')
-     * @param mixed  $data    Dữ liệu cần gửi (mảng, chuỗi...)
-     * @return bool True nếu gửi thành công
+     * @param string $channel e.g. PusherService::userChannel(12)
+     * @param string $event   e.g. 'new_message'
+     * @param mixed  $data    array or string payload
+     * @return bool true when Pusher accepted the event
      */
     public function trigger(string $channel, string $event, $data): bool
     {
+        if (!$this->isConfigured()) {
+            return false;
+        }
         $host = "api-{$this->cluster}.pusher.com";
         $path = "/apps/{$this->appId}/events";
 
@@ -40,27 +81,20 @@ class PusherService
             'data'     => is_string($data) ? $data : json_encode($data)
         ]);
 
-        $bodyMd5 = md5($body);
-
         $params = [
             'auth_key'       => $this->key,
             'auth_timestamp' => time(),
             'auth_version'   => '1.0',
-            'body_md5'       => $bodyMd5
+            'body_md5'       => md5($body)
         ];
-
         ksort($params);
 
         $queryString = http_build_query($params, '', '&');
         // Ký HMAC SHA256
         $stringToSign = "POST\n{$path}\n{$queryString}";
-        $authSignature = hash_hmac('sha256', $stringToSign, $this->secret);
+        $queryString .= '&auth_signature=' . hash_hmac('sha256', $stringToSign, $this->secret);
 
-        $queryString .= '&auth_signature=' . $authSignature;
-
-        $url = "https://{$host}{$path}?{$queryString}";
-
-        $ch = curl_init($url);
+        $ch = curl_init("https://{$host}{$path}?{$queryString}");
         curl_setopt_array($ch, [
             CURLOPT_POST           => true,
             CURLOPT_RETURNTRANSFER => true,
@@ -70,12 +104,19 @@ class PusherService
                 'Accept: application/json'
             ],
             CURLOPT_TIMEOUT        => 5,
-            CURLOPT_SSL_VERIFYPEER => false // Có thể tắt trong môi trường local
         ]);
 
         $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
+        $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($response === false || $httpCode !== 200) {
+            error_log('Pusher trigger failed: HTTP ' . $httpCode . ' ' . curl_error($ch));
+        }
         return $httpCode === 200;
+    }
+
+    private static function env(string $name): string
+    {
+        $value = $_ENV[$name] ?? getenv($name);
+        return is_string($value) ? trim($value) : '';
     }
 }

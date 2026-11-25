@@ -8,7 +8,8 @@ interface RequestOptions {
 
 let csrfToken: string | null = null;
 
-async function getCsrfToken(): Promise<string> {
+/** Session CSRF token (cached); also used by the realtime channel authorizer. */
+export async function getCsrfToken(): Promise<string> {
   if (csrfToken) return csrfToken;
 
   let response: Response;

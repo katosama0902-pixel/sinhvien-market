@@ -16,6 +16,7 @@ import {
   UserFlowApp,
   UserFlowLayout,
 } from "@/components/flows/FlowFrame";
+import { subscribeToChat } from "@/lib/realtime";
 import { Button } from "@/components/ui/Button";
 import {
   getConversationMessages,
@@ -40,8 +41,12 @@ const OFFER_STATUS_VI: Record<string, string> = {
   rejected: "đã từ chối",
 };
 
-/** How often an open conversation fetches new messages (the other side's replies, the auto-reply bot). */
+/**
+ * Fallback refresh of an open conversation. With realtime (Pusher) live, new
+ * messages arrive instantly and polling only covers missed events.
+ */
 const POLL_MS = 5000;
+const POLL_MS_WHEN_LIVE = 30000;
 
 function ConversationContent() {
   const { user, loadingUser } = useMainShell();
@@ -56,6 +61,7 @@ function ConversationContent() {
   const [offerDraft, setOfferDraft] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [live, setLive] = useState(false);
   const [error, setError] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -85,13 +91,15 @@ function ConversationContent() {
     void Promise.resolve().then(refresh);
   }, [loadingUser, refresh, user]);
 
-  // Poll while the tab is visible so replies appear without reloading the page.
+  const conversationKey = conversation?.id ?? null;
+  const userId = user?.id ?? null;
+
+  // Realtime: a "new_message" event for this conversation triggers a refresh at once.
   useEffect(() => {
-    if (!user || !conversation) return;
+    if (userId === null || conversationKey === null) return;
     let active = true;
-    const timer = window.setInterval(() => {
-      if (document.visibilityState !== "visible") return;
-      getConversationMessages(conversation.id)
+    const reload = () => {
+      getConversationMessages(conversationKey)
         .then((next) => {
           if (!active) return;
           setMessages((current) => {
@@ -102,14 +110,26 @@ function ConversationContent() {
           });
         })
         .catch(() => {
-          // Transient network error: keep the current messages and try again next tick.
+          // Transient network error: keep the current messages; the next event or poll retries.
         });
-    }, POLL_MS);
+    };
+    const unsubscribe = subscribeToChat(
+      userId,
+      (event) => {
+        if (Number(event.conv_id) === conversationKey) reload();
+      },
+      setLive,
+    );
+    // Fallback polling (slower once the realtime channel is live).
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") reload();
+    }, live ? POLL_MS_WHEN_LIVE : POLL_MS);
     return () => {
       active = false;
+      unsubscribe();
       window.clearInterval(timer);
     };
-  }, [user, conversation]);
+  }, [userId, conversationKey, live]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -59,6 +59,7 @@ Các khóa quan trọng trong `.env`:
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | OAuth client loại *Web application* |
 | `GOOGLE_REDIRECT_URI` | `http://localhost:8081/auth/google/callback`. Phải khai báo **y hệt** trong Google Cloud Console |
 | `STUDENT_EMAIL_DOMAINS` | *(tùy chọn)* Đuôi email trường được cấp tích xanh, ngoài `.edu.vn`, `.ac.vn`, `.edu` |
+| `PUSHER_APP_ID`, `PUSHER_APP_KEY`, `PUSHER_APP_SECRET`, `PUSHER_APP_CLUSTER` | *(tùy chọn)* Chat tức thời. Tạo app *Channels* miễn phí tại dashboard.pusher.com, chép 4 giá trị ở tab *App Keys*. Không có thì chat tự cập nhật mỗi 5 giây |
 
 Không commit file `.env`.
 
@@ -134,4 +135,5 @@ Benchmark AI: xem [`../database/demo/marketplace/README.md`](../database/demo/ma
 | Mở trang PHP cũ (ví dụ `:8081/login`) gặp lỗi 503 "chưa cấu hình giao diện" | `.env` thiếu `NEXT_APP_URL` (trước đây lỗi này gây vòng lặp chuyển hướng) |
 | Tìm kiếm hiện "đang tìm theo từ khóa" (dải màu vàng) | Gemini chưa cấu hình, hết hạn mức hoặc quá tải. Kết quả vẫn đúng nhưng chỉ dựa trên từ khóa |
 | Bot không tự trả lời tin nhắn | Model chat bị đóng hoặc quá tải; xem log PHP dòng `Google AI API Error (model)` rồi đổi `GEMINI_CHAT_MODEL` |
+| Chat không tức thời; log PHP có `Pusher trigger failed: HTTP 400` | Thông tin Pusher sai cụm hoặc app đã bị xóa. Tạo app mới, điền lại 4 khóa `PUSHER_*` |
 | `tsc` báo `Cannot find name 'LayoutProps'` | Chưa chạy `npm run build` hoặc `npm run dev` lần nào (Next sinh kiểu khi chạy) |

@@ -13,6 +13,7 @@ import {
   getConversations,
   type ConversationSummary,
 } from "@/lib/api/user-flows";
+import { subscribeToChat } from "@/lib/realtime";
 
 function ChatListContent() {
   const { user, loadingUser } = useMainShell();
@@ -37,6 +38,19 @@ function ChatListContent() {
     if (loadingUser || !user) return;
     void Promise.resolve().then(refresh);
   }, [loadingUser, refresh, user]);
+
+  // New message anywhere: refresh previews and order silently (no spinner).
+  const userId = user?.id ?? null;
+  useEffect(() => {
+    if (userId === null || !user) return;
+    return subscribeToChat(userId, () => {
+      getConversations(user)
+        .then(setConversations)
+        .catch(() => {
+          // Keep the current list; the next event or a reload retries.
+        });
+    });
+  }, [userId, user]);
 
   return (
     <UserFlowLayout

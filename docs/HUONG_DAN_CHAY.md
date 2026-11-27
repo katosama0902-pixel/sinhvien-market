@@ -107,6 +107,10 @@ Get-Content .\database\demo\dorm-rules.sql -Raw | mysql -u root sinhvien_market
 $env:TEST_ACCOUNTS_PASSWORD = "<mật khẩu chung tự đặt>"
 php scripts/seed-test-marketplace.php --database=sinhvien_market --confirm=sinhvien_market
 
+# Dữ liệu vận hành KTX cho demo: tài khoản quanly.ktx / kythuat.ktx, 12 hóa đơn, 6 phiếu sửa chữa,
+# 3 ki-ốt, giường trống, hồ sơ chờ duyệt, thông báo. Chạy sau lệnh trên (cùng mật khẩu chung).
+php scripts/seed-demo-ktx.php --database=sinhvien_market --confirm=sinhvien_market
+
 # Tạo vector Gemini cho mọi sản phẩm đang bán (cần GEMINI_API_KEY)
 php scripts/index-marketplace-embeddings.php
 ```
@@ -123,6 +127,8 @@ npx vitest run; npx eslint .; npx tsc --noEmit         # tsc cần chạy `npm r
 ```
 
 Smoke test với dữ liệu thật: xem [`../scripts/qa/README.md`](../scripts/qa/README.md).
+Kiểm thử toàn hệ thống (260 kiểm tra API + 25 kịch bản trình duyệt): xem [`BAO_CAO_KIEM_THU_W10.md`](./BAO_CAO_KIEM_THU_W10.md) mục 8.
+Kịch bản demo bảo vệ: [`KICH_BAN_DEMO.md`](./KICH_BAN_DEMO.md).
 Benchmark AI: xem [`../database/demo/marketplace/README.md`](../database/demo/marketplace/README.md) và `scripts/eval/`.
 
 ## 7. Lỗi thường gặp

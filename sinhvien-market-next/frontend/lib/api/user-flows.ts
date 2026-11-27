@@ -40,6 +40,8 @@ export interface UserTransaction
   paymentStatus?: "pending" | "paid" | "refunded";
   hasPaymentProof?: boolean;
   updatedAt?: string;
+  /** Stars the viewer gave this transaction, null when not rated yet (real API only). */
+  myRating?: number | null;
 }
 
 export interface TransactionPaymentInfo {
@@ -557,6 +559,57 @@ export async function confirmTransactionBankPayment(
     "Xác nhận chuyển khoản cần backend PHP đã kết nối.",
     { status: 501 },
   );
+}
+
+export const LISTING_REPORT_REASONS = [
+  "Hàng cấm / vi phạm pháp luật",
+  "Lừa đảo / giả mạo",
+  "Sai danh mục / thông tin sai",
+  "Nội dung phản cảm",
+  "Spam / đăng trùng",
+  "Khác",
+] as const;
+
+export type ListingReportReason = (typeof LISTING_REPORT_REASONS)[number];
+
+/** Buyer rates the seller of a completed transaction (1–5 stars, once). */
+export async function rateTransaction(
+  user: AuthUser,
+  transactionId: number,
+  stars: number,
+  comment: string,
+): Promise<void> {
+  requireUser(user);
+  if (!USE_MOCK) {
+    await apiRequest<{ stars: number }>("/user/ratings", {
+      method: "POST",
+      body: { transactionId, stars, comment },
+    });
+    return;
+  }
+  throw new ApiError("NOT_IMPLEMENTED", "Đánh giá cần backend PHP đã kết nối.", {
+    status: 501,
+  });
+}
+
+/** Report a listing to the admins. */
+export async function reportListing(
+  user: AuthUser,
+  productId: number,
+  reason: ListingReportReason,
+  description: string,
+): Promise<void> {
+  requireUser(user);
+  if (!USE_MOCK) {
+    await apiRequest<{ id: number }>("/user/reports", {
+      method: "POST",
+      body: { productId, reason, description },
+    });
+    return;
+  }
+  throw new ApiError("NOT_IMPLEMENTED", "Báo cáo cần backend PHP đã kết nối.", {
+    status: 501,
+  });
 }
 
 export async function updateTransactionStatus(

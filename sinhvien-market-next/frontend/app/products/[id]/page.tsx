@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
+  Flag,
   Heart,
   LoaderCircle,
   MessageCircle,
@@ -25,9 +26,13 @@ import { formatVnd } from "@/lib/validation/admin";
 import {
   checkoutProduct,
   getWishlist,
+  LISTING_REPORT_REASONS,
+  reportListing,
   startConversation,
   toggleWishlist,
+  type ListingReportReason,
 } from "@/lib/api/user-flows";
+import type { AuthUser } from "@/lib/api/types";
 
 function ProductDetailContent() {
   const { user, loadingUser } = useMainShell();
@@ -420,6 +425,104 @@ function ProductDetailContent() {
           )}
         </div>
       </article>
+      {user && user.role === "student" && product.sellerId !== user.id && (
+        <ReportListing user={user} productId={product.id} />
+      )}
+    </div>
+  );
+}
+
+function ReportListing({ user, productId }: { user: AuthUser; productId: number }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState<ListingReportReason>(LISTING_REPORT_REASONS[0]);
+  const [description, setDescription] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    setSending(true);
+    setError("");
+    try {
+      await reportListing(user, productId, reason, description.trim());
+      setDone(true);
+      setOpen(false);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không gửi được báo cáo.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (done) {
+    return (
+      <p role="status" className="mt-4 text-right text-xs font-semibold text-emerald-600">
+        Đã gửi báo cáo. Quản trị viên sẽ xem xét sớm.
+      </p>
+    );
+  }
+  return (
+    <div className="mt-4 text-right">
+      {!open ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-rose-600"
+        >
+          <Flag className="h-3.5 w-3.5" />
+          Báo cáo tin đăng
+        </button>
+      ) : (
+        <form
+          onSubmit={submit}
+          aria-label="Báo cáo tin đăng"
+          className="ml-auto max-w-md space-y-3 rounded-2xl border border-border bg-surface p-4 text-left"
+        >
+          <p className="font-extrabold text-fg">Báo cáo tin đăng vi phạm</p>
+          <label className="block text-xs font-bold text-fg">
+            Lý do
+            <select
+              value={reason}
+              onChange={(event) => setReason(event.target.value as ListingReportReason)}
+              className="mt-1.5 w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm font-normal"
+            >
+              {LISTING_REPORT_REASONS.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block text-xs font-bold text-fg">
+            Mô tả chi tiết *
+            <textarea
+              required
+              minLength={10}
+              maxLength={1000}
+              rows={3}
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="Nêu rõ điểm vi phạm (tối thiểu 10 ký tự)"
+              className="mt-1.5 w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm font-normal"
+            />
+          </label>
+          {error && (
+            <p role="alert" className="text-xs font-semibold text-rose-600">
+              {error}
+            </p>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+              Hủy
+            </Button>
+            <Button type="submit" disabled={sending}>
+              {sending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Flag className="h-4 w-4" />}
+              Gửi báo cáo
+            </Button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }

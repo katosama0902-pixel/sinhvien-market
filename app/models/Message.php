@@ -64,13 +64,32 @@ class Message extends Model
     /**
      * Cập nhật trạng thái của Offer
      */
-    public function updateOfferStatus(int $messageId, string $status): void
+    /**
+     * Chốt một đề nghị giá đang chờ ('accepted' | 'rejected').
+     * Chỉ áp dụng cho đề nghị thuộc đúng hội thoại và chưa được xử lý;
+     * trả về false nếu không có đề nghị nào như vậy.
+     */
+    public function updateOfferStatus(int $messageId, int $conversationId, string $status): bool
     {
-        // status có thể là 'accepted' hoặc 'rejected'
-        $this->execute(
-            "UPDATE messages SET offer_status = ? WHERE id = ? AND msg_type = 'offer'",
-            [$status, $messageId]
+        return $this->execute(
+            "UPDATE messages SET offer_status = ?
+             WHERE id = ? AND conversation_id = ? AND msg_type = 'offer' AND offer_status = 'pending'",
+            [$status, $messageId, $conversationId]
+        ) === 1;
+    }
+
+    /** Giá đã được người bán chấp nhận gần nhất cho cặp (sản phẩm, người mua), hoặc null. */
+    public function acceptedOfferPrice(int $productId, int $buyerId): ?int
+    {
+        $row = $this->queryOne(
+            "SELECT m.offer_price FROM messages m
+             JOIN conversations c ON c.id = m.conversation_id
+             WHERE c.product_id = ? AND c.buyer_id = ? AND m.sender_id = c.buyer_id
+               AND m.msg_type = 'offer' AND m.offer_status = 'accepted'
+             ORDER BY m.id DESC LIMIT 1",
+            [$productId, $buyerId]
         );
+        return $row && (int)$row['offer_price'] > 0 ? (int)$row['offer_price'] : null;
     }
 
     /**

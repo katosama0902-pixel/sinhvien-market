@@ -321,7 +321,10 @@ class ChatController extends Controller
             return; // BUG-010 fix
         }
 
-        $this->msgModel->updateOfferStatus($msgId, $status);
+        if (!$this->msgModel->updateOfferStatus($msgId, $convId, $status)) {
+            $this->json(['success' => false, 'message' => 'Đề nghị giá không tồn tại trong hội thoại này hoặc đã được xử lý.'], 409);
+            return;
+        }
         
         $replyText = ($status === 'accepted') ? "✅ Mình đồng ý với mức giá đề nghị của bạn. Giao dịch nhé!" : "❌ Mình chưa thể bán với mức giá này nha. Bạn có thể trả thêm chút không?";
         $newMsgId = $this->msgModel->send($convId, $user['id'], $replyText);

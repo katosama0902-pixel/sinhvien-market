@@ -13,6 +13,7 @@ import {
   LoaderCircle,
   PackageCheck,
   ShoppingBag,
+  Star,
 } from "lucide-react";
 import { useMainShell } from "@/components/layout/MainShell";
 import {
@@ -24,6 +25,7 @@ import { Button } from "@/components/ui/Button";
 import {
   getMyTransactions,
   confirmTransactionBankPayment,
+  rateTransaction,
   updateTransactionStatus,
   type UserTransaction,
   type UserTransactionStatus,
@@ -367,12 +369,107 @@ function TransactionsContent() {
                     )}
                   </div>
                 </div>
+                {!seller && transaction.orderStatus === "completed" && (
+                  transaction.myRating ? (
+                    <p className="mt-3 flex items-center gap-1 border-t border-border pt-3 text-xs font-semibold text-muted">
+                      Bạn đã đánh giá người bán {transaction.myRating}
+                      <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                    </p>
+                  ) : transaction.myRating === null && user ? (
+                    <RatingForm
+                      onSubmit={async (stars, comment) => {
+                        await rateTransaction(user, transaction.id, stars, comment);
+                        setNotice("Cảm ơn bạn đã đánh giá người bán.");
+                        await refresh();
+                      }}
+                    />
+                  ) : null
+                )}
               </article>
             );
           })}
         </div>
       )}
     </UserFlowLayout>
+  );
+}
+
+function RatingForm({
+  onSubmit,
+}: {
+  onSubmit: (stars: number, comment: string) => Promise<void>;
+}) {
+  const [stars, setStars] = useState(0);
+  const [hover, setHover] = useState(0);
+  const [comment, setComment] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (stars < 1) {
+      setError("Hãy chọn số sao.");
+      return;
+    }
+    setSending(true);
+    setError("");
+    try {
+      await onSubmit(stars, comment.trim());
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Không gửi được đánh giá.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <form
+      onSubmit={submit}
+      className="mt-3 space-y-2 border-t border-border pt-3"
+      aria-label="Đánh giá người bán"
+    >
+      <p className="text-sm font-bold text-fg">Đánh giá người bán</p>
+      <div className="flex items-center gap-1" role="radiogroup" aria-label="Số sao">
+        {[1, 2, 3, 4, 5].map((value) => (
+          <button
+            key={value}
+            type="button"
+            role="radio"
+            aria-checked={stars === value}
+            aria-label={`${value} sao`}
+            onClick={() => {
+              setStars(value);
+              setError("");
+            }}
+            onMouseEnter={() => setHover(value)}
+            onMouseLeave={() => setHover(0)}
+            className="rounded p-0.5"
+          >
+            <Star
+              className={`h-6 w-6 ${
+                (hover || stars) >= value
+                  ? "fill-amber-400 text-amber-400"
+                  : "text-muted/50"
+              }`}
+            />
+          </button>
+        ))}
+      </div>
+      <textarea
+        value={comment}
+        onChange={(event) => setComment(event.target.value)}
+        maxLength={1000}
+        rows={2}
+        placeholder="Nhận xét về người bán (không bắt buộc)"
+        aria-label="Nhận xét"
+        className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm text-fg"
+      />
+      {error && <p className="text-xs font-semibold text-red-600">{error}</p>}
+      <Button type="submit" disabled={sending}>
+        {sending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Star className="h-4 w-4" />}
+        Gửi đánh giá
+      </Button>
+    </form>
   );
 }
 

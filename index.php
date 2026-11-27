@@ -333,6 +333,8 @@ $router->post('api/user/rewards/checkin', 'NextApi', 'checkin');
 $router->post('api/user/rewards/bump', 'NextApi', 'bump');
 $router->get('api/user/wishlist', 'NextApi', 'wishlist');
 $router->post('api/user/wishlist/toggle', 'NextApi', 'toggleWishlist');
+$router->post('api/user/ratings', 'NextApi', 'rateTransaction');
+$router->post('api/user/reports', 'NextApi', 'reportListing');
 
 // Admin
 $router->get('api/admin/dashboard', 'AdminApi', 'dashboard');

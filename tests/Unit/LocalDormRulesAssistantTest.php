@@ -79,4 +79,26 @@ class LocalDormRulesAssistantTest extends TestCase
 
         self::assertSame([], $answer['sources']);
     }
+
+    public function test_everyday_phrasing_maps_to_curfew_rule(): void
+    {
+        // "Mấy giờ đóng cửa" never names "giới nghiêm"; "mấy" must not pull in rules about "máy".
+        $notices = $this->createMock(ResidenceNotice::class);
+        $notices->method('activeRulesForAssistant')->willReturn($this->rules());
+
+        $answer = (new LocalDormRulesAssistant($notices))->answer('Mấy giờ KTX đóng cửa buổi tối?', null);
+
+        self::assertSame(1, $answer['sources'][0]['id']);
+    }
+
+    public function test_question_fillers_do_not_produce_an_answer(): void
+    {
+        // "đến" and the "bao" of "bao nhiêu" used to push off-topic questions over the threshold.
+        $notices = $this->createMock(ResidenceNotice::class);
+        $notices->method('activeRulesForAssistant')->willReturn($this->rules());
+
+        $answer = (new LocalDormRulesAssistant($notices))->answer('Giá vé xe buýt đến trường bao nhiêu?', null);
+
+        self::assertSame([], $answer['sources']);
+    }
 }

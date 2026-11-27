@@ -11,6 +11,8 @@ use App\Models\LoginSession;
 use App\Models\Message;
 use App\Models\Notification;
 use App\Models\Product;
+use App\Models\Rating;
+use App\Models\Report;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Wishlist;
@@ -778,7 +780,11 @@ class NextApiController extends ApiController
     {
         $user = $this->requireUser();
         $rows = (new Transaction())->getByUser((int)$user['id']);
-        $this->success(array_map(fn(array $tx): array => $this->transactionDto($tx, (int)$user['id']), $rows));
+        $stmt = Database::getInstance()->prepare('SELECT transaction_id, stars FROM ratings WHERE rater_id = ?');
+        $stmt->execute([(int)$user['id']]);
+        $rated = $stmt->fetchAll(\PDO::FETCH_KEY_PAIR);
+        $this->success(array_map(fn(array $tx): array => $this->transactionDto($tx, (int)$user['id'])
+            + ['myRating' => isset($rated[$tx['id']]) ? (int)$rated[$tx['id']] : null], $rows));
     }
 
     public function transactionPaymentInfo(): void
@@ -1090,6 +1096,11 @@ class NextApiController extends ApiController
                 $this->validationError('Không thể mua sản phẩm của chính mình.');
             }
             $amount = (int)$product['price'];
+            // Giá đã thỏa thuận qua chat (người bán chấp nhận đề nghị) được ưu tiên nếu thấp hơn giá niêm yết.
+            $agreed = (new Message())->acceptedOfferPrice($targetId, (int)$user['id']);
+            if ($agreed !== null && $agreed < $amount) {
+                $amount = $agreed;
+            }
             $sellerId = (int)$product['user_id'];
             if ($method !== 'momo') {
                 $productModel->updateStatus($targetId, 'sold');
@@ -1235,6 +1246,63 @@ class NextApiController extends ApiController
         }
         $model->add((int)$user['id'], $productId, !empty($product['price']) ? (int)$product['price'] : null);
         $this->success(['action' => 'added', 'productId' => $productId]);
+    }
+
+    public function rateTransaction(): void
+    {
+        $user = $this->requireUser();
+        $this->requireCsrf();
+        $data = $this->requestData();
+        $id = $this->integer($data['transactionId'] ?? $data['id'] ?? null, 'transactionId');
+        $stars = $this->integer($data['stars'] ?? null, 'stars');
+        $comment = trim($this->text($data, 'comment'));
+        if ($stars < 1 || $stars > 5) { $this->validationError('Số sao phải từ 1 đến 5.'); }
+        if (mb_strlen($comment) > 1000) { $this->validationError('Nhận xét tối đa 1000 ký tự.'); }
+        $tx = $id > 0 ? (new Transaction())->findById($id) : null;
+        if (!$tx || (int)$tx['buyer_id'] !== (int)$user['id']) {
+            $this->notFound('Không tìm thấy giao dịch của bạn.');
+        }
+        if ($tx['order_status'] !== 'completed') {
+            $this->error('NOT_COMPLETED', 'Chỉ đánh giá được sau khi đã xác nhận nhận hàng.', 409);
+        }
+        $ratings = new Rating();
+        if ($ratings->existsForTransaction($id)
+            || !$ratings->create($id, (int)$user['id'], (int)$tx['seller_id'], (int)$tx['product_id'], $stars, $comment)) {
+            $this->error('ALREADY_RATED', 'Bạn đã đánh giá giao dịch này.', 409);
+        }
+        (new Notification())->create((int)$tx['seller_id'], 'rating', 'Bạn nhận được đánh giá mới',
+            $user['name'] . ' đã đánh giá ' . $stars . ' sao cho "' . ((new Product())->findById((int)$tx['product_id'])['title'] ?? 'sản phẩm') . '".', '/users/' . (int)$tx['seller_id']);
+        http_response_code(201);
+        $this->created(['transactionId' => $id, 'stars' => $stars], 'Cảm ơn bạn đã đánh giá.');
+    }
+
+    public function reportListing(): void
+    {
+        $user = $this->requireUser();
+        $this->requireCsrf();
+        $data = $this->requestData();
+        $productId = $this->integer($data['productId'] ?? null, 'productId');
+        $reason = trim($this->text($data, 'reason'));
+        $description = trim($this->text($data, 'description'));
+        $allowed = ['Hàng cấm / vi phạm pháp luật', 'Lừa đảo / giả mạo', 'Sai danh mục / thông tin sai',
+            'Nội dung phản cảm', 'Spam / đăng trùng', 'Khác'];
+        if (!in_array($reason, $allowed, true)) { $this->validationError('Lý do báo cáo không hợp lệ.'); }
+        $len = mb_strlen($description);
+        if ($len < 10 || $len > 1000) { $this->validationError('Mô tả cần từ 10 đến 1000 ký tự.'); }
+        $product = $productId > 0 ? (new Product())->findById($productId) : null;
+        if (!$product) { $this->notFound('Không tìm thấy tin đăng.'); }
+        if ((int)$product['user_id'] === (int)$user['id']) {
+            $this->validationError('Bạn không thể báo cáo tin của chính mình.');
+        }
+        $db = Database::getInstance();
+        $dup = $db->prepare('SELECT id FROM reports WHERE reporter_id = ? AND product_id = ? AND status = "pending" LIMIT 1');
+        $dup->execute([(int)$user['id'], $productId]);
+        if ($dup->fetchColumn()) {
+            $this->error('ALREADY_REPORTED', 'Bạn đã báo cáo tin này, quản trị viên đang xem xét.', 409);
+        }
+        $reportId = (new Report())->createReport((int)$user['id'], (int)$product['user_id'], $productId, $reason, $description);
+        http_response_code(201);
+        $this->created(['id' => $reportId], 'Đã gửi báo cáo. Quản trị viên sẽ xem xét sớm.');
     }
 
     private function requireUser(): array

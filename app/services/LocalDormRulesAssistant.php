@@ -30,7 +30,21 @@ class LocalDormRulesAssistant
         'va', 'hoac', 'voi', 'cua', 'cho', 'trong', 'tren', 'duoi', 'cac', 'nhung', 'mot', 'nay', 'kia', 'rat',
         'co', 'khong', 'tai', 'de', 'la', 'khi', 'nao', 'nhieu', 'sao', 'duoc', 'gi', 'ai', 'oi', 'nhe', 'vay',
         'thi', 'em', 'hoi', 'xin', 'phai', 'bi', 'neu', 'nhu', 'minh', 'ban', 'muon', 'can', 'dau', 'ktx',
-        'sinh', 'vien', 'chao', 'hoc', 'truong',
+        'sinh', 'vien', 'chao', 'hoc', 'truong', 'den', 'tu', 'thi',
+    ];
+
+    /**
+     * Everyday phrasings (diacritics-free) -> words the rules actually use.
+     * Students ask "mấy giờ đóng cửa" while the rule says "giờ mở cổng / giới nghiêm";
+     * without this, "cửa" is a stopword-like filler and "mấy" collides with "máy".
+     */
+    private const SYNONYMS = [
+        'dong cua' => 'cong gioi nghiem', 'khoa cong' => 'cong gioi nghiem', 've muon' => 'gioi nghiem cong',
+        'gio ve' => 'gioi nghiem cong', 'di choi khuya' => 'gioi nghiem', 'ban be' => 'khach den tham',
+        'nguoi yeu' => 'khach den tham', 'ngu lai' => 'khach qua dem', 'on ao' => 'yen tinh', 'karaoke' => 'yen tinh',
+        'hu hong' => 'bao hong sua chua', 'bi hong' => 'bao hong sua chua', 'chay no' => 'phong chay chua chay',
+        'xe may' => 'gui xe', 'nuoi meo' => 'thu cung', 'nuoi cho' => 'thu cung', 'uong ruou' => 'ruou bia',
+        'chuyen phong' => 'chuyen phong tra phong', 'roi ktx' => 'tra phong', 'nau com' => 'nau an thiet bi dien',
     ];
 
     public function __construct(private readonly ResidenceNotice $notices = new ResidenceNotice())
@@ -51,7 +65,7 @@ class LocalDormRulesAssistant
             $documents[$id] = $rule['title'] . ' ' . $rule['title'] . ' ' . strip_tags((string)$rule['body']);
         }
 
-        $scores = VietnameseBm25::scores($question, $documents, self::STOPWORDS);
+        $scores = VietnameseBm25::scores($this->expand($question), $documents, self::STOPWORDS);
         arsort($scores);
         $best = (float)(reset($scores) ?: 0.0);
 
@@ -75,5 +89,19 @@ class LocalDormRulesAssistant
             'sources' => $sources,
             'modelKey' => 'local-dorm-rules-bm25-vi-v2',
         ];
+    }
+
+    private function expand(string $question): string
+    {
+        $plain = VietnameseBm25::stripDiacritics($question);
+        // Question fillers: "bao" in "bao nhiêu" must not match "báo hỏng".
+        $plain = (string)preg_replace('/\b(bao nhieu|bao lau|nhu the nao|the nao|ra sao)\b/u', ' ', $plain);
+        $extra = [];
+        foreach (self::SYNONYMS as $phrase => $terms) {
+            if (preg_match('/\b' . preg_quote($phrase, '/') . '\b/u', $plain)) {
+                $extra[] = $terms;
+            }
+        }
+        return trim($plain . ' ' . implode(' ', $extra));
     }
 }
